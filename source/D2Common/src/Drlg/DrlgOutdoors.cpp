@@ -330,7 +330,7 @@ BOOL __fastcall DRLGOUTDOORS_SpawnPresetFarAway(D2DrlgLevelStrc* pLevel, D2DrlgC
 //D2Common.0x6FD7E330
 BOOL __fastcall DRLGOUTDOORS_SpawnOutdoorLevelPreset(D2DrlgLevelStrc* pLevel, int nLevelPrestId, int nRand, int nOffset, char nFlags)
 {
-	D2CoordStrc pCoord[256] = {};
+	D2CoordStrc pCoord[4096] = {};
 	int nWidth = 0;
 	int nRand1 = 0;
 	int nRand2 = 0;
@@ -393,7 +393,7 @@ BOOL __fastcall DRLGOUTDOORS_SpawnRandomOutdoorDS1(D2DrlgLevelStrc* pLevel, int 
 		0, -1, 1, 0, -1, 1, -1, 1
 	};
 
-	D2CoordStrc pCoord[256] = {};
+	D2CoordStrc pCoord[4096] = {};
 	unsigned int nRand1 = 0;
 	unsigned int nRand2 = 0;
 	int nWidth = 0;
@@ -462,7 +462,7 @@ BOOL __fastcall DRLGOUTDOORS_SpawnRandomOutdoorDS1(D2DrlgLevelStrc* pLevel, int 
 //D2Common.0x6FD7E6D0
 void __fastcall DRLGOUTDOORS_SpawnAct12Waypoint(D2DrlgLevelStrc* pLevel)
 {
-	D2CoordStrc pCoord[256] = {};
+	D2CoordStrc pCoord[4096] = {};
 	int* pVisArray = NULL;
 	int nCounter = 0;
 	int nFlags = 0;
@@ -568,7 +568,7 @@ void __fastcall DRLGOUTDOORS_SpawnAct12Shrines(D2DrlgLevelStrc* pLevel, int nShr
 		0x1000, 0x2000, 0x4000, 0x8000
 	};
 
-	D2CoordStrc pCoord[256] = {};
+	D2CoordStrc pCoord[4096] = {};
 	unsigned int nRand1 = 0;
 	unsigned int nRand2 = 0;
 	int nWidth = 0;

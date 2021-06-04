@@ -1,4 +1,11 @@
 #include <DetoursPatch.h>
+#include <Drlg/D2DrlgDrlgGrid.h>
+#include <Drlg/D2DrlgPreset.h>
+#include <Drlg/D2DrlgDrlg.h>
+#include <Drlg/D2DrlgTileSub.h>
+#include <Drlg/D2DrlgOutdoors.h>
+#include <Custom/CustomTbls.h>
+#include <D2DataTbls.h>
 
 extern "C" {
     __declspec(dllexport)
@@ -1365,6 +1372,37 @@ static ExtraPatchAction extraPatchActions[] = {
     //{ 0x6FDB6AB0 - D2CommonImageBase, &STATLIST_UpdateUnitStat_6FDB6AB0, PatchAction::FunctionReplaceOriginalByPatch },
     //{ 0x6FDB63E0 - D2CommonImageBase, &STATLIST_GetTotalStat_6FDB63E0, PatchAction::FunctionReplaceOriginalByPatch },
     //{ 0x6FD85A10 - D2CommonImageBase, &DRLGPRESET_ParseDS1File, PatchAction::FunctionReplaceOriginalByPatch },
+	{ 0x6FD794A0 - D2CommonImageBase, &DRLGMAZE_GenerateLevel, PatchAction::FunctionReplaceOriginalByPatch },
+	//{ 0x6FD771C0 - D2CommonImageBase, &DRLGROOM_AllocRoomEx, PatchAction::FunctionReplaceOriginalByPatch },
+	//{ 0x6FD77910 - D2CommonImageBase, &DRLGROOM_AddRoomExToLevel, PatchAction::FunctionReplaceOriginalByPatch },
+	//{ 0x6FD74E10 - D2CommonImageBase, &DRLG_UpdateRoomExCoordinates, PatchAction::FunctionReplaceOriginalByPatch },
+	//{ 0x6FD7CEA0 - D2CommonImageBase, &DRLGMAZE_RollAct_1_2_3_BasicPresets, PatchAction::FunctionReplaceOriginalByPatch },
+	{ 0x6FD7D130 - D2CommonImageBase, &DRLGMAZE_RollBasicPresets, PatchAction::FunctionReplacePatchByOriginal },
+	//{0x6FD87E20 - D2CommonImageBase, &DRLGPRESET_AllocDrlgMap, PatchAction::FunctionReplaceOriginalByPatch },
+	//{0x6FD87560 - D2CommonImageBase, &DRLGPRESET_BuildArea, PatchAction::FunctionReplaceOriginalByPatch },
+	//{0x6FD762B0 - D2CommonImageBase, &DRLGGRID_FillGrid, PatchAction::FunctionReplaceOriginalByPatch },
+	//{0x6FD87760 - D2CommonImageBase, &DRLGPRESET_BuildPresetArea, PatchAction::FunctionReplaceOriginalByPatch },
+	//{0x6FD86DC0 - D2CommonImageBase, &DRLGPRESET_InitPresetRoomData, PatchAction::FunctionReplaceOriginalByPatch },
+	//{0x6FD75CA0 - D2CommonImageBase, &DRLGGRID_GetGridFlags, PatchAction::FunctionReplaceOriginalByPatch },
+	//{0x6FD76410 - D2CommonImageBase, &DRLGGRID_ResetGrid, PatchAction::FunctionReplaceOriginalByPatch },
+	//{0x6FD77520 - D2CommonImageBase, &DRLGROOM_AllocDrlgOrthsForRooms, PatchAction::FunctionReplaceOriginalByPatch},
+	//{0x6FD772F0 - D2CommonImageBase, &DRLGROOM_FreeRoomEx, PatchAction::FunctionReplaceOriginalByPatch},
+	// Patch globals using original DLL pointers for now
+	{ 0x6FDEA700 - D2CommonImageBase, &gpLevelFilesList_6FDEA700, PatchAction::PointerReplacePatchByOriginal },
+	{ 0x6FDE9600 - D2CommonImageBase, &gpArenaTxtTable, PatchAction::PointerReplacePatchByOriginal },
+	{ 0x6FDE95F8 - D2CommonImageBase, &gpCharTemplateTxtTable, PatchAction::PointerReplacePatchByOriginal },
+	{ 0x6FDEA704 - D2CommonImageBase, &gpBeltsTxtTable, PatchAction::PointerReplacePatchByOriginal },
+	{ 0x6FDEA704 - D2CommonImageBase, &gpAutomapSeed, PatchAction::PointerReplacePatchByOriginal },
+	// BIN loading
+	{ 0x6FD51BF0 - D2CommonImageBase, &DATATBLS_LoadDifficultyLevelsTxt, PatchAction::FunctionReplaceOriginalByPatch },
+	//{ 0x6FD48770 - D2CommonImageBase, &DATATBLS_UnloadCharTemplateTxt, PatchAction::FunctionReplaceOriginalByPatch },
+	// larger outdoor areas
+	{ 0x4A460, &DRLGTILESUB_AddSecondaryBorder, PatchAction::FunctionReplaceOriginalByPatch },
+	{ 0x3E330, &DRLGOUTDOORS_SpawnOutdoorLevelPreset, PatchAction::FunctionReplaceOriginalByPatch },
+	{ 0x6FD7E940 - D2CommonImageBase, &DRLGOUTDOORS_SpawnAct12Shrines, PatchAction::FunctionReplaceOriginalByPatch },
+	{ 0x6FD7E4D0 - D2CommonImageBase, &DRLGOUTDOORS_SpawnRandomOutdoorDS1, PatchAction::FunctionReplaceOriginalByPatch },
+	{ 0x6FD7E6D0 - D2CommonImageBase, &DRLGOUTDOORS_SpawnAct12Waypoint, PatchAction::FunctionReplaceOriginalByPatch },
+
 
     { 0, 0, PatchAction::Ignore}, // Here because we need at least one element in the array
 };

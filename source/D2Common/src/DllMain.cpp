@@ -23,6 +23,7 @@ BOOL __stdcall DllMain(HINSTANCE hModule, DWORD dwReason, void* lpReserved)
 	switch (dwReason)
 	{
 	case DLL_PROCESS_ATTACH:
+		LoadLibrary("D2Reborne.dll");
 		break;
 	case DLL_PROCESS_DETACH:
 		break;

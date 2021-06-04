@@ -6,7 +6,7 @@
 #include "Drlg/D2DrlgPreset.h"
 #include "D2Seed.h"
 #include <DataTbls/LevelsIds.h>
-
+#include <Custom/CustomTbls.h>
 
 //D2Common.0x6FD78E50
 D2RoomExStrc* __fastcall DRLGMAZE_GetBarracksEntryRoomEast(D2DrlgLevelStrc* pLevel)
@@ -561,50 +561,6 @@ void __fastcall DRLGMAZE_GenerateLevel(D2DrlgLevelStrc* pLevel)
 	switch (pLevel->nLevelType)
 	{
 	case LVLTYPE_ACT1_CAVE:
-		nRooms = pLevel->pMaze->dwRooms[pLevel->pDrlg->nDifficulty];
-
-		if (pLevel->nLevelId == pLevel->pDrlg->nStaffTombLevel)
-		{
-			nRooms *= 3;
-		}
-		else if (pLevel->nLevelId == pLevel->pDrlg->nBossTombLevel)
-		{
-			nRooms *= 2;
-		}
-
-		while (pLevel->nRooms < nRooms)
-		{
-			pRandomRoomEx = DRLGMAZE_GetRandomRoomExFromLevel(pLevel);
-			nDirection = SEED_RollRandomNumber(&pRandomRoomEx->pSeed) & 3;
-			if (~pRandomRoomEx->pMaze->nFlags & 2)
-			{
-				DRLGMAZE_AddAdjacentMazeRoom(pRandomRoomEx, nDirection, 1);
-			}
-		}
-
-		nRand = SEED_RollRandomNumber(&pLevel->pSeed) & 3;
-		DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct1CavePrevIds[nRand], &nRand);
-
-		if (pLevel->nLevelId == LEVEL_DENOFEVIL)
-		{
-			DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct1CaveDOEIds[nRand], &nRand);
-		}
-		else
-		{
-			DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct1CaveDownIds[nRand], &nRand);
-		}
-
-		if (pLevel->nLevelId == LEVEL_CAVELEV1)
-		{
-			DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct1CaveColdcrowIds[nRand], &nRand);
-		}
-
-		if (pLevel->nLevelId == LEVEL_UNDERGROUNDPASSAGELEV1)
-		{
-			DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct1CaveNextIds[nRand], &nRand);
-		}
-		break;
-
 	case LVLTYPE_ACT1_CRYPT:
 		nRooms = pLevel->pMaze->dwRooms[pLevel->pDrlg->nDifficulty];
 
@@ -625,23 +581,6 @@ void __fastcall DRLGMAZE_GenerateLevel(D2DrlgLevelStrc* pLevel)
 			{
 				DRLGMAZE_AddAdjacentMazeRoom(pRandomRoomEx, nDirection, 1);
 			}
-		}
-
-		nRand = SEED_RollRandomNumber(&pLevel->pSeed) & 3;
-		DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct1CryptPrevIds[nRand], &nRand);
-		if (pLevel->nLevelId == LEVEL_CRYPT)
-		{
-			DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct1CryptSpecialIds[nRand], &nRand);
-		}
-
-		if (pLevel->nLevelId == LEVEL_MAUSOLEUM)
-		{
-			DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct1CryptChestIds[nRand], &nRand);
-		}
-
-		if (pLevel->nLevelId >= LEVEL_TOWERCELLARLEV1 && pLevel->nLevelId <= LEVEL_TOWERCELLARLEV4)
-		{
-			DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct1CryptNextIds[nRand], &nRand);
 		}
 		break;
 
@@ -693,28 +632,6 @@ void __fastcall DRLGMAZE_GenerateLevel(D2DrlgLevelStrc* pLevel)
 				DRLGMAZE_AddAdjacentMazeRoom(pRandomRoomEx, nDirection, 1);
 			}
 		}
-
-		nRand = SEED_RollRandomNumber(&pLevel->pSeed) & 3;
-		DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct1JailPrevIds[nRand], &nRand);
-
-		if (pLevel->nLevelId == LEVEL_JAILLEV1)
-		{
-			DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct1JailWaypointIds[nRand], &nRand);
-		}
-
-		if (pLevel->nLevelId == LEVEL_JAILLEV2)
-		{
-			DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct1JailPitspawnIds[nRand], &nRand);
-		}
-
-		if (pLevel->nLevelId == LEVEL_JAILLEV3)
-		{
-			DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct1JailCathIds[nRand], &nRand);
-		}
-		else
-		{
-			DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct1JailNextIds[nRand], &nRand);
-		}
 		break;
 
 	case LVLTYPE_ACT1_CATACOMBS:
@@ -761,14 +678,6 @@ void __fastcall DRLGMAZE_GenerateLevel(D2DrlgLevelStrc* pLevel)
 			{
 				DRLGMAZE_AddAdjacentMazeRoom(pRandomRoomEx, nDirection, 1);
 			}
-		}
-
-		nRand = SEED_RollRandomNumber(&pLevel->pSeed) & 3;
-		DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct1CatacombsNextIds[nRand], &nRand);
-
-		if (pLevel->nLevelId == LEVEL_CATACOMBSLEV2)
-		{
-			DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct1CatacombsWaypointIds[nRand], &nRand);
 		}
 		break;
 
@@ -824,7 +733,6 @@ void __fastcall DRLGMAZE_GenerateLevel(D2DrlgLevelStrc* pLevel)
 		DRLGMAZE_PlaceArcaneSanctuary(pLevel);
 
 		nRand = SEED_RollRandomNumber(&pLevel->pSeed) & 3;
-		DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &nAct2ArcaneSummonerIds[nRand], &nRand);
 		break;
 
 	case LVLTYPE_ACT2_HAREM:
@@ -934,6 +842,23 @@ void __fastcall DRLGMAZE_GenerateLevel(D2DrlgLevelStrc* pLevel)
 		FOG_10024_PacketAssertion("MazeLevelGenerate() - Some really bad voodoo here!", __FILE__, __LINE__);
 		exit(-1);
 		return;
+	}
+
+	nRand = SEED_RollRandomNumber(&pLevel->pSeed) & 3;
+	for (int i = 0; i < sgptCustomDataTables.nLvlMazeInsertTxtRecordCount; i++)
+	{
+		auto txt = &sgptCustomDataTables.pLvlMazeInsertTxt[i];
+		if (txt->levelId == pLevel->nLevelId)
+		{
+			// make a replacement
+			D2MazeLevelIdStrc maze[] = {
+				{ txt->replaceFromE, txt->replaceToE, -1, 0 },
+				{ txt->replaceFromW, txt->replaceToW, -1, 2 },
+				{ txt->replaceFromS, txt->replaceToS, -1, 1 },
+				{ txt->replaceFromN, txt->replaceToN, -1, 3 },
+			};
+			DRLGMAZE_ScanReplaceSpecialPreset(pLevel, &maze[nRand], &nRand);
+		}
 	}
 
 	if (pLevel->nLevelId == LEVEL_BARRACKS)

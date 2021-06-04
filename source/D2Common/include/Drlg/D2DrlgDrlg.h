@@ -551,3 +551,21 @@ D2DrlgWarpStrc* __fastcall DRLG_GetDrlgWarpFromLevelId(D2DrlgStrc* pDrlg, int nL
 void __fastcall DRLG_SetWarpId(D2DrlgWarpStrc* pDrlgWarp, int nVis, int nWarp, int nId);
 //D2Common.0x6FD75450
 int __fastcall DRLG_IsOnClient(D2DrlgStrc* pDrlg);
+//D2Common.0x6FD794A0
+void __fastcall DRLGMAZE_GenerateLevel(D2DrlgLevelStrc* pLevel);
+D2RoomExStrc* __fastcall DRLGROOM_AllocRoomEx(D2DrlgLevelStrc* pLevel, int nType);
+void __fastcall DRLGROOM_AddRoomExToLevel(D2DrlgLevelStrc* pLevel, D2RoomExStrc* pRoomEx);
+void __fastcall DRLG_UpdateRoomExCoordinates(D2DrlgLevelStrc* pLevel);
+//D2Common.0x6FD7CEA0
+void __fastcall DRLGMAZE_RollAct_1_2_3_BasicPresets(D2DrlgLevelStrc* pLevel);
+//D2Common.0x6FD7D130
+void __fastcall DRLGMAZE_RollBasicPresets(D2DrlgLevelStrc* pLevel);
+//D2Common.0x6FD87E20
+D2DrlgMapStrc* __fastcall DRLGPRESET_AllocDrlgMap(D2DrlgLevelStrc* pLevel, int nLvlPrestId, D2DrlgCoordStrc* pDrlgCoord, D2SeedStrc* pSeed);
+//D2Common.0x6FD87560
+//TODO: v17
+D2RoomExStrc* __fastcall DRLGPRESET_BuildArea(D2DrlgLevelStrc* pLevel, D2DrlgMapStrc* pDrlgMap, int nFlags, BOOL bSingleRoom);
+//D2Common.0x6FD77520
+void __fastcall DRLGROOM_AllocDrlgOrthsForRooms(D2RoomExStrc* pRoomEx1, D2RoomExStrc* pRoomEx2, int nDirection);
+//D2Common.0x6FD772F0
+void __fastcall DRLGROOM_FreeRoomEx(D2RoomExStrc* pRoomEx);

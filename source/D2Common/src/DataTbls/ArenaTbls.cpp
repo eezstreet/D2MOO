@@ -1,4 +1,5 @@
 #include "D2DataTbls.h"
+#include <Custom/CustomTbls.h>
 
 static const int NUM_ARENA_TYPES = 1;
 
@@ -147,6 +148,8 @@ void __fastcall DATATBLS_UnloadCharTemplateTxt()
 {
 	DATATBLS_UnloadBin(gpCharTemplateTxtTable);
 	gpCharTemplateTxtTable = NULL;
+
+	DATATBLS_CUSTOM_UnloadAll();
 }
 
 //D2Common.0x6FD48790 (#10664)

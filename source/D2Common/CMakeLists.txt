@@ -24,6 +24,9 @@ target_compile_definitions(D2Common PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
 # Data tables
 target_sources(D2Common
   PRIVATE
+    src/Custom/CustomTbls.cpp
+    include/Custom/CustomTbls.h
+
     src/DataTbls/AnimTbls.cpp
     src/DataTbls/ArenaTbls.cpp
     src/DataTbls/BeltsTbls.cpp

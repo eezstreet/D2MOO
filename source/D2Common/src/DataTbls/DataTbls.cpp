@@ -1223,6 +1223,8 @@ void __fastcall DATATBLS_LoadCharStatsTxt(void* pMemPool)
 	DATATBLS_InitUnicodeClassNamesInCharStatsTxt();
 }
 
+extern void __fastcall DATATBLS_CUSTOM_LoadAll(void* pMemPool);
+
 //D2Common.0x6FD51BF0
 void __fastcall DATATBLS_LoadDifficultyLevelsTxt(void* pMemPool)
 {
@@ -1256,6 +1258,9 @@ void __fastcall DATATBLS_LoadDifficultyLevelsTxt(void* pMemPool)
 	sgptDataTables->pDifficultyLevelsTxt = (D2DifficultyLevelsTxt*)DATATBLS_CompileTxt(pMemPool, "difficultylevels", pTbl, &sgptDataTables->nDifficultyLevelsTxtRecordCount, sizeof(D2DifficultyLevelsTxt));
 #define NUM_DIFFICULTY_LEVELS 3
 	D2_ASSERT(sgptDataTables->nDifficultyLevelsTxtRecordCount == NUM_DIFFICULTY_LEVELS);
+
+	// DifficultyLevels.txt is the last loaded BIN file, so it's a natural spot for us to load custom stuff!
+	DATATBLS_CUSTOM_LoadAll(pMemPool);
 }
 
 // FIELD

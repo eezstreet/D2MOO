@@ -1,6 +1,9 @@
 # We embed the patching ordinal information directly into the .DLLs
 
-target_sources(D2Common PRIVATE ${D2MOO_ORDINALS_VERSION}/D2Common.patch.cpp)
+target_sources(D2Common PRIVATE 
+  ${D2MOO_ORDINALS_VERSION}/D2Common.patch.cpp
+  ${D2MOO_ORDINALS_VERSION}/D2Game.patch.cpp
+)
 target_link_libraries(D2Common PRIVATE D2.Detours)
 add_dependencies(D2Common D2.DetoursLauncher)
 

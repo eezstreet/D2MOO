@@ -33,7 +33,7 @@ void __fastcall DRLGTILESUB_AddSecondaryBorder(D2UnkOutdoorStrc* a1)
 	int nArea = 0;
 	int nX = 0;
 	int nY = 0;
-	D2CoordStrc pCoord[256] = {};
+	D2CoordStrc pCoord[4096] = {}; // this static buffer here limits us from creating a level that is 
 
 	pLvlSubTxtRecord = DATATBLS_GetLvlSubTxtRecord(a1->nLvlSubId);
 
