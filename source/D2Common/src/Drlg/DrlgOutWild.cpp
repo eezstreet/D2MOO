@@ -7,6 +7,7 @@
 #include "Drlg/D2DrlgMaze.h"
 #include "D2Seed.h"
 #include <DataTbls/LevelsIds.h>
+#include <Custom/CustomTbls.h>
 
 //D2Common.0x6FD84CA0
 void __fastcall DRLGOUTWILD_GetBridgeCoords(D2DrlgLevelStrc* pLevel, int* pX, int* pY)
@@ -493,7 +494,32 @@ void __fastcall DRLGOUTWILD_SpawnTownTransitionsAndCaves(D2DrlgLevelStrc* pLevel
 //D2Common.0x6FD85520
 void __fastcall DRLGOUTWILD_SpawnSpecialPresets(D2DrlgLevelStrc* pLevel)
 {
-	switch (pLevel->nLevelId)
+	for (int i = 0; i < sgptCustomDataTables.nLvlOutdoorsFillTxtRecordCount; i++)
+	{
+		const LvlOutdoorsFillTxt* fill = &sgptCustomDataTables.pLvlOutdoorsFillTxt[i];
+		if (fill->levelId != pLevel->nLevelId)
+		{	// not correct level
+			continue;
+		}
+
+		if (SEED_RollLimitedRandomNumber(&pLevel->pSeed, 100) > fill->chance)
+		{	// roll failed
+			continue;
+		}
+
+		// otherwise, check flags.
+		// if flags are -1, we use DRLGOUTDOORS_SpawnRandomOutdoorDS1.
+		// otherwise, we use DRLGOUTDOORS_SpawnOutdoorLevelPreset.
+		if (fill->flags == -1)
+		{
+			DRLGOUTDOORS_SpawnRandomOutdoorDS1(pLevel, fill->presetId, -1);
+		}
+		else
+		{
+			DRLGOUTDOORS_SpawnOutdoorLevelPreset(pLevel, fill->presetId, -1, 0, fill->flags);
+		}
+	}
+	/*switch (pLevel->nLevelId)
 	{
 	case LEVEL_BLOODMOOR:
 		DRLGOUTDOORS_SpawnRandomOutdoorDS1(pLevel, LVLPREST_ACT1_POND, -1);
@@ -640,7 +666,7 @@ void __fastcall DRLGOUTWILD_SpawnSpecialPresets(D2DrlgLevelStrc* pLevel)
 
 	default:
 		return;
-	}
+	}*/
 }
 
 //D2Common.0x6FD85920

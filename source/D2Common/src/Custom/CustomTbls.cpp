@@ -32,12 +32,36 @@ void __fastcall DATATBLS_CUSTOM_UnloadLvlMazeInsert()
 	}
 }
 
+void __fastcall DATATBLS_CUSTOM_LoadLvlOutdoorsFill(void* pMemPool)
+{
+	D2BinFieldStrc pTbl[] =
+	{
+		{ "Level", TXTFIELD_DWORD, 0, offsetof(LvlOutdoorsFillTxt, levelId), NULL },
+		{ "Preset", TXTFIELD_DWORD, 0, offsetof(LvlOutdoorsFillTxt, presetId), NULL },
+		{ "Flags", TXTFIELD_BYTE, 0, offsetof(LvlOutdoorsFillTxt, flags), NULL },
+		{ "Chance", TXTFIELD_BYTE, 0, offsetof(LvlOutdoorsFillTxt, chance), NULL },
+		{ "File", TXTFIELD_BYTE, 0, offsetof(LvlOutdoorsFillTxt, file), NULL }
+	};
+
+	sgptCustomDataTables.pLvlOutdoorsFillTxt = (LvlOutdoorsFillTxt*)DATATBLS_CompileTxt(pMemPool, "lvloutdoorsfill", pTbl, &sgptCustomDataTables.nLvlOutdoorsFillTxtRecordCount, sizeof(LvlOutdoorsFillTxt));
+}
+
+void __fastcall DATATBLS_CUSTOM_UnloadLvlOutdoorsFill()
+{
+	if (sgptCustomDataTables.pLvlOutdoorsFillTxt)
+	{
+		DATATBLS_UnloadBin(sgptCustomDataTables.pLvlOutdoorsFillTxt);
+		sgptCustomDataTables.pLvlOutdoorsFillTxt = NULL;
+	}
+}
+
 /**
  *	Load all BIN files here.
  */
 void __fastcall DATATBLS_CUSTOM_LoadAll(void* pMemPool)
 {
 	DATATBLS_CUSTOM_LoadLvlMazeInsert(pMemPool);
+	DATATBLS_CUSTOM_LoadLvlOutdoorsFill(pMemPool);
 }
 
 /**
@@ -46,4 +70,5 @@ void __fastcall DATATBLS_CUSTOM_LoadAll(void* pMemPool)
 void __fastcall DATATBLS_CUSTOM_UnloadAll()
 {
 	DATATBLS_CUSTOM_UnloadLvlMazeInsert();
+	DATATBLS_CUSTOM_UnloadLvlOutdoorsFill();
 }

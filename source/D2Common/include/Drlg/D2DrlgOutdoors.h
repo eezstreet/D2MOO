@@ -87,3 +87,5 @@ void __fastcall sub_6FD7F5B0(D2DrlgLevelStrc* pLevel);
 void __fastcall sub_6FD7F810(D2DrlgLevelStrc* pLevel, int nVertexId);
 //D2Common.0x6FD7F9B0
 void __fastcall DRLGOUTDOORS_InitAct4OutdoorLevel(D2DrlgLevelStrc* pLevel);
+//D2Common.0x6FD85520
+void __fastcall DRLGOUTWILD_SpawnSpecialPresets(D2DrlgLevelStrc* pLevel);

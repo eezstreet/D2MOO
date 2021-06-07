@@ -1402,7 +1402,8 @@ static ExtraPatchAction extraPatchActions[] = {
 	{ 0x6FD7E940 - D2CommonImageBase, &DRLGOUTDOORS_SpawnAct12Shrines, PatchAction::FunctionReplaceOriginalByPatch },
 	{ 0x6FD7E4D0 - D2CommonImageBase, &DRLGOUTDOORS_SpawnRandomOutdoorDS1, PatchAction::FunctionReplaceOriginalByPatch },
 	{ 0x6FD7E6D0 - D2CommonImageBase, &DRLGOUTDOORS_SpawnAct12Waypoint, PatchAction::FunctionReplaceOriginalByPatch },
-
+	// controlled outdoor area spawning
+	{ 0x6FD85520 - D2CommonImageBase, &DRLGOUTWILD_SpawnSpecialPresets, PatchAction::FunctionReplaceOriginalByPatch },
 
     { 0, 0, PatchAction::Ignore}, // Here because we need at least one element in the array
 };
