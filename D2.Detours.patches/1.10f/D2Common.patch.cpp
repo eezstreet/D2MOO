@@ -1378,6 +1378,8 @@ static ExtraPatchAction extraPatchActions[] = {
 	//{ 0x6FD74E10 - D2CommonImageBase, &DRLG_UpdateRoomExCoordinates, PatchAction::FunctionReplaceOriginalByPatch },
 	//{ 0x6FD7CEA0 - D2CommonImageBase, &DRLGMAZE_RollAct_1_2_3_BasicPresets, PatchAction::FunctionReplaceOriginalByPatch },
 	{ 0x6FD7D130 - D2CommonImageBase, &DRLGMAZE_RollBasicPresets, PatchAction::FunctionReplacePatchByOriginal },
+	{ 0x6FD7B330 - D2CommonImageBase, &DRLGMAZE_ScanReplaceSpecialAct2SewersPresets, PatchAction::FunctionReplacePatchByOriginal },
+	{ 0x6FD7ABC0 - D2CommonImageBase, &DRLGMAZE_PlaceArcaneSanctuary, PatchAction::FunctionReplacePatchByOriginal },
 	//{0x6FD87E20 - D2CommonImageBase, &DRLGPRESET_AllocDrlgMap, PatchAction::FunctionReplaceOriginalByPatch },
 	//{0x6FD87560 - D2CommonImageBase, &DRLGPRESET_BuildArea, PatchAction::FunctionReplaceOriginalByPatch },
 	//{0x6FD762B0 - D2CommonImageBase, &DRLGGRID_FillGrid, PatchAction::FunctionReplaceOriginalByPatch },
@@ -1404,7 +1406,8 @@ static ExtraPatchAction extraPatchActions[] = {
 	{ 0x6FD7E6D0 - D2CommonImageBase, &DRLGOUTDOORS_SpawnAct12Waypoint, PatchAction::FunctionReplaceOriginalByPatch },
 	// controlled outdoor area spawning
 	{ 0x6FD85520 - D2CommonImageBase, &DRLGOUTWILD_SpawnSpecialPresets, PatchAction::FunctionReplaceOriginalByPatch },
-
+	// no more dirt paths - comment out to preserve paths
+	{ 0x6FD7F250 - D2CommonImageBase, &DRLGOUTDOORS_SpawnAct1DirtPaths, PatchAction::FunctionReplaceOriginalByPatch },
     { 0, 0, PatchAction::Ignore}, // Here because we need at least one element in the array
 };
 

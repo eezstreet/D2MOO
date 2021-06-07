@@ -1104,14 +1104,14 @@ void __fastcall DRLGOUTDOORS_SpawnAct1DirtPaths(D2DrlgLevelStrc* pLevel)
 
 	sub_6FD7F5B0(pLevel);
 
-	for (int i = 0; i < pLevel->pOutdoors->nVertices; ++i)
+	/*for (int i = 0; i < pLevel->pOutdoors->nVertices; ++i)
 	{
 		if (sub_6FD80750(pLevel, i))
 		{
 			DRLGGRID_SetVertexGridFlags(&pLevel->pOutdoors->pGrid[2], pLevel->pOutdoors->unk0x68[i], 128);
 			sub_6FD7F810(pLevel, i);
 		}
-	}
+	}*/
 }
 
 //D2Common.0x6FD7F500
