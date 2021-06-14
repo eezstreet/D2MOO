@@ -520,55 +520,59 @@ void __fastcall DRLGPRESET_FreeDrlgFile(D2DrlgFileStrc** ppDrlgFile)
 			pPrevious = pCurrent;
 		}
 
-		InterlockedDecrement(&pCurrent->nRefCount);
+		if (pCurrent)
+		{ // fix BlizzNo bug: crash with InterlockedDecrement --eez
+			InterlockedDecrement(&pCurrent->nRefCount);
 
-		if (pCurrent && pCurrent->nRefCount <= 0)
-		{
-			if (pPrevious)
+			if (pCurrent->nRefCount <= 0)
 			{
-				pPrevious->pNext = pCurrent->pNext;
+				if (pPrevious)
+				{
+					pPrevious->pNext = pCurrent->pNext;
+				}
+				else
+				{
+					gpLevelFilesList_6FDEA700 = pCurrent->pNext;
+				}
+
+				if (gpLvlSubTypeFilesCriticalSection)
+				{
+					LeaveCriticalSection(gpLvlSubTypeFilesCriticalSection);
+				}
+
+				if ((*ppDrlgFile)->pDS1File)
+				{
+					D2_FREE_CLIENT((*ppDrlgFile)->pDS1File);
+				}
+
+				if ((*ppDrlgFile)->pSubstGroups)
+				{
+					D2_FREE_SERVER(nullptr, (*ppDrlgFile)->pSubstGroups);
+				}
+
+				D2PresetUnitStrc* pPresetUnit = (*ppDrlgFile)->pPresetUnit;
+				while (pPresetUnit)
+				{
+					D2PresetUnitStrc* pNextPresetUnit = pPresetUnit->pNext;
+
+					DRLGPRESET_FreePresetUnit(NULL, pPresetUnit);
+
+					pPresetUnit = pNextPresetUnit;
+				}
+
+				D2_FREE_SERVER(nullptr, *ppDrlgFile);
+				D2_FREE_SERVER(nullptr, pCurrent);
+				*ppDrlgFile = nullptr;
 			}
 			else
 			{
-				gpLevelFilesList_6FDEA700 = pCurrent->pNext;
-			}
-
-			if (gpLvlSubTypeFilesCriticalSection)
-			{
-				LeaveCriticalSection(gpLvlSubTypeFilesCriticalSection);
-			}
-
-			if ((*ppDrlgFile)->pDS1File)
-			{
-				D2_FREE_CLIENT((*ppDrlgFile)->pDS1File);
-			}
-
-			if ((*ppDrlgFile)->pSubstGroups)
-			{
-				D2_FREE_SERVER(nullptr, (*ppDrlgFile)->pSubstGroups);
-			}
-
-			D2PresetUnitStrc* pPresetUnit = (*ppDrlgFile)->pPresetUnit;
-			while (pPresetUnit)
-			{
-				D2PresetUnitStrc* pNextPresetUnit = pPresetUnit->pNext;
-
-				DRLGPRESET_FreePresetUnit(NULL, pPresetUnit);
-
-				pPresetUnit = pNextPresetUnit;
-			}
-
-			D2_FREE_SERVER(nullptr, *ppDrlgFile);
-			D2_FREE_SERVER(nullptr, pCurrent);
-			*ppDrlgFile = nullptr;
-		}
-		else
-		{
-			if (gpLvlSubTypeFilesCriticalSection)
-			{
-				LeaveCriticalSection(gpLvlSubTypeFilesCriticalSection);
+				if (gpLvlSubTypeFilesCriticalSection)
+				{
+					LeaveCriticalSection(gpLvlSubTypeFilesCriticalSection);
+				}
 			}
 		}
+		
 	}
 }
 

@@ -6,6 +6,7 @@
 #include <Drlg/D2DrlgOutdoors.h>
 #include <Custom/CustomTbls.h>
 #include <D2DataTbls.h>
+#include <D2Skills.h>
 
 extern "C" {
     __declspec(dllexport)
@@ -1409,6 +1410,8 @@ static ExtraPatchAction extraPatchActions[] = {
 	// no more dirt paths - comment out to preserve paths
 	{ 0x6FD7F250 - D2CommonImageBase, &DRLGOUTDOORS_SpawnAct1DirtPaths, PatchAction::FunctionReplaceOriginalByPatch },
     { 0, 0, PatchAction::Ignore}, // Here because we need at least one element in the array
+	// fix crash when exiting game due to DRLG changes
+	{ 0x6FD86190 - D2CommonImageBase, &DRLGPRESET_FreeDrlgFile, PatchAction::FunctionReplaceOriginalByPatch },
 };
 
 __declspec(dllexport)
