@@ -123,7 +123,7 @@ Function:		BITMANIP_ReadSigned
 Address:		Fog.#10129
 Notes:
 */
-int __fastcall BITMANIP_ReadSigned(D2BitBufferStrc* pBuffer, int nBits)
+int __stdcall BITMANIP_ReadSigned(D2BitBufferStrc* pBuffer, int nBits)
 {
 	int nResult = BITMANIP_Read(pBuffer, nBits);
 
@@ -228,7 +228,7 @@ Notes:
 */
 int __stdcall BITMANIP_GetBitState(uint8_t* pBitStream, int nBit)
 {
-	return gdwBitMasks[nBit & 7] & pBitStream[nBit >> 3];
+	return pBitStream[nBit >> 3] & (uint8_t)gdwBitMasks[nBit & 7];
 }
 
 /*
@@ -238,5 +238,5 @@ Notes:
 */
 void __stdcall BITMANIP_MaskBitstate(uint8_t* pBitStream, int nBit)
 {
-	pBitStream[nBit >> 3] &= LOBYTE(gdwInvBitMasks[nBit & 7]);
+	pBitStream[nBit >> 3] &= (uint8_t)gdwInvBitMasks[nBit & 7];
 }

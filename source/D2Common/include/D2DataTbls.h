@@ -102,6 +102,36 @@ struct D2HireDescTxt
 	uint32_t dwCode;						//0x00
 };
 
+enum D2C_HitClassIds {
+	// Base
+	HITCLASS_None                = 0,
+	HITCLASS_HandToHand          = 1,
+	HITCLASS_OneHandSwingVsSmall = 2,
+	HITCLASS_OneHandSwingVsLarge = 3,
+	HITCLASS_TwoHandSwingVsSmall = 4,
+	HITCLASS_TwoHandSwingVsLarge = 5,
+	HITCLASS_OneHandThrust       = 6,
+	HITCLASS_TwoHandThrust       = 7,
+	HITCLASS_Club                = 8,
+	HITCLASS_Staff               = 9,
+	HITCLASS_Bow                 = 10,
+	HITCLASS_Crossbow			 = 11,
+	HITCLASS_Claw				 = 12,
+	HITCLASS_Overlay			 = 13,
+	// Layers
+	HITCLASS_Layer_Double	     = 16,
+	HITCLASS_Layer_Fire		     = 32,
+	HITCLASS_Layer_Cold		     = 48,
+	HITCLASS_Layer_Lightning	 = 64,
+	HITCLASS_Layer_Poison	     = 80,
+	HITCLASS_Layer_Stun		     = 96,
+	HITCLASS_Layer_Bash		     = 112,
+	HITCLASS_Layer_Thorns	     = 128,
+	HITCLASS_Layer_Sanctuary	 = 144,
+	HITCLASS_Layer_SilentVoice   = 160,
+	HITCLASS_Layer_Goo		     = 176,
+};
+
 struct D2HitClassTxt
 {
 	uint32_t dwCode;						//0x00
@@ -131,6 +161,12 @@ struct D2ExperienceTxt
 {
 	uint32_t dwClass[7];					//0x00
 	uint32_t dwExpRatio;					//0x1C
+};
+
+struct D2ExperienceDataTbl
+{
+	D2ExperienceTxt tMax;
+	D2ExperienceTxt aLevels[];
 };
 
 struct D2PlayerClassTxt
@@ -405,8 +441,8 @@ struct D2DataTablesStrc
 	int nLvlPrestTxtRecordCount;						//0xC68
 	int nStuff;											//0xC6C
 	int nShiftedStuff;									//0xC70
-	D2AnimDataStrc* pAnimData;							//0xC74
-	D2ExperienceTxt* pExperienceTxt;					//0xC78
+	D2AnimDataTableStrc* pAnimData;						//0xC74
+	D2ExperienceDataTbl* pExperienceTxt;				//0xC78
 	D2DifficultyLevelsTxt* pDifficultyLevelsTxt;		//0xC7C
 	int nDifficultyLevelsTxtRecordCount;				//0xC80
 	BOOL bCompileTxt;									//0xC84
@@ -486,17 +522,21 @@ struct D2DataTablesStrc
 	D2PlrModeDataTbl pPlrModeDataTables;				//0x10D4
 };
 
-
+// D2Common.0x6FDE9600
 extern D2ArenaTxt* gpArenaTxtTable;
+// D2Common.0x6FDE95F8
 extern D2CharTemplateTxt* gpCharTemplateTxtTable;
 extern int gnCharTemplateTxtTableRecordCount;
 extern uint32_t gnCharTemplateStartIds[64];
+// D2Common.0x6FDE9604
 extern D2BeltsTxt* gpBeltsTxtTable;
 extern D2DataTablesStrc gpDataTables;
-extern D2DataTablesStrc* sgptDataTables;
+// D2Common.0x6FDD6A20 (#10042)
+D2COMMON_DLL_DECL extern D2DataTablesStrc* sgptDataTables;
 
 
 extern D2SeedStrc* gpAutomapSeed;
+//D2Common.0x6FDEA704
 extern LPCRITICAL_SECTION gpLvlSubTypeFilesCriticalSection;
 
 //TODO: Reimport defs from .cpps
@@ -508,42 +548,22 @@ extern BOOL DATATBLS_LoadFromBin;
 
 #pragma pack()
 
-
-
-//D2Common.0x6FDC412C
-void __fastcall DATATBLS_CloseFileInMPQ(void* pMemPool, void* pFileHandle);
-//D2Common.0x6FDC40F0
-BOOL __fastcall DATATBLS_CheckIfFileExists(void* pMemPool, char* szFileName, void** pFileHandle, int bDontLogError);
-//D2Common.0x6FDC45EE
-size_t __cdecl DATATBLS_LockAndWriteToFile(const void* Str, size_t Size, size_t Count, FILE* File);
-//D2Common.0x6FDC41C1
-BOOL __fastcall DATATBLS_ReadFromFile(void* pMemPool, void* pFileHandle, void* pBuffer, size_t nBytesToRead);
-//D2Common.0x6FDC4152
-size_t __fastcall DATATBLS_GetFileSize(void* pMemPool, void* pFileHandle, uint32_t* lpFileSizeHigh);
-//D2Common.0x6FDC4268
-void* __fastcall DATATBLS_GetBinaryData(void* pMemPool, const char* szFileName, int* pSize, char* szFile, int nLine);
-
-
-
-
-
-
 //D2Common.0x6FD494D0
 uint16_t __fastcall DATATBLS_GetStringIdFromReferenceString(char* szReference);
 //D2Common.0x6FD49500 - Changed this function a lot (had 6 hardcoded (i.e. pre-defined) Args)
 void __fastcall DATATBLS_InitUnicodeClassNamesInCharStatsTxt();
 //D2Common.0x6FD49660 (#11255)
-uint32_t __stdcall DATATBLS_GetCodeFromCompCodeTxt(int nCompCode);
+D2COMMON_DLL_DECL uint32_t __stdcall DATATBLS_GetCodeFromCompCodeTxt(int nCompCode);
 //D2Common.0x6FD49680 (#11249)
-uint32_t __stdcall DATATBLS_GetExpRatio(int nLevel);
+D2COMMON_DLL_DECL uint32_t __stdcall DATATBLS_GetExpRatio(int nLevel);
 //D2Common.0x6FD496B0 (#10628)
-uint32_t __stdcall DATATBLS_GetLevelThreshold(int nClass, uint32_t dwLevel);
+D2COMMON_DLL_DECL uint32_t __stdcall DATATBLS_GetLevelThreshold(int nClass, uint32_t dwLevel);
 //D2Common.0x6FD496E0 (#10629)
-int __stdcall DATATBLS_GetMaxLevel(int nClass);
+D2COMMON_DLL_DECL int __stdcall DATATBLS_GetMaxLevel(int nClass);
 //D2Common.0x6FD49710 (#10630)
-uint32_t __stdcall DATATBLS_GetCurrentLevelFromExp(int nClass, uint32_t dwExperience);
+D2COMMON_DLL_DECL uint32_t __stdcall DATATBLS_GetCurrentLevelFromExp(int nClass, uint32_t dwExperience);
 //D2Common.0x6FD49760
-void __fastcall DATATBLS_GetBinFileHandle(void* pMemPool, char* szFile, void** ppFileHandle, int* pSize, int* pSizeEx);
+void __fastcall DATATBLS_GetBinFileHandle(void* pMemPool, const char* szFile, void** ppFileHandle, int* pSize, int* pSizeEx);
 //D2Common.0x6FD49850
 int __fastcall DATATBLS_AppendMemoryBuffer(char** ppCodes, int* pSize, int* pSizeEx, char* pBuffer, int nBufferSize);
 
@@ -551,11 +571,11 @@ int __fastcall DATATBLS_AppendMemoryBuffer(char** ppCodes, int* pSize, int* pSiz
 
 
 //D2Common.0x6FD4E4B0 (#10593)
-D2CharStatsTxt* __fastcall DATATBLS_GetCharstatsTxtTable();
+D2COMMON_DLL_DECL D2CharStatsTxt* __fastcall DATATBLS_GetCharstatsTxtTable();
 //D2Common.0x6FD4E4C0
-D2AnimDataStrc* __fastcall DATATBLS_GetAnimData();
+D2AnimDataTableStrc* __fastcall DATATBLS_GetAnimData();
 //D2Common.0x6FD4E4D0 (#10655)
-D2DifficultyLevelsTxt* __stdcall DATATBLS_GetDifficultyLevelsTxtRecord(int nDifficulty);
+D2COMMON_DLL_DECL D2DifficultyLevelsTxt* __stdcall DATATBLS_GetDifficultyLevelsTxtRecord(int nDifficulty);
 //D2Common.0x6FD4E500
 void __fastcall DATATBLS_LoadStatesTxt(void* pMemPool);
 //D2Common.0x6FD4F4A0
@@ -565,21 +585,21 @@ D2StatesTxt* DATATBLS_GetStatesTxtRecord(int nStateId);
 //D2Common.0x6FD4F5A0
 void __fastcall DATATBLS_LoadPetTypeTxt(void* pMemPool);
 //D2Common.0x6FD4F990 (#11298)
-char* __stdcall DATATBLS_GetUnitNameFromUnit(D2UnitStrc* pUnit, char* szName);
+D2COMMON_DLL_DECL char* __stdcall DATATBLS_GetUnitNameFromUnit(D2UnitStrc* pUnit, char* szName);
 //D2Common.0x6FD4FB50 (#11299)
-char* __stdcall DATATBLS_GetUnitNameFromUnitTypeAndClassId(int nUnitType, int nClassId, char* szName);
+D2COMMON_DLL_DECL char* __stdcall DATATBLS_GetUnitNameFromUnitTypeAndClassId(int nUnitType, int nClassId, char* szName);
 //D2Common.0x6FD4FCF0 (#10580)
-void __stdcall DATATBLS_WriteBinFile(char* szFileName, void* pWriteBuffer, size_t nBufferSize, int nRecordCount);
+D2COMMON_DLL_DECL void __stdcall DATATBLS_WriteBinFile(char* szFileName, void* pWriteBuffer, size_t nBufferSize, int nRecordCount);
 //D2Common.0x6FD4FD70 (#10578)
-void* __stdcall DATATBLS_CompileTxt(void* pMemPool, char* szName, D2BinFieldStrc* pTbl, int* pRecordCount, int nSize);
+D2COMMON_DLL_DECL void* __stdcall DATATBLS_CompileTxt(void* pMemPool, const char* szName, D2BinFieldStrc* pTbl, int* pRecordCount, size_t dwSize);
 //D2Common.0x6FD500F0 (#11242)
-void __stdcall DATATBLS_ToggleCompileTxtFlag(BOOL bSilent);
+D2COMMON_DLL_DECL void __stdcall DATATBLS_ToggleCompileTxtFlag(BOOL bSilent);
 //D2Common.0x6FD50110 (#10579)
-void __stdcall DATATBLS_UnloadBin(void* pBinFile);
+D2COMMON_DLL_DECL void __stdcall DATATBLS_UnloadBin(void* pBinFile);
 //D2Common.0x6FD50150 (#10575)
-void __stdcall DATATBLS_UnloadAllBins();
+D2COMMON_DLL_DECL void __stdcall DATATBLS_UnloadAllBins();
 //D2Common.0x6FD504B0 (#10576)
-void __stdcall DATATBLS_LoadAllTxts(void* pMemPool, int a2, int a3);
+D2COMMON_DLL_DECL void __stdcall DATATBLS_LoadAllTxts(void* pMemPool, int a2, int a3);
 //D2Common.0x6FD507B0
 void __fastcall DATATBLS_LoadSomeTxts(void* pMemPool);
 //D2Common.0x6FD50FB0
@@ -587,3 +607,19 @@ void __fastcall DATATBLS_LoadCharStatsTxt(void* pMemPool);
 //D2Common.0x6FD51BF0
 void __fastcall DATATBLS_LoadDifficultyLevelsTxt(void* pMemPool);
 
+
+//Inlined at various places
+inline D2MonStatsTxt* __fastcall DATATBLS_GetMonStatsTxtRecord(int nMonsterId)
+{
+	if (nMonsterId >= 0 && nMonsterId < sgptDataTables->nMonStatsTxtRecordCount)
+	{
+		return &sgptDataTables->pMonStatsTxt[nMonsterId];
+	}
+
+	return NULL;
+}
+
+inline int __fastcall DATATBLS_GetMonStatsTxtRecordCount()
+{
+	return sgptDataTables->nMonStatsTxtRecordCount;
+}

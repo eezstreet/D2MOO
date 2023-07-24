@@ -1,137 +1,26 @@
 #include <cstdio>
-#include "D2DataTbls.h"
-#include <D2Lang.h>
-#include <D2BitManip.h>
-#include <Units/Units.h>
-#include <D2States.h>
 
+#include <Archive.h>
+#include <File.h>
+#include <D2BitManip.h>
+#include <D2Lang.h>
+
+#include "D2DataTbls.h"
+#include "D2States.h"
+#include "Units/Units.h"
+
+// D2Common.0x6FDE9600
 D2ArenaTxt* gpArenaTxtTable;
+// D2Common.0x6FDE95F8
 D2CharTemplateTxt* gpCharTemplateTxtTable;
 int gnCharTemplateTxtTableRecordCount;
 uint32_t gnCharTemplateStartIds[64];
+// D2Common.0x6FDE9604
 D2BeltsTxt* gpBeltsTxtTable;
 D2DataTablesStrc gpDataTables;
+// D2Common.0x6FDD6A20 (#10042)
 D2DataTablesStrc* sgptDataTables = &gpDataTables;
 BOOL DATATBLS_LoadFromBin = TRUE;
-
-//D2Common.0x6FDC412C
-void __fastcall DATATBLS_CloseFileInMPQ(void* pMemPool, void* pFileHandle)
-{
-	D2_ASSERT(pFileHandle);
-	FOG_MPQFileClose(pFileHandle);
-}
-
-//D2Common.0x6FDC40F0
-BOOL __fastcall DATATBLS_CheckIfFileExists(void* pMemPool, char* szFileName, void** pFileHandle, int bDontLogError)
-{
-	if (FOG_MPQFileOpen(szFileName, pFileHandle))
-	{
-		return TRUE;
-	}
-	else
-	{
-		if (!bDontLogError || GetLastError() != 2)
-		{
-			FOG_WriteToLogFile("Error opening file: %s", szFileName);
-		}
-		return FALSE;
-	}
-}
-
-//D2Common.0x6FDC45EE
-size_t __cdecl DATATBLS_LockAndWriteToFile(const void* Str, size_t Size, size_t Count, FILE* File)
-{
-	size_t nSize = 0;
-
-	_lock_file(File);
-	nSize = fwrite(Str, Size, Count, File);
-	_unlock_file(File);
-
-	return nSize;
-}
-
-//D2Common.0x6FDC41C1
-BOOL __fastcall DATATBLS_ReadFromFile(void* pMemPool, void* pFileHandle, void* pBuffer, size_t nBytesToRead)
-{
-	int nBytesRead = 0;
-	BOOL bResult = FALSE;
-	char szFileName[MAX_PATH] = {};
-
-	D2_ASSERT(pFileHandle);
-
-	bResult = FOG_MPQFileRead(pFileHandle, pBuffer, nBytesToRead, &nBytesRead, 0, 0, 0);
-	if (!bResult)
-	{
-		//TODO: ...
-		//Storm_276_GetFileName(pFileHandle, szFileName, sizeof(szFileName));
-		//Fog_10026(3, szFileName, __FILE__, __LINE__);
-		exit(-1);
-	}
-
-	D2_ASSERT(nBytesToRead == nBytesRead);
-
-	return bResult;
-}
-
-//D2Common.0x6FDC4152
-size_t __fastcall DATATBLS_GetFileSize(void* pMemPool, void* pFileHandle, uint32_t* lpFileSizeHigh)
-{
-	size_t nSize = 0;
-	char pBuffer[MAX_PATH] = {};
-
-	D2_ASSERT(pFileHandle);
-
-	nSize = FOG_MPQFileGetSize(pFileHandle, lpFileSizeHigh);
-	if (!nSize)
-	{
-		//TODO: ...
-		//Storm_276_GetFileName(pFileHandle, &pBuffer, sizeof(pBuffer));
-		//Fog_10026(3, &pBuffer, __FILE__, __LINE__);
-		exit(-1);
-	}
-
-	return nSize;
-}
-
-//D2Common.0x6FDC4268
-void* __fastcall DATATBLS_GetBinaryData(void* pMemPool, const char* szFileName, int* pSize, char* szFile, int nLine)
-{
-	void* pFileHandle = NULL;
-	void* pBuffer = NULL;
-	size_t nSize = 0;
-	uint32_t dwFileSizeHigh = 0;
-	if (!FOG_MPQFileOpen(szFileName, &pFileHandle))
-	{
-		const DWORD err = GetLastError();
-		FOG_WriteToLogFile("Error opening file: %s (0x%x)", szFileName, err);
-		return NULL;
-	}
-
-	nSize = DATATBLS_GetFileSize(pMemPool, pFileHandle, &dwFileSizeHigh);
-	pBuffer = FOG_AllocClientMemory(nSize + 800, szFile, nLine, 0);
-
-	if (!pBuffer)
-	{
-		return NULL;
-	}
-
-	DATATBLS_ReadFromFile(pMemPool, pFileHandle, pBuffer, nSize);
-
-	D2_ASSERT(pFileHandle);
-	
-	FOG_MPQFileClose(pFileHandle);
-
-	if (pSize)
-	{
-		*pSize = nSize;
-	}
-
-	return pBuffer;
-}
-
-
-
-
 
 // ARENA & CHARTEMPLATE
 
@@ -148,7 +37,7 @@ uint16_t __fastcall DATATBLS_GetStringIdFromReferenceString(char* szReference)
 	{
 		if (*szReference)
 		{
-			FOG_WriteToLogFile("Couldn't find string hash: %s", szReference);
+			FOG_Trace("Couldn't find string hash: %s", szReference);
 		}
 		nIndex = 5382;
 	}
@@ -205,14 +94,14 @@ uint32_t __stdcall DATATBLS_GetExpRatio(int nLevel)
 	{
 		if (nLevel > 0)
 		{
-			if (nLevel <= (int)sgptDataTables->pExperienceTxt->dwClass[0])
+			if (nLevel <= (int)sgptDataTables->pExperienceTxt->tMax.dwClass[0])
 			{
-				return sgptDataTables->pExperienceTxt[nLevel + 1].dwExpRatio;
+				return sgptDataTables->pExperienceTxt->aLevels[nLevel].dwExpRatio;
 			}
 		}
 		else
 		{
-			return sgptDataTables->pExperienceTxt->dwExpRatio;
+			return sgptDataTables->pExperienceTxt->tMax.dwExpRatio;
 		}
 	}
 
@@ -222,36 +111,36 @@ uint32_t __stdcall DATATBLS_GetExpRatio(int nLevel)
 //D2Common.0x6FD496B0 (#10628)
 uint32_t __stdcall DATATBLS_GetLevelThreshold(int nClass, uint32_t dwLevel)
 {
-	if (nClass < 0 || nClass >= 7)
+	if (nClass < 0 || nClass >= NUMBER_OF_PLAYERCLASSES)
 	{
 		nClass = 0;
 	}
 
-	return sgptDataTables->pExperienceTxt[dwLevel + 1].dwClass[nClass];
+	return sgptDataTables->pExperienceTxt->aLevels[dwLevel].dwClass[nClass];
 }
 
 //D2Common.0x6FD496E0 (#10629)
 int __stdcall DATATBLS_GetMaxLevel(int nClass)
 {
-	if (nClass >= 0 && nClass < 7)
+	if (nClass >= 0 && nClass < NUMBER_OF_PLAYERCLASSES)
 	{
-		return sgptDataTables->pExperienceTxt->dwClass[nClass];
+		return sgptDataTables->pExperienceTxt->tMax.dwClass[nClass];
 	}
 
-	return sgptDataTables->pExperienceTxt->dwClass[0];
+	return sgptDataTables->pExperienceTxt->tMax.dwClass[0];
 }
 
 //D2Common.0x6FD49710 (#10630)
 uint32_t __stdcall DATATBLS_GetCurrentLevelFromExp(int nClass, uint32_t dwExperience)
 {
-	int nLevel = 1;
-
-	if (nClass < 0 || nClass >= 7)
+	if (nClass < 0 || nClass >= NUMBER_OF_PLAYERCLASSES)
 	{
 		nClass = 0;
 	}
 
-	while (dwExperience >= sgptDataTables->pExperienceTxt[nLevel].dwClass[nClass])
+	int nLevel = 0;
+	while ( nLevel < sgptDataTables->pExperienceTxt->tMax.dwClass[nClass]
+		&& dwExperience >= sgptDataTables->pExperienceTxt->aLevels[nLevel+1].dwClass[nClass])
 	{
 		++nLevel;
 	}
@@ -260,10 +149,10 @@ uint32_t __stdcall DATATBLS_GetCurrentLevelFromExp(int nClass, uint32_t dwExperi
 }
 
 //D2Common.0x6FD49760
-void __fastcall DATATBLS_GetBinFileHandle(void* pMemPool, char* szFile, void** ppFileHandle, int* pSize, int* pSizeEx)
+void __fastcall DATATBLS_GetBinFileHandle(void* pMemPool, const char* szFile, void** ppFileHandle, int* pSize, int* pSizeEx)
 {
 	FILE* pFile = NULL;
-	int nSize = 0;
+	size_t dwSize = 0;
 	char szFilePath[MAX_PATH] = {};
 
 	wsprintfA(szFilePath, "%s\\%s.bin", "DATA\\GLOBAL\\EXCEL", szFile);
@@ -273,16 +162,16 @@ void __fastcall DATATBLS_GetBinFileHandle(void* pMemPool, char* szFile, void** p
 		fopen_s(&pFile, szFilePath, "wb");
 		if (pFile)
 		{
-			DATATBLS_LockAndWriteToFile(*ppFileHandle, *pSize, 1, pFile);
+			FileLockAndWrite(*ppFileHandle, *pSize, 1, pFile);
 
 			fclose(pFile);
 		}
-		FOG_FreeServerMemory(NULL, *ppFileHandle, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(nullptr, *ppFileHandle);
 	}
 
-	*ppFileHandle = DATATBLS_GetBinaryData(pMemPool, szFilePath, &nSize, __FILE__, __LINE__);
-	*pSizeEx = nSize;
-	*pSize = nSize;
+	*ppFileHandle = ARCHIVE_READ_FILE_TO_ALLOC_BUFFER(pMemPool, szFilePath, &dwSize);
+	*pSizeEx = dwSize;
+	*pSize = dwSize;
 }
 
 //D2Common.0x6FD49850
@@ -309,7 +198,7 @@ int __fastcall DATATBLS_AppendMemoryBuffer(char** ppCodes, int* pSize, int* pSiz
 				break;
 			}
 
-			*ppCodes = (char*)FOG_ReallocServerMemory(NULL, *ppCodes, nNewSize, __FILE__, __LINE__, 0);
+			*ppCodes = (char*)D2_REALLOC_POOL(NULL, *ppCodes, nNewSize);
 
 			if (nBufferSize + *pSize < *pSizeEx)
 			{
@@ -334,7 +223,7 @@ D2CharStatsTxt* __fastcall DATATBLS_GetCharstatsTxtTable()
 }
 
 //D2Common.0x6FD4E4C0
-D2AnimDataStrc* __fastcall DATATBLS_GetAnimData()
+D2AnimDataTableStrc* __fastcall DATATBLS_GetAnimData()
 {
 	return sgptDataTables->pAnimData;
 }
@@ -439,12 +328,11 @@ void __fastcall DATATBLS_LoadStatesTxt(void* pMemPool)
 
 	if (sgptDataTables->nStatesTxtRecordCount >= 256)
 	{
-		FOG_10025("Exceeded maximum allowable number of states", __FILE__, __LINE__);
+		FOG_DisplayWarning("Exceeded maximum allowable number of states", __FILE__, __LINE__);
 	}
 
-	sgptDataTables->pStateMasks = (uint32_t*)FOG_AllocServerMemory(NULL, ARRAY_SIZE(sgptDataTables->fStateMasks) * sizeof(uint32_t) * (sgptDataTables->nStatesTxtRecordCount + 31) / 32, __FILE__, __LINE__, 0);
-	memset(sgptDataTables->pStateMasks, 0x00, ARRAY_SIZE(sgptDataTables->fStateMasks) * sizeof(uint32_t) * (sgptDataTables->nStatesTxtRecordCount + 31) / 32);
-
+	sgptDataTables->pStateMasks = (uint32_t*)D2_CALLOC_POOL(nullptr, ARRAY_SIZE(sgptDataTables->fStateMasks) * sizeof(uint32_t) * (sgptDataTables->nStatesTxtRecordCount + 31) / 32);
+	
 	for (int i = 0; i < ARRAY_SIZE(sgptDataTables->fStateMasks); ++i)
 	{
 		pStateMasks = &sgptDataTables->pStateMasks[(sgptDataTables->nStatesTxtRecordCount + 31) / 32 * i];
@@ -459,24 +347,19 @@ void __fastcall DATATBLS_LoadStatesTxt(void* pMemPool)
 		}
 	}
 
-	sgptDataTables->pProgressiveStates = (short*)FOG_AllocServerMemory(NULL, sizeof(short) * sgptDataTables->nStatesTxtRecordCount, __FILE__, __LINE__, 0);
-	memset(sgptDataTables->pProgressiveStates, 0x00, sizeof(short) * sgptDataTables->nStatesTxtRecordCount);
+	sgptDataTables->pProgressiveStates = (short*)D2_CALLOC_POOL(nullptr, sizeof(short) * sgptDataTables->nStatesTxtRecordCount);
 	sgptDataTables->nProgressiveStates = 0;
 
-	sgptDataTables->pCurseStates = (short*)FOG_AllocServerMemory(NULL, sizeof(short) * sgptDataTables->nStatesTxtRecordCount, __FILE__, __LINE__, 0);
-	memset(sgptDataTables->pCurseStates, 0x00, sizeof(short) * sgptDataTables->nStatesTxtRecordCount);
+	sgptDataTables->pCurseStates = (short*)D2_CALLOC_POOL(nullptr, sizeof(short) * sgptDataTables->nStatesTxtRecordCount);
 	sgptDataTables->nCurseStates = 0;
 
-	sgptDataTables->pTransformStates = (short*)FOG_AllocServerMemory(NULL, sizeof(short) * sgptDataTables->nStatesTxtRecordCount, __FILE__, __LINE__, 0);
-	memset(sgptDataTables->pTransformStates, 0x00, sizeof(short) * sgptDataTables->nStatesTxtRecordCount);
+	sgptDataTables->pTransformStates = (short*)D2_CALLOC_POOL(nullptr, sizeof(short) * sgptDataTables->nStatesTxtRecordCount);
 	sgptDataTables->nTransformStates = 0;
 
-	sgptDataTables->pActionStates = (short*)FOG_AllocServerMemory(NULL, sizeof(short) * sgptDataTables->nStatesTxtRecordCount, __FILE__, __LINE__, 0);
-	memset(sgptDataTables->pActionStates, 0x00, sizeof(short) * sgptDataTables->nStatesTxtRecordCount);
+	sgptDataTables->pActionStates = (short*)D2_CALLOC_POOL(nullptr, sizeof(short) * sgptDataTables->nStatesTxtRecordCount);
 	sgptDataTables->nActionStates = 0;
 
-	sgptDataTables->pColourStates = (short*)FOG_AllocServerMemory(NULL, sizeof(short) * sgptDataTables->nStatesTxtRecordCount, __FILE__, __LINE__, 0);
-	memset(sgptDataTables->pColourStates, 0x00, sizeof(short) * sgptDataTables->nStatesTxtRecordCount);
+	sgptDataTables->pColourStates = (short*)D2_CALLOC_POOL(nullptr, sizeof(short) * sgptDataTables->nStatesTxtRecordCount);
 	sgptDataTables->nColourStates = 0;
 	
 	for (int i = 0; i < sgptDataTables->nStatesTxtRecordCount; ++i)
@@ -518,31 +401,31 @@ void __fastcall DATATBLS_UnloadStatesTxt()
 {
 	if (sgptDataTables->pStateMasks)
 	{
-		FOG_FreeServerMemory(NULL, sgptDataTables->pStateMasks, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(nullptr, sgptDataTables->pStateMasks);
 		sgptDataTables->pStateMasks = NULL;
 	}
 
 	if (sgptDataTables->pProgressiveStates)
 	{
-		FOG_FreeServerMemory(NULL, sgptDataTables->pProgressiveStates, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(nullptr, sgptDataTables->pProgressiveStates);
 		sgptDataTables->pProgressiveStates = NULL;
 	}
 
 	if (sgptDataTables->pCurseStates)
 	{
-		FOG_FreeServerMemory(NULL, sgptDataTables->pCurseStates, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(nullptr, sgptDataTables->pCurseStates);
 		sgptDataTables->pCurseStates = NULL;
 	}
 
 	if (sgptDataTables->pTransformStates)
 	{
-		FOG_FreeServerMemory(NULL, sgptDataTables->pTransformStates, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(nullptr, sgptDataTables->pTransformStates);
 		sgptDataTables->pTransformStates = NULL;
 	}
 
 	if (sgptDataTables->pActionStates)
 	{
-		FOG_FreeServerMemory(NULL, sgptDataTables->pActionStates, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(nullptr, sgptDataTables->pActionStates);
 		sgptDataTables->pActionStates = NULL;
 	}
 
@@ -599,7 +482,7 @@ void __fastcall DATATBLS_LoadPetTypeTxt(void* pMemPool)
 	{
 		if (sgptDataTables->nPetTypeTxtRecordCount >= 256)
 		{
-			FOG_10025("Pet types table exceeded maximum number of entries.", __FILE__, __LINE__);
+			FOG_DisplayWarning("Pet types table exceeded maximum number of entries.", __FILE__, __LINE__);
 			sgptDataTables->nPetTypeTxtRecordCount = 256;
 		}
 	}
@@ -716,56 +599,55 @@ void __stdcall DATATBLS_WriteBinFile(char* szFileName, void* pWriteBuffer, size_
 	fopen_s(&pFile, szFilePath, "wb");
 	if (pFile)
 	{
-		DATATBLS_LockAndWriteToFile(&nRecordCount, sizeof(nRecordCount), 1, pFile);
-		DATATBLS_LockAndWriteToFile(pWriteBuffer, nBufferSize, 1, pFile);
+		FileLockAndWrite(&nRecordCount, sizeof(nRecordCount), 1, pFile);
+		FileLockAndWrite(pWriteBuffer, nBufferSize, 1, pFile);
 		fclose(pFile);
 	}
 }
 
 //D2Common.0x6FD4FD70 (#10578)
-void* __stdcall DATATBLS_CompileTxt(void* pMemPool, char* szName, D2BinFieldStrc* pTbl, int* pRecordCount, int nSize)
+void* __stdcall DATATBLS_CompileTxt(void* pMemPool, const char* szName, D2BinFieldStrc* pTbl, int* pRecordCount, size_t dwSize)
 {
 	D2BinFileStrc* pBinFile = NULL;
 	FILE* pFile = NULL;
 	void* pData = NULL;
 	void* pTxt = NULL;
 	int nRecordCount = 0;
-	int nDataSize = 0;
+	size_t dwDataSize = 0;
 	char szFilePath[MAX_PATH] = {};
 
-	nDataSize = 0;
+	dwDataSize = 0;
 	if (sgptDataTables->bCompileTxt)
 	{
 		if (_strcmpi(szName, "leveldefs"))
 		{
-			FOG_WriteToLogFile("Translating data from: %s", szName);
+			FOG_Trace("Translating data from: %s", szName);
 			wsprintfA(szFilePath, "%s\\%s%s", "DATA\\GLOBAL\\EXCEL", szName, ".txt");
 		}
 		else
 		{
-			FOG_WriteToLogFile("Translating data from: %s", "levels");
+			FOG_Trace("Translating data from: %s", "levels");
 			wsprintfA(szFilePath, "%s\\%s%s", "DATA\\GLOBAL\\EXCEL", "levels", ".txt");
 		}
 
-		pData = DATATBLS_GetBinaryData(pMemPool, szFilePath, &nDataSize, __FILE__, __LINE__);
+		pData = ARCHIVE_READ_FILE_TO_ALLOC_BUFFER(pMemPool, szFilePath, &dwDataSize);
 		D2_ASSERT(pData);
 
-		pBinFile = FOG_CreateBinFile(pData, nDataSize);
+		pBinFile = FOG_CreateBinFile(pData, dwDataSize);
 		nRecordCount = FOG_GetRecordCountFromBinFile(pBinFile);
-		pTxt = FOG_AllocServerMemory(NULL, nSize * nRecordCount, __FILE__, __LINE__, 0);
-		memset(pTxt, 0x00, nSize * nRecordCount);
-		FOG_10207(pBinFile, pTbl, pTxt, nRecordCount, nSize);
+		pTxt = D2_CALLOC_POOL(nullptr, dwSize * nRecordCount);
+		FOG_10207(pBinFile, pTbl, pTxt, nRecordCount, dwSize);
 		FOG_FreeBinFile(pBinFile);
 
 		wsprintfA(szFilePath, "%s\\%s%s", "DATA\\GLOBAL\\EXCEL", szName, ".bin");
 		fopen_s(&pFile, szFilePath, "wb");
 		if (pFile)
 		{
-			DATATBLS_LockAndWriteToFile(&nRecordCount, 4, 1, pFile);
-			DATATBLS_LockAndWriteToFile(pTxt, nSize * nRecordCount, 1, pFile);
+			FileLockAndWrite(&nRecordCount, 4, 1, pFile);
+			FileLockAndWrite(pTxt, dwSize * nRecordCount, 1, pFile);
 			fclose(pFile);
 		}
-		FOG_FreeServerMemory(NULL, pTxt, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(nullptr, pTxt);
 	}
 
 	if (DATATBLS_LoadFromBin)
@@ -784,7 +666,7 @@ void* __stdcall DATATBLS_CompileTxt(void* pMemPool, char* szName, D2BinFieldStrc
 		}
 	}
 
-	pData = DATATBLS_GetBinaryData(pMemPool, szFilePath, &nDataSize, __FILE__, __LINE__);
+	pData = ARCHIVE_READ_FILE_TO_ALLOC_BUFFER(pMemPool, szFilePath, &dwDataSize);
 	D2_ASSERT(pData);
 
 	if (DATATBLS_LoadFromBin)
@@ -794,11 +676,10 @@ void* __stdcall DATATBLS_CompileTxt(void* pMemPool, char* szName, D2BinFieldStrc
 	}
 	else
 	{
-		pBinFile = FOG_CreateBinFile(pData, nDataSize);
+		pBinFile = FOG_CreateBinFile(pData, dwDataSize);
 		nRecordCount = FOG_GetRecordCountFromBinFile(pBinFile);
-		pTxt = FOG_AllocServerMemory(NULL, nSize * nRecordCount, __FILE__, __LINE__, 0);
-		memset(pTxt, 0x00, nSize * nRecordCount);
-		FOG_10207(pBinFile, pTbl, pTxt, nRecordCount, nSize);
+		pTxt = D2_CALLOC_POOL(nullptr, dwSize * nRecordCount);
+		FOG_10207(pBinFile, pTbl, pTxt, nRecordCount, dwSize);
 		FOG_FreeBinFile(pBinFile);
 	}
 
@@ -823,11 +704,11 @@ void __stdcall DATATBLS_UnloadBin(void* pBinFile)
 	{
 		if (DATATBLS_LoadFromBin)
 		{
-			FOG_FreeServerMemory(NULL, (char*)pBinFile - 4, __FILE__, __LINE__, 0);
+			D2_FREE_POOL(nullptr, (char*)pBinFile - 4);
 		}
 		else
 		{
-			FOG_FreeServerMemory(NULL, pBinFile, __FILE__, __LINE__, 0);
+			D2_FREE_POOL(nullptr, pBinFile);
 		}
 	}
 }
@@ -972,7 +853,7 @@ void __stdcall DATATBLS_LoadAllTxts(void* pMemPool, int a2, int a3)
 	DATATBLS_LoadCompositTxt(pMemPool);
 	DATATBLS_LoadArmTypeTxt(pMemPool);
 
-	sgptDataTables->pExperienceTxt = (D2ExperienceTxt*)DATATBLS_CompileTxt(pMemPool, "experience", pTbl, NULL, sizeof(D2ExperienceTxt));
+	sgptDataTables->pExperienceTxt = (D2ExperienceDataTbl*)DATATBLS_CompileTxt(pMemPool, "experience", pTbl, NULL, sizeof(D2ExperienceTxt));
 
 	sgptDataTables->pAnimData = DATATBLS_LoadAnimDataD2(pMemPool);
 	DATATBLS_LoadSomeMonsterTxts(pMemPool);

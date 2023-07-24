@@ -96,7 +96,7 @@ int __fastcall MONSTERS_HirelingInit(BOOL bExpansion, D2UnitStrc* pMonster, int 
 
 		pHirelingInit->nId = pHirelingTxtRecord->nId;
 
-		nLevel = STATLIST_GetUnitStatUnsigned(pMonster, STAT_LEVEL, 0);
+		nLevel = STATLIST_UnitGetStatValue(pMonster, STAT_LEVEL, 0);
 		nRand = (int)SEED_RollRandomNumber(&pSeed) % 5;
 		if (nRand >= nLevel - pHirelingTxtRecord->nHirelingLevel)
 		{
@@ -399,7 +399,7 @@ int __stdcall MONSTERS_GetHirelingExpForNextLevel(int nLevel, int nExpPerLevel)
 //D2Common.0x6FDA5220 (#11083)
 int __stdcall MONSTERS_GetHirelingResurrectionCost(D2UnitStrc* pHireling)
 {
-	int nLevel = STATLIST_GetUnitStatUnsigned(pHireling, STAT_LEVEL, 0);
+	int nLevel = STATLIST_UnitGetStatValue(pHireling, STAT_LEVEL, 0);
 	int nCost = 15 * nLevel * nLevel / 2;
 
 	if (nCost > 50000)
@@ -613,7 +613,7 @@ int __stdcall D2Common_11050(D2UnitStrc* pUnit, int a2)
 		nCounter = nStart;
 		while (nCounter <= nFrame)
 		{
-			if (UNITS_GetEventFrameInfo(pUnit, nCounter) == 2 || UNITS_GetEventFrameInfo(pUnit, nCounter) == 1)
+			if (UNITS_GetEventFrameInfo(pUnit, nCounter) == MONSEQ_EVENT_MISSILE_ATTACK || UNITS_GetEventFrameInfo(pUnit, nCounter) == MONSEQ_EVENT_MELEE_ATTACK)
 			{
 				break;
 			}
@@ -732,17 +732,15 @@ void __stdcall D2Common_11055(uint8_t a1, int* a2, int* a3)
 }
 
 //D2Common.0x6FDA5670 (#11297)
-void __fastcall MONSTERS_SetMonsterNameInMonsterData(D2UnitStrc* pMonster, wchar_t* wszName)
+void __fastcall MONSTERS_SetMonsterNameInMonsterData(D2UnitStrc* pMonster, const Unicode* wszName)
 {
-	unsigned int nSize = 0;
-
-	if (pMonster && pMonster->dwUnitType == UNIT_MONSTER && pMonster->pPlayerData)
+	if (pMonster && pMonster->dwUnitType == UNIT_MONSTER && pMonster->pMonsterData)
 	{
 		if (wszName)
 		{
-			nSize = sizeof(wchar_t) * (wcslen(wszName) + 1);
-			pMonster->pMonsterData->wszMonName = (wchar_t*)FOG_AllocClientMemory(nSize, __FILE__, __LINE__, 0);
-			wcscpy_s(pMonster->pMonsterData->wszMonName, nSize, wszName);
+			const size_t nStringBufferBytes = (Unicode::strlen(wszName) + 1) * sizeof(Unicode);
+			pMonster->pMonsterData->wszMonName = (Unicode*)D2_ALLOC(nStringBufferBytes);
+			Unicode::strcpy(pMonster->pMonsterData->wszMonName, wszName);
 		}
 	}
 }
@@ -768,7 +766,7 @@ BOOL __fastcall MONSTERS_CanBeInTown(D2UnitStrc* pMonster)
 }
 
 //D2Common.0x6FDA5750 (#11057)
-BOOL __stdcall MONSTESR_IsSandLeaper(D2UnitStrc* pMonster, BOOL bAlwaysReturnFalse)
+BOOL __stdcall MONSTERS_IsSandLeaper(D2UnitStrc* pMonster, BOOL bAlwaysReturnFalse)
 {
 	D2MonStatsTxt* pMonStatsTxtRecord = NULL;
 	int nClassId = 0;
@@ -875,8 +873,9 @@ BOOL __stdcall MONSTERS_IsDead(D2UnitStrc* pMonster)
 }
 
 //D2Common.0x6FDA5930 (#11280)
-int __stdcall MONSTERS_GetSpawnMode_XY(D2UnitStrc* pMonster, BOOL bFromMonster, int nSkillId, int nUnused, int* pSpawnMode, int* pX, int* pY)
+int __stdcall MONSTERS_GetSpawnMode_XY(D2UnitStrc* pMonster, BOOL bFromMonster, int nSkillId, int nSkillLevel, int* pSpawnMode, int* pX, int* pY)
 {
+	D2_MAYBE_UNUSED(nSkillLevel);
 	D2MonStatsTxt* pMonStatsTxtRecord = NULL;
 	D2SkillsTxt* pSkillsTxtRecord = NULL;
 	D2CoordStrc pCoords = {};
@@ -1265,9 +1264,9 @@ void __stdcall D2Common_11246(D2UnitStrc* pMonster, int a2, uint8_t a3)
 		pMonStatsTxtRecord = DATATBLS_GetMonStatsTxtRecord(pMonster->dwClassId);
 		if (pMonStatsTxtRecord && pMonStatsTxtRecord->nAlign != 1)
 		{
-			STATLIST_SetUnitStat(pMonster, STAT_MAXHP, STATLIST_GetUnitStatUnsigned(pMonster, STAT_MAXHP, 0) / 2, 0);
-			STATLIST_SetUnitStat(pMonster, STAT_ARMORCLASS, 10 * STATLIST_GetUnitStatUnsigned(pMonster, STAT_ARMORCLASS, 0) / 12, 0);
-			STATLIST_SetUnitStat(pMonster, STAT_EXPERIENCE, 10 * STATLIST_GetUnitStatUnsigned(pMonster, STAT_EXPERIENCE, 0) / (a3 == 1 ? 17 : 26), 0);
+			STATLIST_SetUnitStat(pMonster, STAT_MAXHP, STATLIST_UnitGetStatValue(pMonster, STAT_MAXHP, 0) / 2, 0);
+			STATLIST_SetUnitStat(pMonster, STAT_ARMORCLASS, 10 * STATLIST_UnitGetStatValue(pMonster, STAT_ARMORCLASS, 0) / 12, 0);
+			STATLIST_SetUnitStat(pMonster, STAT_EXPERIENCE, 10 * STATLIST_UnitGetStatValue(pMonster, STAT_EXPERIENCE, 0) / (a3 == 1 ? 17 : 26), 0);
 			STATLIST_SetUnitStat(pMonster, STAT_LEVEL, 25 * a3 + pMonStatsTxtRecord->nLevel[0], 0);
 		}
 	}

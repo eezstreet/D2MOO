@@ -10,43 +10,35 @@
 int dword_6FDD2580;
 int dword_6FDD2584;
 
-bool DungeonTestRoomGame(D2RoomStrc* pRoom, int nX, int nY)
-{
-	return nX >= pRoom->nSubtileX && nX < pRoom->nSubtileX + pRoom->nSubtileWidth
-		&& nY >= pRoom->nSubtileY && nY < pRoom->nSubtileY + pRoom->nSubtileHeight;
-
-}
-
 //D2Common.0x6FDBCF10 (#11279)
 int __stdcall UNITROOM_AddUnitToRoomEx(D2UnitStrc* pUnit, D2RoomStrc* pRoom, int nUnused)
 {
-	D2UnitStrc** ppUnitFirst = NULL;
-	D2RoomStrc* pUnitRoom = NULL;
-	D2CoordStrc pCoords = {};
-	//D2RoomCoordStrc pRoomCoord = {};
+	D2_MAYBE_UNUSED(nUnused);
 
 	D2_ASSERT(pUnit);
-
 	D2_ASSERT(pRoom);
 
-	//DUNGEON_GetRoomCoordinates(pRoom, &pRoomCoord);
+	//Note: tRoomCoord is unused but filled in the original code
+	//D2RoomCoordStrc tRoomCoord = {};
+	//DUNGEON_GetRoomCoordinates(pRoom, &tRoomCoord);
 
-	UNITS_GetCoords(pUnit, &pCoords);
-	D2_ASSERT(DungeonTestRoomGame(pRoom, pCoords.nX, pCoords.nY));
+	D2CoordStrc tCoord = {};
+	UNITS_GetCoords(pUnit, &tCoord);
+	D2_ASSERT(DungeonTestRoomGame(pRoom, tCoord.nX, tCoord.nY));
 
 	for (D2UnitStrc* i = pRoom->pUnitFirst; i; i = i->pRoomNext)
 	{
 		D2_ASSERTM(pUnit != i, "Unit being added to a room it is already in");
 	}
 
-	ppUnitFirst = DUNGEON_GetUnitListFromRoom(pRoom);
+	D2UnitStrc** ppUnitFirst = DUNGEON_GetUnitListFromRoom(pRoom);
 	D2_ASSERT(ppUnitFirst);
 	pUnit->pRoomNext = *ppUnitFirst;
 	*ppUnitFirst = pUnit;
 
 	UNITROOM_RefreshUnit(pUnit);
 
-	if (pUnit->dwUnitType == UNIT_PLAYER || pUnit->dwUnitType == UNIT_MONSTER && STATLIST_GetUnitAlignment(pUnit) == 2)
+	if (pUnit->dwUnitType == UNIT_PLAYER || (pUnit->dwUnitType == UNIT_MONSTER && STATLIST_GetUnitAlignment(pUnit) == 2))
 	{
 		DUNGEON_IncreaseAlliedCountOfRoom(pRoom);
 	}
@@ -63,17 +55,15 @@ int __stdcall UNITROOM_AddUnitToRoom(D2UnitStrc* pUnit, D2RoomStrc* pRoom)
 //D2Common.0x6FDBD120 (#10385)
 void __stdcall UNITROOM_RefreshUnit(D2UnitStrc* pUnit)
 {
-	D2UnitStrc** ppUnitFirst = NULL;
-	D2RoomStrc* pRoom = NULL;
 
 	D2_ASSERT(pUnit);
 
-	pRoom = UNITS_GetRoom(pUnit);
+	D2RoomStrc* pRoom = UNITS_GetRoom(pUnit);
 	if (pRoom && !D2Common_10084(pRoom) && !(pUnit->dwFlags & UNITFLAG_ISLINKREFRESHMSG))
 	{
 		pUnit->dwFlags |= UNITFLAG_ISLINKREFRESHMSG;
 
-		ppUnitFirst = DUNGEON_GetUnitUpdateListFromRoom(pRoom, TRUE);
+		D2UnitStrc** ppUnitFirst = DUNGEON_GetUnitUpdateListFromRoom(pRoom, TRUE);
 		D2_ASSERT(ppUnitFirst);
 
 		pUnit->pChangeNextUnit = *ppUnitFirst;
@@ -104,7 +94,7 @@ void __stdcall UNITROOM_SortUnitListByTargetY(D2RoomStrc* pRoom)
 
 			while (pNextUnit)
 			{
-				if (UNITS_GetTargetY(pUnit) <= UNITS_GetTargetY(pNextUnit))
+				if (UNITS_GetClientCoordY(pUnit) <= UNITS_GetClientCoordY(pNextUnit))
 				{
 					pPreviousUnit = pUnit;
 					pUnit = pNextUnit;
@@ -143,11 +133,11 @@ void __stdcall UNITROOM_UpdatePath(D2UnitStrc* pUnit)
 	case UNIT_PLAYER:
 	case UNIT_MONSTER:
 	case UNIT_MISSILE:
-		pUnit->pDynamicPath->dwPrecisionX = dword_6FDD2580;
-		pUnit->pDynamicPath->dwPrecisionY = dword_6FDD2584;
+		pUnit->pDynamicPath->tGameCoords.dwPrecisionX = dword_6FDD2580;
+		pUnit->pDynamicPath->tGameCoords.dwPrecisionY = dword_6FDD2584;
 
-		pUnit->pDynamicPath->dwTargetX = dword_6FDD2580;
-		pUnit->pDynamicPath->dwTargetY = dword_6FDD2584;
+		pUnit->pDynamicPath->dwClientCoordX = dword_6FDD2580;
+		pUnit->pDynamicPath->dwClientCoordY = dword_6FDD2584;
 
 		pUnit->pDynamicPath->dwPathPoints = 0;
 		

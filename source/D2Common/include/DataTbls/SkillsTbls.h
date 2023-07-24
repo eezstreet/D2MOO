@@ -94,6 +94,15 @@ enum D2C_SkillsTxtFlags
 	SKILLSFLAG2_WARP = (1 << SKILLSFLAGINDEX2_WARP),
 };
 
+// Targeting behaviour when skill is cast by object
+enum D2C_SkillsTxtItemTarget {
+	SKILLSITEMTARGET_ATTACKER = 0, // default
+	SKILLSITEMTARGET_CASTER = 1,
+	SKILLSITEMTARGET_RANDOM = 2, // Random walkable location in a radius of size 20
+	SKILLSITEMTARGET_RANDOM_CORPSE = 3,
+	SKILLSITEMTARGET_LAST_ATTACKER = 4, // Attacker or last known attacker
+};
+
 struct D2SkillCalcTxt
 {
 	uint32_t dwCode;						//0x00
@@ -149,7 +158,7 @@ struct D2SkillsTxt
 	int16_t nITypeB[3];						//0x1E
 	int16_t nETypeA[2];						//0x24
 	int16_t nETypeB[2];						//0x28
-	uint16_t wSrvStartFunc;					//0x2C
+	int16_t wSrvStartFunc;					//0x2C
 	uint16_t wSrvDoFunc;					//0x2E
 	uint16_t wSrvPrgFunc[3];				//0x30
 	uint16_t pad0x36;						//0x36
@@ -160,16 +169,16 @@ struct D2SkillsTxt
 	uint16_t wSrvMissileA;					//0x48
 	uint16_t wSrvMissileB;					//0x4A
 	uint16_t wSrvMissileC;					//0x4C
-	uint16_t wSrvOverlay;					//0x4E
+	int16_t wSrvOverlay;					//0x4E
 	uint32_t dwAuraFilter;					//0x50
-	uint16_t wAuraStat[6];					//0x54
+	int16_t wAuraStat[6];					//0x54
 	uint32_t dwAuraLenCalc;					//0x60
 	uint32_t dwAuraRangeCalc;				//0x64
 	int32_t dwAuraStatCalc[6];				//0x68
 	int16_t nAuraState;						//0x80
 	int16_t wAuraTargetState;				//0x82
-	uint16_t wAuraEvent[3];					//0x84
-	uint16_t wAuraEventFunc[3];				//0x8A
+	int16_t wAuraEvent[3];					//0x84
+	int16_t wAuraEventFunc[3];				//0x8A
 	uint16_t wAuraTgtEvent;					//0x90
 	uint16_t wAuraTgtEventFunc;				//0x92
 	int16_t nPassiveState;					//0x94
@@ -180,14 +189,14 @@ struct D2SkillsTxt
 	uint16_t wPassiveEvent;					//0xB8
 	uint16_t wPassiveEventFunc;				//0xBA
 	uint16_t wSummon;						//0xBC
-	uint8_t nPetType;						//0xBE
-	uint8_t nSumMode;						//0xBF
+	int8_t nPetType;						//0xBE
+	int8_t nSumMode;						//0xBF
 	uint32_t dwPetMax;						//0xC0
 	uint16_t wSumSkill[5];					//0xC4
 	uint16_t pad0xCE;						//0xCE
 	uint32_t dwSumSkCalc[5];				//0xD0
-	uint16_t wSumUMod;						//0xE4
-	uint16_t wSumOverlay;					//0xE6
+	int16_t wSumUMod;						//0xE4
+	int16_t wSumOverlay;					//0xE6
 	uint16_t wCltMissile;					//0xE8
 	uint16_t wCltMissileA;					//0xEA
 	uint16_t wCltMissileB;					//0xEC
@@ -209,7 +218,7 @@ struct D2SkillsTxt
 	uint16_t wCltOverlayA;					//0x110
 	uint16_t wCltOverlayB;					//0x112
 	int32_t dwCltCalc[3];					//0x114
-	uint8_t nItemTarget;					//0x120
+	uint8_t nItemTarget;					//0x120 D2C_SkillsTxtItemTarget
 	uint8_t pad0x121;						//0x121
 	uint16_t wItemCastSound;				//0x122
 	uint16_t wItemCastOverlay;				//0x124
@@ -233,11 +242,11 @@ struct D2SkillsTxt
 	uint16_t wReqInt;						//0x17A
 	uint16_t wReqVit;						//0x17C
 	int16_t nReqSkill[3];					//0x17E
-	uint16_t wStartMana;					//0x184
+	int16_t wStartMana;						//0x184
 	uint16_t wMinMana;						//0x186
 	uint8_t nManaShift;						//0x188
 	uint8_t pad0x189;						//0x189
-	uint16_t wMana;							//0x18A
+	int16_t wMana;							//0x18A
 	int16_t wLevelMana;						//0x18C
 	uint8_t nAttackRank;					//0x18E
 	uint8_t nLineOfSight;					//0x18F

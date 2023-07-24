@@ -4,6 +4,7 @@
 //D2Common.0x6FD62EA0
 int __fastcall DATATBLS_MapMissilesTxtKeywordToNumber(char* szKey)
 {
+	// Note: Game actually uses Storm.dll SStrCmpI
 	if (!_strnicmp(szKey, "min", 32))
 	{
 		return 0;
@@ -303,7 +304,7 @@ void __fastcall DATATBLS_LoadMissilesTxt(void* pMemPool)
 	{
 		if (sgptDataTables->pMissilesTxt[i].nCollideType > 8)
 		{
-			FOG_WriteToLogFile("Range error in entry %d in table '%s' field '%s'.  Value must be between %d and %d.", i, "missiles", "CollideType", 0, 8);
+			FOG_Trace("Range error in entry %d in table '%s' field '%s'.  Value must be between %d and %d.", i, "missiles", "CollideType", 0, 8);
 		}
 
 		if (sgptDataTables->pMissilesTxt[i].nCollideType < 0)
@@ -324,7 +325,7 @@ void __fastcall DATATBLS_UnloadMissilesTxt()
 {
 	if (sgptDataTables->pMissCode)
 	{
-		FOG_FreeServerMemory(NULL, sgptDataTables->pMissCode, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(nullptr, sgptDataTables->pMissCode);
 		sgptDataTables->pMissCode = NULL;
 	}
 	sgptDataTables->nMissCodeSize = 0;
@@ -360,8 +361,6 @@ int __stdcall DATATBLS_GetMissileVelocityFromMissilesTxt(int nMissileId, int nLe
 //Inlined at various places
 D2MissilesTxt* __fastcall DATATBLS_GetMissilesTxtRecord(int nMissileId)
 {
-	D2MissilesTxt* pMissilesTxtRecord = NULL;
-
 	if (nMissileId >= 0 && nMissileId < sgptDataTables->nMissilesTxtRecordCount)
 	{
 		return &sgptDataTables->pMissilesTxt[nMissileId];

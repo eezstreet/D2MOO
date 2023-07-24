@@ -277,7 +277,7 @@ int __stdcall SKILLS_GetSpecialParamValue(D2UnitStrc* pUnit, uint8_t nParamId, i
 		case 40:
 			if (pUnit)
 			{
-				return STATLIST_GetUnitStatUnsigned(pUnit, STAT_LEVEL, 0);
+				return STATLIST_UnitGetStatValue(pUnit, STAT_LEVEL, 0);
 			}
 			break;
 
@@ -427,6 +427,7 @@ int __fastcall sub_6FDAF6A0(uint8_t nParamId, D2SkillCalcStrc* pSkillCalc)
 //D2Common.0x6FDAF6C0
 int __fastcall sub_6FDAF6C0(int nSkillId, uint8_t nParamId, int nUnused, D2SkillCalcStrc* pSkillCalc)
 {
+	D2_MAYBE_UNUSED(nUnused);
 	D2SkillStrc* pSkill = NULL;
 	int nSkillLevel = 0;
 
@@ -451,6 +452,7 @@ int __fastcall sub_6FDAF6C0(int nSkillId, uint8_t nParamId, int nUnused, D2Skill
 //D2Common.0x6FDAF780
 int __fastcall sub_6FDAF780(int nMissileId, uint8_t nParamId, int nUnused, D2SkillCalcStrc* pSkillCalc)
 {
+	D2_MAYBE_UNUSED(nUnused);
 	if (pSkillCalc)
 	{
 		return MISSILE_GetSpecialParamValue(NULL, pSkillCalc->pUnit, nParamId, nMissileId, pSkillCalc->nSkillLevel);
@@ -633,7 +635,7 @@ D2SkillStrc* __fastcall SKILLS_GetHighestLevelSkillFromSkillId(D2UnitStrc* pUnit
 	{
 		for (D2SkillStrc* pSkill = pUnit->pSkills->pFirstSkill; pSkill; pSkill = pSkill->pNextSkill)
 		{
-			if (pSkill->pSkillsTxt->nSkillId == nSkillId && (!pHighestLevelSkill || pSkill->nOwnerGUID == -1 || pHighestLevelSkill->nOwnerGUID != -1 && pSkill->nSkillLevel > pHighestLevelSkill->nSkillLevel))
+			if (pSkill->pSkillsTxt->nSkillId == nSkillId && (!pHighestLevelSkill || pSkill->nOwnerGUID == D2UnitInvalidGUID || pHighestLevelSkill->nOwnerGUID != D2UnitInvalidGUID && pSkill->nSkillLevel > pHighestLevelSkill->nSkillLevel))
 			{
 				pHighestLevelSkill = pSkill;
 			}
@@ -657,7 +659,7 @@ int __stdcall SKILLS_GetSkillModeFromUnit(D2UnitStrc* pUnit, D2SkillStrc* pSkill
 //D2Common.0x6FDAFCA0 (#11049)
 int __stdcall SKILLS_Return1(int a1)
 {
-	REMOVE_LATER_WriteToLogFile("SKILLS_Return1: Useless");
+	REMOVE_LATER_Trace("SKILLS_Return1: Useless");
 	return 1;
 }
 
@@ -675,8 +677,7 @@ int __stdcall SKILLS_GetRange(D2SkillStrc* pSkill)
 //D2Common.0x6FDAFCD0 (#10945)
 D2SkillListStrc* __stdcall SKILLS_AllocSkillList(void* pMemPool)
 {
-	D2SkillListStrc* pSkillList = (D2SkillListStrc*)FOG_AllocServerMemory(pMemPool, sizeof(D2SkillListStrc), __FILE__, __LINE__, 0);
-	memset(pSkillList, 0x00, sizeof(D2SkillListStrc));
+	D2SkillListStrc* pSkillList = D2_CALLOC_STRC_POOL(pMemPool, D2SkillListStrc);
 
 	pSkillList->pMemPool = pMemPool;
 
@@ -690,7 +691,7 @@ void __stdcall SKILLS_InitSkillList(D2UnitStrc* pUnit)
 	int nCounter = 0;
 	int nClass = 0;
 
-	if (!SKILLS_GetSkill(pUnit, 0, -1))
+	if (SKILLS_GetSkill(pUnit, 0, -1) == nullptr)
 	{
 		nClass = pUnit->dwClassId;
 		if (nClass < 0 || nClass >= sgptDataTables->nCharStatsTxtRecordCount)
@@ -706,24 +707,20 @@ void __stdcall SKILLS_InitSkillList(D2UnitStrc* pUnit)
 
 		SKILLS_AddSkill(pUnit, 0);
 
-		do
-		{
-			if (DATATBLS_GetSkillsTxtRecord(pCharStatsTxtRecord->nBaseSkill[nCounter]))
+		for (int i = 0; i < ARRAY_SIZE(pCharStatsTxtRecord->nBaseSkill); ++i) {
+			if (DATATBLS_GetSkillsTxtRecord(pCharStatsTxtRecord->nBaseSkill[i]))
 			{
-				SKILLS_AddSkill(pUnit, pCharStatsTxtRecord->nBaseSkill[nCounter]);
+				SKILLS_AddSkill(pUnit, pCharStatsTxtRecord->nBaseSkill[i]);
 			}
-
-			++nCounter;
 		}
-		while (nCounter < 10);
 	}
 
-	if (!UNITS_GetGetLeftSkill(pUnit))
+	if (UNITS_GetLeftSkill(pUnit) == nullptr)
 	{
 		SKILLS_SetLeftActiveSkill(pUnit, 0, -1);
 	}
 
-	if (!UNITS_GetRightSkill(pUnit))
+	if (UNITS_GetRightSkill(pUnit) == nullptr)
 	{
 		SKILLS_SetRightActiveSkill(pUnit, 0, -1);
 	}
@@ -737,7 +734,7 @@ D2SkillStrc* __stdcall SKILLS_GetNextSkill(D2SkillStrc* pSkill)
 		return pSkill->pNextSkill;
 	}
 
-	REMOVE_LATER_WriteToLogFile("SKILLS_GetNextSkill: NULL pointer");
+	REMOVE_LATER_Trace("SKILLS_GetNextSkill: NULL pointer");
 	return NULL;
 }
 
@@ -749,7 +746,7 @@ D2SkillStrc* __stdcall SKILLS_GetFirstSkillFromSkillList(D2SkillListStrc* pSkill
 		return pSkillList->pFirstSkill;
 	}
 
-	REMOVE_LATER_WriteToLogFile("SKILLS_GetFirstSkillFromSkillList: NULL pointer");
+	REMOVE_LATER_Trace("SKILLS_GetFirstSkillFromSkillList: NULL pointer");
 	return NULL;
 }
 
@@ -790,7 +787,7 @@ D2SkillStrc* __fastcall SKILLS_GetUsedSkillFromSkillList(D2SkillListStrc* pSkill
 }
 
 //D2Common.0x6FDAFF40 (#10949)
-D2SkillStrc* __fastcall SKILLS_GetSkillById(D2UnitStrc* pUnit, int nSkillId, int nOwnerGUID)
+D2SkillStrc* __fastcall SKILLS_GetSkillById(D2UnitStrc* pUnit, int nSkillId, D2UnitGUID nOwnerGUID)
 {
 	return SKILLS_GetSkill(pUnit, nSkillId, nOwnerGUID);
 }
@@ -802,92 +799,89 @@ D2SkillStrc* __fastcall SKILLS_GetHighestLevelSkillFromUnitAndId(D2UnitStrc* pUn
 }
 
 //D2Common.0x6FDAFFD0 (#10951)
-void __stdcall SKILLS_RemoveSkill(D2UnitStrc* pUnit, int nSkillId, char* szFile, int nLine)
+void __stdcall SKILLS_RemoveSkill(D2UnitStrc* pUnit, int nSkillId, const char* szFile, int nLine)
 {
 	D2COMMON_SKILLS_RemoveSkill_6FDAFFF0(pUnit, nSkillId, 1, szFile, nLine);
 }
 
 //D2Common.0x6FDAFFF0
-void __fastcall D2COMMON_SKILLS_RemoveSkill_6FDAFFF0(D2UnitStrc* pUnit, int nSkillId, int a3, char* szFile, int nLine)
+void __fastcall D2COMMON_SKILLS_RemoveSkill_6FDAFFF0(D2UnitStrc* pUnit, int nSkillId, BOOL bDecrementAndCheckSkillLevel, const char* szFile, int nLine)
 {
-	D2SkillsTxt* pSkillsTxtRecord = NULL;
-	D2SkillStrc* pPreviousSkill = NULL;
-	D2SkillStrc* pSkill = NULL;
-
-	if (pUnit)
+	if (!pUnit)
 	{
-		if (pUnit->pSkills)
+		FOG_Trace("sSkillsRemoveSkill(): NULL unit  FILE:%s  LINE:%d", szFile, nLine);
+		return;
+	}
+	if (!pUnit->pSkills)
+	{
+		FOG_Trace("sSkillsRemoveSkill(): NULL skillinfo  (TYPE:%d  CLASS:%d)  FILE:%s  LINE:%d", pUnit->dwUnitType, pUnit->dwClassId, szFile, nLine);
+		return;
+	}
+	if (!pUnit->pSkills->pFirstSkill)
+	{
+		FOG_Trace("sSkillsRemoveSkill(): NULL skilllist  (TYPE:%d  CLASS:%d)  FILE:%s  LINE:%d", pUnit->dwUnitType, pUnit->dwClassId, szFile, nLine);
+		return;
+	}
+
+	if (D2SkillsTxt* pSkillsTxtRecord = DATATBLS_GetSkillsTxtRecord(nSkillId))
+	{
+		if (pSkillsTxtRecord->nPassiveState > 0)
 		{
-			if (pUnit->pSkills->pFirstSkill)
+			STATES_ToggleState(pUnit, pSkillsTxtRecord->nPassiveState, 0);
+		}
+	}
+
+	if (const D2SkillStrc* pLeftSkill = pUnit->pSkills->pLeftSkill)
+	{
+		if (nSkillId == pLeftSkill->pSkillsTxt->nSkillId && pLeftSkill->nOwnerGUID == D2UnitInvalidGUID)
+		{
+			SKILLS_SetLeftActiveSkill(pUnit, SKILL_ATTACK, -1);
+		}
+	}
+
+	if (const D2SkillStrc* pRightSkill = pUnit->pSkills->pRightSkill)
+	{
+		if (nSkillId == pRightSkill->pSkillsTxt->nSkillId && pRightSkill->nOwnerGUID == D2UnitInvalidGUID)
+		{
+			SKILLS_SetRightActiveSkill(pUnit, SKILL_ATTACK, -1);
+		}
+	}
+
+	if (const D2SkillStrc* pUsedSkill = pUnit->pSkills->pUsedSkill)
+	{
+		if (nSkillId == pUsedSkill->pSkillsTxt->nSkillId && pUsedSkill->nOwnerGUID == D2UnitInvalidGUID)
+		{
+			SKILLS_SetUsedSkillInSkillList(pUnit->pSkills, nullptr);
+		}
+	}
+
+	// Try to find the skill in the unit skills list
+	D2SkillStrc* pPreviousSkill = nullptr;
+	D2SkillStrc* pSkill = pUnit->pSkills->pFirstSkill;
+	while (pSkill && !(pSkill->pSkillsTxt->nSkillId == nSkillId && pSkill->nOwnerGUID == D2UnitInvalidGUID))
+	{
+		pPreviousSkill = pSkill;
+		pSkill = pSkill->pNextSkill;
+	}
+
+	if (pSkill)
+	{
+		if (!bDecrementAndCheckSkillLevel || (--pSkill->nSkillLevel) <= 0)
+		{
+			if (pPreviousSkill)
 			{
-				pSkillsTxtRecord = DATATBLS_GetSkillsTxtRecord(nSkillId);
-				if (pSkillsTxtRecord && pSkillsTxtRecord->nPassiveState > 0)
-				{
-					STATES_ToggleState(pUnit, pSkillsTxtRecord->nPassiveState, 0);
-				}
-
-				if (pUnit->pSkills->pLeftSkill && nSkillId == pUnit->pSkills->pLeftSkill->pSkillsTxt->nSkillId && pUnit->pSkills->pLeftSkill->nOwnerGUID == -1)
-				{
-					SKILLS_SetLeftActiveSkill(pUnit, nSkillId, -1);
-				}
-
-				if (pUnit->pSkills->pRightSkill && nSkillId == pUnit->pSkills->pRightSkill->pSkillsTxt->nSkillId && pUnit->pSkills->pRightSkill->nOwnerGUID == -1)
-				{
-					SKILLS_SetRightActiveSkill(pUnit, nSkillId, -1);
-				}
-
-				if (pUnit->pSkills->pUsedSkill && nSkillId == pUnit->pSkills->pUsedSkill->pSkillsTxt->nSkillId)
-				{
-					if (pUnit->pSkills->pUsedSkill->nOwnerGUID == -1)
-					{
-						pUnit->pSkills->pUsedSkill = NULL;
-					}
-				}
-
-				pPreviousSkill = NULL;
-				pSkill = pUnit->pSkills->pFirstSkill;
-				while (pSkill->pSkillsTxt->nSkillId != nSkillId || pSkill->nOwnerGUID != -1)
-				{
-					pPreviousSkill = pSkill;
-
-					pSkill = pSkill->pNextSkill;
-					if (!pSkill)
-					{
-						SKILLS_RefreshSkill(pUnit, nSkillId);
-						return;
-					}
-				}
-
-				if (!a3 || (--pSkill->nSkillLevel) <= 0)
-				{
-					if (pPreviousSkill)
-					{
-						pPreviousSkill->pNextSkill = pSkill->pNextSkill;
-					}
-					else
-					{
-						pUnit->pSkills->pFirstSkill = pSkill->pNextSkill;
-					}
-
-					FOG_FreeServerMemory(pUnit->pMemoryPool, pSkill, __FILE__, __LINE__, 0);
-				}
-
-				SKILLS_RefreshSkill(pUnit, nSkillId);
+				pPreviousSkill->pNextSkill = pSkill->pNextSkill;
 			}
 			else
 			{
-				FOG_WriteToLogFile("sSkillsRemoveSkill(): NULL skilllist  (TYPE:%d  CLASS:%d)  FILE:%s  LINE:%d", pUnit->dwUnitType, pUnit->dwClassId, szFile, nLine);
+				pUnit->pSkills->pFirstSkill = pSkill->pNextSkill;
 			}
-		}
-		else
-		{
-			FOG_WriteToLogFile("sSkillsRemoveSkill(): NULL skillinfo  (TYPE:%d  CLASS:%d)  FILE:%s  LINE:%d", pUnit->dwUnitType, pUnit->dwClassId, szFile, nLine);
+
+			D2_FREE_POOL(pUnit->pMemoryPool, pSkill);
 		}
 	}
-	else
-	{
-		FOG_WriteToLogFile("sSkillsRemoveSkill(): NULL unit  FILE:%s  LINE:%d", szFile, nLine);
-	}
+
+	SKILLS_RefreshSkill(pUnit, nSkillId);
 }
 
 //D2Common.0x6FDB0270 (#10958)
@@ -931,11 +925,11 @@ void __stdcall SKILLS_FreeSkillList(D2UnitStrc* pUnit)
 			while (pSkill)
 			{
 				pNextSkill = pSkill->pNextSkill;
-				FOG_FreeServerMemory(pUnit->pMemoryPool, pSkill, __FILE__, __LINE__, 0);
+				D2_FREE_POOL(pUnit->pMemoryPool, pSkill);
 				pSkill = pNextSkill;
 			}
 
-			FOG_FreeServerMemory(pUnit->pMemoryPool, pSkillList, __FILE__, __LINE__, 0);
+			D2_FREE_POOL(pUnit->pMemoryPool, pSkillList);
 			pUnit->pSkills = NULL;
 		}
 	}
@@ -962,7 +956,7 @@ D2SkillStrc* __stdcall SKILLS_AddSkill(D2UnitStrc* pUnit, int nSkillId)
 			pSkill = UNITS_GetStartSkill(pUnit);
 			if (pSkill)
 			{
-				while (pSkill->pSkillsTxt != pSkillsTxtRecord || pSkill->nOwnerGUID != -1)
+				while (pSkill->pSkillsTxt != pSkillsTxtRecord || pSkill->nOwnerGUID != D2UnitInvalidGUID)
 				{
 					pSkill = pSkill->pNextSkill;
 					if (!pSkill)
@@ -992,8 +986,7 @@ D2SkillStrc* __stdcall SKILLS_AddSkill(D2UnitStrc* pUnit, int nSkillId)
 
 			if (pUnit->pSkills)
 			{
-				pSkill = (D2SkillStrc*)FOG_AllocServerMemory(pUnit->pSkills->pMemPool, sizeof(D2SkillStrc), __FILE__, __LINE__, 0);
-				memset(pSkill, 0x00, sizeof(D2SkillStrc));
+				pSkill = D2_CALLOC_STRC_POOL(pUnit->pSkills->pMemPool, D2SkillStrc);
 				pSkill->pSkillsTxt = pSkillsTxtRecord;
 
 				if (pUnit->dwUnitType == UNIT_MONSTER)
@@ -1040,7 +1033,7 @@ D2SkillStrc* __stdcall SKILLS_AddSkill(D2UnitStrc* pUnit, int nSkillId)
 }
 
 //D2Common.0x6FDB04D0 (#10953)
-void __stdcall SKILLS_AssignSkill(D2UnitStrc* pUnit, int nSkillId, int nSkillLevel, BOOL bRemove, char* szFile, int nLine)
+void __stdcall SKILLS_AssignSkill(D2UnitStrc* pUnit, int nSkillId, int nSkillLevel, BOOL bRemove, const char* szFile, int nLine)
 {
 	D2SkillStrc* pSkill = NULL;
 
@@ -1087,7 +1080,7 @@ void __stdcall SKILLS_AssignSkill(D2UnitStrc* pUnit, int nSkillId, int nSkillLev
 }
 
 //D2Common.0x6FDB05E0 (#10954)
-void __stdcall D2Common_10954(D2UnitStrc* pUnit, int nOwnerGUID, int nSkillId, int nSkillLevel, int nCharges, BOOL bFreeMemory)
+void __stdcall D2Common_10954(D2UnitStrc* pUnit, D2UnitGUID nOwnerGUID, int nSkillId, int nSkillLevel, int nCharges, BOOL bFreeMemory)
 {
 	D2SkillsTxt* pSkillsTxtRecord = NULL;
 	D2SkillListStrc* pSkillList = NULL;
@@ -1143,7 +1136,7 @@ void __stdcall D2Common_10954(D2UnitStrc* pUnit, int nOwnerGUID, int nSkillId, i
 							pSkillList->pFirstSkill = pSkill->pNextSkill;
 						}
 
-						FOG_FreeServerMemory(pUnit->pMemoryPool, pSkill, __FILE__, __LINE__, 0);
+						D2_FREE_POOL(pUnit->pMemoryPool, pSkill);
 					}
 				}
 				else
@@ -1167,8 +1160,7 @@ void __stdcall D2Common_10954(D2UnitStrc* pUnit, int nOwnerGUID, int nSkillId, i
 					}
 					else
 					{
-						pSkill = (D2SkillStrc*)FOG_AllocServerMemory(pSkillList->pMemPool, sizeof(D2SkillStrc), __FILE__, __LINE__, 0);
-						memset(pSkill, 0x00, sizeof(D2SkillStrc));
+						pSkill = D2_CALLOC_STRC_POOL(pSkillList->pMemPool, D2SkillStrc);
 						pSkill->pSkillsTxt = pSkillsTxtRecord;
 
 						switch (pSkillsTxtRecord->nAnim)
@@ -1206,7 +1198,7 @@ void __stdcall D2Common_10954(D2UnitStrc* pUnit, int nOwnerGUID, int nSkillId, i
 }
 
 //D2Common.0x6FDB08C0 (#10957)
-int __stdcall SKILLS_GetOwnerGUIDFromSkill(D2SkillStrc* pSkill)
+D2UnitGUID __stdcall SKILLS_GetOwnerGUIDFromSkill(D2SkillStrc* pSkill)
 {
 	D2_ASSERT(pSkill);
 
@@ -1214,11 +1206,11 @@ int __stdcall SKILLS_GetOwnerGUIDFromSkill(D2SkillStrc* pSkill)
 }
 
 //D2Common.0x6FDB08F0 (#10955)
-BOOL __stdcall SKILLS_GetSkillInfo(D2SkillStrc* pSkill, int* pOwnerGUID, int* pSkillId, int* pSkillLevel, int* pCharges)
+BOOL __stdcall SKILLS_GetSkillInfo(D2SkillStrc* pSkill, D2UnitGUID* pOwnerGUID, int* pSkillId, int* pSkillLevel, int* pCharges)
 {
 	D2_ASSERT(pSkill);
 
-	if (pSkill->nOwnerGUID == -1)
+	if (pSkill->nOwnerGUID == D2UnitInvalidGUID)
 	{
 		return FALSE;
 	}
@@ -1250,7 +1242,7 @@ BOOL __stdcall SKILLS_SetCharges(D2SkillStrc* pSkill, int nCharges)
 {
 	D2_ASSERT(pSkill);
 
-	if (pSkill->nOwnerGUID == -1)
+	if (pSkill->nOwnerGUID == D2UnitInvalidGUID)
 	{
 		return FALSE;
 	}
@@ -1262,19 +1254,14 @@ BOOL __stdcall SKILLS_SetCharges(D2SkillStrc* pSkill, int nCharges)
 }
 
 //D2Common.0x6FDB09A0 (#10961)
-void __stdcall SKILLS_SetLeftActiveSkill(D2UnitStrc* pUnit, int nSkillId, int nOwnerGUID)
+void __stdcall SKILLS_SetLeftActiveSkill(D2UnitStrc* pUnit, int nSkillId, D2UnitGUID nOwnerGUID)
 {
-	D2SkillsTxt* pSkillsTxtRecord = NULL;
-	D2SkillStrc* pSkill = NULL;
-	BOOL bSkillFound = FALSE;
-
-	pSkillsTxtRecord = DATATBLS_GetSkillsTxtRecord(nSkillId);
+	D2SkillsTxt* pSkillsTxtRecord = DATATBLS_GetSkillsTxtRecord(nSkillId);
 	D2_ASSERT(pSkillsTxtRecord);
 
-	pSkill = UNITS_GetStartSkill(pUnit);
-
-	if (pSkill)
+	if (D2SkillStrc* pSkill = UNITS_GetStartSkill(pUnit))
 	{
+		bool bSkillFound = false;
 		while (!bSkillFound)
 		{
 			if (pSkill->pSkillsTxt != pSkillsTxtRecord || pSkill->nOwnerGUID != nOwnerGUID)
@@ -1283,7 +1270,7 @@ void __stdcall SKILLS_SetLeftActiveSkill(D2UnitStrc* pUnit, int nSkillId, int nO
 			}
 			else
 			{
-				bSkillFound = TRUE;
+				bSkillFound = true;
 			}
 
 			if (!pSkill)
@@ -1301,7 +1288,7 @@ void __stdcall SKILLS_SetLeftActiveSkill(D2UnitStrc* pUnit, int nSkillId, int nO
 }
 
 //D2Common.0x6FDB0A30 (#10962)
-void __stdcall SKILLS_SetRightActiveSkill(D2UnitStrc* pUnit, int nSkillId, int nOwnerGUID)
+void __stdcall SKILLS_SetRightActiveSkill(D2UnitStrc* pUnit, int nSkillId, D2UnitGUID nOwnerGUID)
 {
 	D2SkillsTxt* pSkillsTxtRecord = NULL;
 	D2SkillStrc* pSkill = NULL;
@@ -1340,7 +1327,7 @@ void __stdcall SKILLS_SetRightActiveSkill(D2UnitStrc* pUnit, int nSkillId, int n
 }
 
 //D2Common.0x6FDB0AC0 (#10963)
-int __stdcall SKILLS_GetSkillIdFromSkill(D2SkillStrc* pSkill, char* szFile, int nLine)
+int __stdcall SKILLS_GetSkillIdFromSkill(D2SkillStrc* pSkill, const char* szFile, int nLine)
 {
 	if (pSkill)
 	{
@@ -1348,7 +1335,7 @@ int __stdcall SKILLS_GetSkillIdFromSkill(D2SkillStrc* pSkill, char* szFile, int 
 	}
 	else
 	{
-		FOG_WriteToLogFile("Null skill passed to SkillsGetType() from FILE:%s  LINE:%d", szFile, nLine);
+		FOG_Trace("Null skill passed to SkillsGetType() from FILE:%s  LINE:%d", szFile, nLine);
 		return 0;
 	}
 }
@@ -1457,7 +1444,7 @@ int __stdcall SKILLS_GetUseState(D2UnitStrc* pUnit, D2SkillStrc* pSkill)
 						}
 						else
 						{
-							bContinue = STATLIST_GetUnitStatSigned(pItem, STAT_ITEM_THROWABLE, 0);
+							bContinue = STATLIST_UnitGetItemStatOrSkillStatValue(pItem, STAT_ITEM_THROWABLE, 0);
 						}
 					}
 				}
@@ -1472,7 +1459,7 @@ int __stdcall SKILLS_GetUseState(D2UnitStrc* pUnit, D2SkillStrc* pSkill)
 					}
 					else
 					{
-						bContinue = STATLIST_GetUnitStatSigned(pItem, STAT_ITEM_THROWABLE, 0);
+						bContinue = STATLIST_UnitGetItemStatOrSkillStatValue(pItem, STAT_ITEM_THROWABLE, 0);
 					}
 				}
 			}
@@ -1503,13 +1490,13 @@ int __stdcall SKILLS_GetUseState(D2UnitStrc* pUnit, D2SkillStrc* pSkill)
 						}
 						else
 						{
-							bContinue = STATLIST_GetUnitStatSigned(pItem, STAT_ITEM_THROWABLE, 0);
+							bContinue = STATLIST_UnitGetItemStatOrSkillStatValue(pItem, STAT_ITEM_THROWABLE, 0);
 						}
 					}
 				}
 				else if (!ITEMS_CheckIfThrowable(pItem))
 				{
-					bContinue = STATLIST_GetUnitStatSigned(pItem, STAT_ITEM_THROWABLE, 0);
+					bContinue = STATLIST_UnitGetItemStatOrSkillStatValue(pItem, STAT_ITEM_THROWABLE, 0);
 				}
 			}
 
@@ -1629,7 +1616,7 @@ BOOL __fastcall D2Common_SKILLMANA_CheckStat_6FDB0F50(D2UnitStrc* pUnit, D2Skill
 
 	D2_ASSERT(pSkill);
 
-	if (pSkill->nOwnerGUID == -1)
+	if (pSkill->nOwnerGUID == D2UnitInvalidGUID)
 	{
 		nSkillLevel = SKILLS_GetSkillLevel(pUnit, pSkill, TRUE) - 1;
 		D2_ASSERT(pSkill->pSkillsTxt);
@@ -1642,7 +1629,7 @@ BOOL __fastcall D2Common_SKILLMANA_CheckStat_6FDB0F50(D2UnitStrc* pUnit, D2Skill
 		nRequiredMana = (pSkill->pSkillsTxt->wMana + nSkillLevel * pSkill->pSkillsTxt->wLevelMana) << pSkill->pSkillsTxt->nManaShift;
 		if (STATES_CheckState(pUnit, STATE_BLOOD_MANA))
 		{
-			return STATLIST_GetUnitStatUnsigned(pUnit, STAT_HITPOINTS, 0) >= nRequiredMana;
+			return STATLIST_UnitGetStatValue(pUnit, STAT_HITPOINTS, 0) >= nRequiredMana;
 		}
 		else
 		{
@@ -1652,7 +1639,7 @@ BOOL __fastcall D2Common_SKILLMANA_CheckStat_6FDB0F50(D2UnitStrc* pUnit, D2Skill
 			}
 			else
 			{
-				return STATLIST_GetUnitStatUnsigned(pUnit, STAT_MANA, 0) >= nRequiredMana;
+				return STATLIST_UnitGetStatValue(pUnit, STAT_MANA, 0) >= nRequiredMana;
 			}
 		}
 	}
@@ -1683,7 +1670,7 @@ BOOL __fastcall sub_6FDB1070(D2UnitStrc* pUnit, D2SkillStrc* pSkill)
 
 	if (pUnit && pSkill && pUnit->pInventory)
 	{
-		if (pSkill->nOwnerGUID != -1)
+		if (pSkill->nOwnerGUID != D2UnitInvalidGUID)
 		{
 			pItem = INVENTORY_GetFirstItem(pUnit->pInventory);
 
@@ -1711,7 +1698,7 @@ BOOL __fastcall sub_6FDB1070(D2UnitStrc* pUnit, D2SkillStrc* pSkill)
 					nSkillLevel = DATATBLS_GetMaxLevel(0);
 				}
 
-				return STATLIST_GetUnitStatUnsigned(pItem, STAT_ITEM_CHARGED_SKILL, (pSkill->pSkillsTxt->nSkillId << 6) + (nSkillLevel & 0x3F)) > 0;
+				return STATLIST_UnitGetStatValue(pItem, STAT_ITEM_CHARGED_SKILL, (pSkill->pSkillsTxt->nSkillId << 6) + (nSkillLevel & 0x3F)) > 0;
 			}
 		}
 
@@ -1799,7 +1786,7 @@ BOOL __fastcall sub_6FDB1130(D2UnitStrc* pItem, D2UnitStrc* pUnit, D2SkillsTxt* 
 				return TRUE;
 			}
 
-			if (!pSkillsTxtRecord->nSkillId && STATLIST_GetUnitStatSigned(pItem, STAT_ITEM_MAGICARROW, 0))
+			if (!pSkillsTxtRecord->nSkillId && STATLIST_UnitGetItemStatOrSkillStatValue(pItem, STAT_ITEM_MAGICARROW, 0))
 			{
 				return TRUE;
 			}
@@ -1809,7 +1796,7 @@ BOOL __fastcall sub_6FDB1130(D2UnitStrc* pItem, D2UnitStrc* pUnit, D2SkillsTxt* 
 				return FALSE;
 			}
 
-			if (!pSkillsTxtRecord->nSkillId && STATLIST_GetUnitStatSigned(pUnit, STAT_ITEM_MAGICARROW, 0))
+			if (!pSkillsTxtRecord->nSkillId && STATLIST_UnitGetItemStatOrSkillStatValue(pUnit, STAT_ITEM_MAGICARROW, 0))
 			{
 				return TRUE;
 			}
@@ -1819,7 +1806,7 @@ BOOL __fastcall sub_6FDB1130(D2UnitStrc* pItem, D2UnitStrc* pUnit, D2SkillsTxt* 
 				return TRUE;
 			}
 
-			if (STATLIST_GetUnitStatUnsigned(pUnit, STAT_QUANTITY, 0) <= 0)
+			if (STATLIST_UnitGetStatValue(pUnit, STAT_QUANTITY, 0) <= 0)
 			{
 				return FALSE;
 			}
@@ -1833,41 +1820,35 @@ BOOL __fastcall sub_6FDB1130(D2UnitStrc* pItem, D2UnitStrc* pUnit, D2SkillsTxt* 
 //TODO: Check name
 BOOL __fastcall D2Common_SKILLS_CheckShapeRestriction_6FDB1380(D2UnitStrc* pUnit, D2SkillStrc* pSkill)
 {
-	int nCounter = 0;
+	if (pUnit == nullptr || pSkill == nullptr || pSkill->pSkillsTxt == nullptr) {
+		return FALSE;
+	}
 
-	if (pUnit && pSkill)
+	D2SkillsTxt* pSkillsTxt = pSkill->pSkillsTxt;
+	if (pSkillsTxt->nRestrict == 0)
 	{
-		if (pSkill->pSkillsTxt)
+		return !STATES_CheckStateMaskRestrictOnUnit(pUnit, pSkill);
+	}
+
+	if (pSkillsTxt->nRestrict == 1 || pSkillsTxt->nRestrict != 2)
+	{
+		return TRUE;
+	}
+
+	if (!STATES_CheckStateMaskRestrictOnUnit(pUnit, pSkill))
+	{
+		return FALSE;
+	}
+
+	for (int i = 0; i < ARRAY_SIZE(pSkillsTxt->nState); ++i) {
+		if (pSkillsTxt->nState[i] < 0)
 		{
-			if (!pSkill->pSkillsTxt->nRestrict)
-			{
-				return STATES_CheckStateMaskRestrictOnUnit(pUnit, pSkill) == 0;
-			}
+			return FALSE;
+		}
 
-			if (pSkill->pSkillsTxt->nRestrict == 1 || pSkill->pSkillsTxt->nRestrict != 2)
-			{
-				return TRUE;
-			}
-
-			if (STATES_CheckStateMaskRestrictOnUnit(pUnit, pSkill))
-			{
-				nCounter = 0;
-				do
-				{
-					if (pSkill->pSkillsTxt->nState[nCounter] < 0)
-					{
-						break;
-					}
-
-					if (STATES_CheckState(pUnit, pSkill->pSkillsTxt->nState[nCounter]))
-					{
-						return TRUE;
-					}
-
-					++nCounter;
-				}
-				while (nCounter < 3);
-			}
+		if (STATES_CheckState(pUnit, pSkillsTxt->nState[i]))
+		{
+			return TRUE;
 		}
 	}
 
@@ -1879,7 +1860,7 @@ BOOL __fastcall D2Common_SKILLS_CheckShapeRestriction_6FDB1380(D2UnitStrc* pUnit
 BOOL __fastcall D2Common_SKILLMANA_CheckStartStat_6FDB1400(D2UnitStrc* pUnit, D2SkillStrc* pSkill)
 {
 	if (!pUnit || pUnit->dwUnitType != UNIT_PLAYER || pSkill->pSkillsTxt->wStartMana <= 0
-		|| STATLIST_GetUnitStatUnsigned(pUnit, STAT_MANA, 0) >= (int)pSkill->pSkillsTxt->wStartMana << 8 || STATES_CheckState(pUnit, STATE_INFERNO))
+		|| STATLIST_UnitGetStatValue(pUnit, STAT_MANA, 0) >= (int)pSkill->pSkillsTxt->wStartMana << 8 || STATES_CheckState(pUnit, STATE_INFERNO))
 	{
 		return TRUE;
 	}
@@ -1943,13 +1924,13 @@ int __fastcall SKILLS_GetBonusSkillLevel(D2UnitStrc* pUnit, D2SkillStrc* pSkill)
 		nSkillLevel += 2;
 	}
 
-	nSkillLevel += STATLIST_GetUnitStatUnsigned(pUnit, STAT_ITEM_ALLSKILLS, 0);
+	nSkillLevel += STATLIST_UnitGetStatValue(pUnit, STAT_ITEM_ALLSKILLS, 0);
 
 	if (pUnit && pUnit->dwUnitType == UNIT_PLAYER)
 	{
 		if (pSkill->pSkillsTxt->nCharClass == pUnit->dwClassId)
 		{
-			nSkillLevel += STATLIST_GetUnitStatUnsigned(pUnit, STAT_ITEM_ADDCLASSSKILLS, pUnit->dwClassId);
+			nSkillLevel += STATLIST_UnitGetStatValue(pUnit, STAT_ITEM_ADDCLASSSKILLS, pUnit->dwClassId);
 
 			pSkillsTxtRecord = &sgptDataTables->pSkillsTxt[pSkill->pSkillsTxt->nSkillId];
 			if (pSkillsTxtRecord)
@@ -1958,11 +1939,11 @@ int __fastcall SKILLS_GetBonusSkillLevel(D2UnitStrc* pUnit, D2SkillStrc* pSkill)
 
 				if (pSkillDescTxtRecord->nSkillPage)
 				{
-					nSkillLevel += STATLIST_GetUnitStatUnsigned(pUnit, STAT_ITEM_ADDSKILL_TAB, (char)pSkillDescTxtRecord->nSkillPage + 8 * pUnit->dwClassId - 1);
+					nSkillLevel += STATLIST_UnitGetStatValue(pUnit, STAT_ITEM_ADDSKILL_TAB, (char)pSkillDescTxtRecord->nSkillPage + 8 * pUnit->dwClassId - 1);
 				}
 			}
 
-			nBonus = STATLIST_GetUnitStatUnsigned(pUnit, STAT_ITEM_NONCLASSSKILL, pSkill->pSkillsTxt->nSkillId);
+			nBonus = STATLIST_UnitGetStatValue(pUnit, STAT_ITEM_NONCLASSSKILL, pSkill->pSkillsTxt->nSkillId);
 			if (nBonus > 3)
 			{
 				nBonus = 3;
@@ -1971,18 +1952,18 @@ int __fastcall SKILLS_GetBonusSkillLevel(D2UnitStrc* pUnit, D2SkillStrc* pSkill)
 		}
 		else
 		{
-			nSkillLevel += STATLIST_GetUnitStatUnsigned(pUnit, STAT_ITEM_NONCLASSSKILL, pSkill->pSkillsTxt->nSkillId);
+			nSkillLevel += STATLIST_UnitGetStatValue(pUnit, STAT_ITEM_NONCLASSSKILL, pSkill->pSkillsTxt->nSkillId);
 		}
 	}
 	else
 	{
 		if (pSkill->nSkillLevel <= 0)
 		{
-			nSkillLevel += STATLIST_GetUnitStatUnsigned(pUnit, STAT_ITEM_NONCLASSSKILL, pSkill->pSkillsTxt->nSkillId);
+			nSkillLevel += STATLIST_UnitGetStatValue(pUnit, STAT_ITEM_NONCLASSSKILL, pSkill->pSkillsTxt->nSkillId);
 		}
 		else
 		{
-			nBonus = STATLIST_GetUnitStatUnsigned(pUnit, STAT_ITEM_NONCLASSSKILL, pSkill->pSkillsTxt->nSkillId);
+			nBonus = STATLIST_UnitGetStatValue(pUnit, STAT_ITEM_NONCLASSSKILL, pSkill->pSkillsTxt->nSkillId);
 			if (nBonus)
 			{
 				if (nBonus > 3)
@@ -1996,10 +1977,10 @@ int __fastcall SKILLS_GetBonusSkillLevel(D2UnitStrc* pUnit, D2SkillStrc* pSkill)
 
 	if (pSkill->pSkillsTxt->nEType)
 	{
-		nSkillLevel += STATLIST_GetUnitStatUnsigned(pUnit, STAT_ITEM_ELEMSKILL, pSkill->pSkillsTxt->nEType);
+		nSkillLevel += STATLIST_UnitGetStatValue(pUnit, STAT_ITEM_ELEMSKILL, pSkill->pSkillsTxt->nEType);
 	}
 
-	return nSkillLevel + STATLIST_GetUnitStatUnsigned(pUnit, STAT_ITEM_SINGLESKILL, pSkill->pSkillsTxt->nSkillId);
+	return nSkillLevel + STATLIST_UnitGetStatValue(pUnit, STAT_ITEM_SINGLESKILL, pSkill->pSkillsTxt->nSkillId);
 }
 
 //D2Common.0x6FDB1700 (#10968)
@@ -2011,7 +1992,7 @@ int __stdcall SKILLS_GetSkillLevel(D2UnitStrc* pUnit, D2SkillStrc* pSkill, BOOL 
 	if (pUnit && pSkill)
 	{
 		nSkillLevel = pSkill->nSkillLevel;
-		if (bBonus && pSkill->nOwnerGUID == -1)
+		if (bBonus && pSkill->nOwnerGUID == D2UnitInvalidGUID)
 		{
 			nSkillLevel += SKILLS_GetBonusSkillLevel(pUnit, pSkill);
 		}
@@ -2043,12 +2024,12 @@ int __stdcall SKILLS_GetBonusSkillLevelFromSkillId(D2UnitStrc* pUnit, int nSkill
 	{
 		pSkill = pUnit->pSkills->pFirstSkill;
 
-		while (pSkill && (pSkill->pSkillsTxt->nSkillId != nSkillId || pSkill->nOwnerGUID != -1))
+		while (pSkill && (pSkill->pSkillsTxt->nSkillId != nSkillId || pSkill->nOwnerGUID != D2UnitInvalidGUID))
 		{
 			pSkill = pSkill->pNextSkill;
 		}
 
-		if (pSkill && pSkill->nOwnerGUID == -1)
+		if (pSkill && pSkill->nOwnerGUID == D2UnitInvalidGUID)
 		{
 			return SKILLS_GetBonusSkillLevel(pUnit, pSkill);
 		}
@@ -2081,7 +2062,7 @@ void __stdcall D2Common_11030(D2UnitStrc* pUnit, int nSkillId, int a3)
 			SKILLS_AssignSkill(pUnit, nSkillId, 0, 0, __FILE__, __LINE__);
 		}
 
-		if (pSkill->nOwnerGUID == -1)
+		if (pSkill->nOwnerGUID == D2UnitInvalidGUID)
 		{
 			pSkill->nLevelBonus = a3;
 			SKILLS_RefreshSkill(pUnit, nSkillId);
@@ -2110,7 +2091,7 @@ void __stdcall D2Common_11031(D2UnitStrc* pUnit, int nSkillId, int a3)
 		SKILLS_AssignSkill(pUnit, nSkillId, 0, 0, __FILE__, __LINE__);
 	}
 
-	if (pSkill->nOwnerGUID == -1)
+	if (pSkill->nOwnerGUID == D2UnitInvalidGUID)
 	{
 		pSkill->nLevelBonus += a3;
 		if (pSkill->nLevelBonus < 0)
@@ -2137,7 +2118,7 @@ int __stdcall SKILLS_GetSkillMode(D2SkillStrc* pSkill)
 		return pSkill->dwSkillMode;
 	}
 
-	REMOVE_LATER_WriteToLogFile("SKILLS_GetSkillMode: NULL pointer");
+	REMOVE_LATER_Trace("SKILLS_GetSkillMode: NULL pointer");
 	return 0;
 }
 
@@ -2262,7 +2243,7 @@ int __stdcall SKILLS_GetFlags(D2SkillStrc* pSkill)
 		return pSkill->dwFlags;
 	}
 
-	REMOVE_LATER_WriteToLogFile("SKILLS_GetFlags: NULL pointer");
+	REMOVE_LATER_Trace("SKILLS_GetFlags: NULL pointer");
 	return 0;
 }
 
@@ -2293,7 +2274,7 @@ int __stdcall SKILLS_GetRequiredLevelBasedOnCurrent(D2UnitStrc* pUnit, int nSkil
 		if (pUnit->pSkills)
 		{
 			pSkill = pUnit->pSkills->pFirstSkill;
-			while (pSkill && (pSkill->pSkillsTxt->nSkillId != nSkillId || pSkill->nOwnerGUID != -1))
+			while (pSkill && (pSkill->pSkillsTxt->nSkillId != nSkillId || pSkill->nOwnerGUID != D2UnitInvalidGUID))
 			{
 				pSkill = pSkill->pNextSkill;
 			}
@@ -2330,7 +2311,7 @@ BOOL __stdcall SKILLS_CheckRequiredSkills(D2UnitStrc* pUnit, int nSkillId)
 		return FALSE;
 	}
 
-	nLevel = STATLIST_GetUnitStatUnsigned(pUnit, STAT_LEVEL, 0);
+	nLevel = STATLIST_UnitGetStatValue(pUnit, STAT_LEVEL, 0);
 
 	nRequiredLevel = pSkillsTxtRecord->wReqLevel;
 
@@ -2379,7 +2360,7 @@ BOOL __stdcall SKILLS_CheckRequiredSkills(D2UnitStrc* pUnit, int nSkillId)
 }
 
 //D2Common.0x6FDB1F80
-D2SkillStrc* __fastcall SKILLS_GetSkill(D2UnitStrc* pUnit, int nSkillId, int nOwnerGUID)
+D2SkillStrc* __fastcall SKILLS_GetSkill(D2UnitStrc* pUnit, int nSkillId, D2UnitGUID nOwnerGUID)
 {
 	D2SkillStrc* pSkill = NULL;
 
@@ -2405,15 +2386,15 @@ BOOL __stdcall SKILLS_CheckRequiredAttributes(D2UnitStrc* pUnit, int nSkillId)
 
 	if (pSkillsTxtRecord && pSkillsTxtRecord->dwFlags[0] & gdwBitMasks[SKILLSFLAGINDEX_INGAME])
 	{
-		if (SKILLS_GetRequiredLevelBasedOnCurrent(pUnit, nSkillId) <= STATLIST_GetUnitStatUnsigned(pUnit, STAT_LEVEL, 0))
+		if (SKILLS_GetRequiredLevelBasedOnCurrent(pUnit, nSkillId) <= STATLIST_UnitGetStatValue(pUnit, STAT_LEVEL, 0))
 		{
-			if (pSkillsTxtRecord->wReqStr <= STATLIST_GetUnitStatUnsigned(pUnit, STAT_STRENGTH, 0))
+			if (pSkillsTxtRecord->wReqStr <= STATLIST_UnitGetStatValue(pUnit, STAT_STRENGTH, 0))
 			{
-				if (pSkillsTxtRecord->wReqDex <= STATLIST_GetUnitStatUnsigned(pUnit, STAT_DEXTERITY, 0))
+				if (pSkillsTxtRecord->wReqDex <= STATLIST_UnitGetStatValue(pUnit, STAT_DEXTERITY, 0))
 				{
-					if (pSkillsTxtRecord->wReqInt <= STATLIST_GetUnitStatUnsigned(pUnit, STAT_ENERGY, 0))
+					if (pSkillsTxtRecord->wReqInt <= STATLIST_UnitGetStatValue(pUnit, STAT_ENERGY, 0))
 					{
-						return pSkillsTxtRecord->wReqVit <= STATLIST_GetUnitStatUnsigned(pUnit, STAT_VITALITY, 0);
+						return pSkillsTxtRecord->wReqVit <= STATLIST_UnitGetStatValue(pUnit, STAT_VITALITY, 0);
 					}
 				}
 			}
@@ -2524,11 +2505,11 @@ int __stdcall SKILLS_GetMinPhysDamage(D2UnitStrc* pUnit, int nSkillId, int nSkil
 		{
 			if (!pUnit || pUnit->dwUnitType != UNIT_PLAYER)
 			{
-				nDamage = 3 * STATLIST_GetUnitStatUnsigned(pUnit, STAT_LEVEL, 0);
+				nDamage = 3 * STATLIST_UnitGetStatValue(pUnit, STAT_LEVEL, 0);
 			}
 			else
 			{
-				nDamage = STATLIST_GetUnitStatUnsigned(pUnit, STAT_DEXTERITY, 0) + STATLIST_GetUnitStatUnsigned(pUnit, STAT_STRENGTH, 0) - 20;
+				nDamage = STATLIST_UnitGetStatValue(pUnit, STAT_DEXTERITY, 0) + STATLIST_UnitGetStatValue(pUnit, STAT_STRENGTH, 0) - 20;
 			}
 
 			if (nDamage < 1)
@@ -2549,7 +2530,7 @@ int __stdcall SKILLS_GetMinPhysDamage(D2UnitStrc* pUnit, int nSkillId, int nSkil
 				}
 				else
 				{
-					nMinDamage = STATLIST_GetUnitStatUnsigned(pUnit, STAT_MINDAMAGE, 0) * pSkillsTxtRecord->nSrcDam;
+					nMinDamage = STATLIST_UnitGetStatValue(pUnit, STAT_MINDAMAGE, 0) * pSkillsTxtRecord->nSrcDam;
 				}
 
 				nDamage = ((int)nMinDamage) >> 7;
@@ -2591,11 +2572,11 @@ int __stdcall SKILLS_GetMaxPhysDamage(D2UnitStrc* pUnit, int nSkillId, int nSkil
 		{
 			if (!pUnit || pUnit->dwUnitType != UNIT_PLAYER)
 			{
-				nDamage = 3 * STATLIST_GetUnitStatUnsigned(pUnit, STAT_LEVEL, 0);
+				nDamage = 3 * STATLIST_UnitGetStatValue(pUnit, STAT_LEVEL, 0);
 			}
 			else
 			{
-				nDamage = STATLIST_GetUnitStatUnsigned(pUnit, STAT_DEXTERITY, 0) + STATLIST_GetUnitStatUnsigned(pUnit, STAT_STRENGTH, 0) - 20;
+				nDamage = STATLIST_UnitGetStatValue(pUnit, STAT_DEXTERITY, 0) + STATLIST_UnitGetStatValue(pUnit, STAT_STRENGTH, 0) - 20;
 			}
 
 			if (nDamage < 1)
@@ -2616,7 +2597,7 @@ int __stdcall SKILLS_GetMaxPhysDamage(D2UnitStrc* pUnit, int nSkillId, int nSkil
 				}
 				else
 				{
-					nMaxDamage = STATLIST_GetUnitStatUnsigned(pUnit, STAT_MAXDAMAGE, 0) * pSkillsTxtRecord->nSrcDam;
+					nMaxDamage = STATLIST_UnitGetStatValue(pUnit, STAT_MAXDAMAGE, 0) * pSkillsTxtRecord->nSrcDam;
 				}
 
 				nDamage = ((int)nMaxDamage) >> 7;
@@ -2683,7 +2664,7 @@ int __fastcall SKILLS_CalculateMasteryBonus(D2UnitStrc* pUnit, int nElemType, in
 	switch (nElemType)
 	{
 	case ELEMTYPE_FIRE:
-		nPercentage = STATLIST_GetUnitStatUnsigned(pUnit, STAT_PASSIVE_FIRE_MASTERY, 0);
+		nPercentage = STATLIST_UnitGetStatValue(pUnit, STAT_PASSIVE_FIRE_MASTERY, 0);
 		if (!nPercentage)
 		{
 			return 0;
@@ -2691,7 +2672,7 @@ int __fastcall SKILLS_CalculateMasteryBonus(D2UnitStrc* pUnit, int nElemType, in
 
 		return nSrcDamage * nPercentage / 100;
 	case ELEMTYPE_LTNG:
-		nPercentage = STATLIST_GetUnitStatUnsigned(pUnit, STAT_PASSIVE_LTNG_MASTERY, 0);
+		nPercentage = STATLIST_UnitGetStatValue(pUnit, STAT_PASSIVE_LTNG_MASTERY, 0);
 		if (!nPercentage)
 		{
 			return 0;
@@ -2700,7 +2681,7 @@ int __fastcall SKILLS_CalculateMasteryBonus(D2UnitStrc* pUnit, int nElemType, in
 		return nSrcDamage * nPercentage / 100;
 	case ELEMTYPE_COLD:
 	case ELEMTYPE_FREEZE:
-		nPercentage = STATLIST_GetUnitStatUnsigned(pUnit, STAT_PASSIVE_COLD_MASTERY, 0);
+		nPercentage = STATLIST_UnitGetStatValue(pUnit, STAT_PASSIVE_COLD_MASTERY, 0);
 		if (!nPercentage)
 		{
 			return 0;
@@ -2708,7 +2689,7 @@ int __fastcall SKILLS_CalculateMasteryBonus(D2UnitStrc* pUnit, int nElemType, in
 
 		return nSrcDamage * nPercentage / 100;
 	case ELEMTYPE_POIS:
-		nPercentage = STATLIST_GetUnitStatUnsigned(pUnit, STAT_PASSIVE_POIS_MASTERY, 0);
+		nPercentage = STATLIST_UnitGetStatValue(pUnit, STAT_PASSIVE_POIS_MASTERY, 0);
 		if (!nPercentage)
 		{
 			return 0;
@@ -2757,6 +2738,7 @@ int __stdcall SKILLS_GetMaxElemDamage(D2UnitStrc* pUnit, int nSkillId, int nSkil
 //D2Common.0x6FDB2CA0 (#11006)
 int __stdcall SKILLS_GetElementalLength(D2UnitStrc* pUnit, int nSkillId, int nSkillLevel, BOOL bUnused)
 {
+	D2_MAYBE_UNUSED(bUnused);
 	D2SkillsTxt* pSkillsTxtRecord = NULL;
 	int nLength = 0;
 	int nBonus = 0;
@@ -2802,7 +2784,7 @@ int __stdcall SKILLS_GetElementalLength(D2UnitStrc* pUnit, int nSkillId, int nSk
 //D2Common.0x6FDB2E70 (#11239)
 int __stdcall SKILLS_Return0(int arg)
 {
-	REMOVE_LATER_WriteToLogFile("SKILLS_Return0: Useless");
+	REMOVE_LATER_Trace("SKILLS_Return0: Useless");
 	return 0;
 }
 
@@ -2845,92 +2827,82 @@ void __stdcall SKILLS_SetQuantity(D2SkillStrc* pSkill, int nQuantity)
 }
 
 //D2Common.0x6FDB2FA0 (#11014)
-int __stdcall D2Common_11014(int nArrayIndex, int nMonsterId)
+int __stdcall D2Common_11014_ConvertShapeShiftedMode(int nArrayIndex, int nMonsterId)
 {
-	D2MonStats2Txt* pMonStats2TxtRecord = NULL;
-	int nMode = 0;
-
-	nMode = dword_6FDD2BD8[nArrayIndex];
+	int nMode = dword_6FDD2BD8[nArrayIndex];
+	
 	while (1)
 	{
-		pMonStats2TxtRecord = UNITS_GetMonStats2TxtRecordFromMonsterId(nMonsterId);
-		if (pMonStats2TxtRecord && pMonStats2TxtRecord->dwModeFlags & gdwBitMasks[nMode])
+		D2MonStats2Txt* pMonStats2TxtRecord = UNITS_GetMonStats2TxtRecordFromMonsterId(nMonsterId);
+		if (pMonStats2TxtRecord && (pMonStats2TxtRecord->dwModeFlags & gdwBitMasks[nMode]))
 		{
 			return nMode;
 		}
 
 		switch (nMode)
 		{
-		case 15:
-			nMode = 2;
+		case MONMODE_NEUTRAL:
+			return nMode;
+		case MONMODE_ATTACK2:
+		case MONMODE_CAST:
+			nMode = MONMODE_ATTACK1;
 			continue;
-		case 9:
-		case 10:
-		case 11:
-			nMode = 8;
+		case MONMODE_BLOCK:
+			nMode = MONMODE_GETHIT;
 			continue;
-		case 5:
-		case 7:
-			nMode = 4;
+		case MONMODE_SKILL2:
+		case MONMODE_SKILL3:
+		case MONMODE_SKILL4:
+			nMode = MONMODE_SKILL1;
 			continue;
-		case 6:
-			nMode = 3;
+		case MONMODE_RUN:
+			nMode = MONMODE_WALK;
 			continue;
 		default:
-			nMode = 1;
+			nMode = MONMODE_NEUTRAL;
 			continue;
-		case 1:
-			return nMode;
 		}
 	}
 }
 
 //D2Common.0x6FDB30A0 (#11013)
-void __stdcall D2COMMON_11013_ConvertMode(D2UnitStrc* pUnit, int* pType, int* pClass, int* pMode, char* szFile, int nLine)
+void __stdcall D2COMMON_11013_ConvertMode(D2UnitStrc* pUnit, int* pType, int* pClass, int* pMode, const char* szFile, int nLine)
 {
-	D2MonStats2Txt* pMonStats2TxtRecord = NULL;
-	D2StatesTxt* pStatesTxtRecord = NULL;
-	int nMonsterId = 0;
-	int nCounter = 0;
-	int nState = 0;
-	int nMode = 0;
-
-	if (!pUnit || !(pUnit->dwFlagEx & UNITFLAGEX_ISSHAPESHIFTED) || sgptDataTables->nTransformStates <= 0)
+	if (!(pUnit && (pUnit->dwFlagEx & UNITFLAGEX_ISSHAPESHIFTED) && sgptDataTables->nTransformStates > 0))
 	{
 		return;
 	}
 
+	D2StatesTxt* pStatesTxtRecord = NULL;
+	int nCounter = 0;
 	while (1)
 	{
-		nState = sgptDataTables->pTransformStates[nCounter];
-		if (STATES_CheckState(pUnit, nState) && nState >= 0 && nState < sgptDataTables->nStatesTxtRecordCount)
+		int nState = sgptDataTables->pTransformStates[nCounter];
+		if (STATES_CheckState(pUnit, nState) && (0 <= nState && nState < sgptDataTables->nStatesTxtRecordCount))
 		{
 			pStatesTxtRecord = &sgptDataTables->pStatesTxt[nState];
-			if (pStatesTxtRecord)
+			if (pStatesTxtRecord->nGfxType == 1)
 			{
-				if (pStatesTxtRecord->nGfxType == 1)
-				{
-					break;
-				}
+				break;
+			}
+			
+			if (pStatesTxtRecord->nGfxType == 2)
+			{
+				*pType = UNIT_PLAYER;
+				*pClass = pStatesTxtRecord->wGfxClass;
 
-				if (pStatesTxtRecord->nGfxType == 2)
+				if (pUnit->dwUnitType == UNIT_MONSTER)
 				{
-					*pType = UNIT_PLAYER;
-					*pClass = pStatesTxtRecord->wGfxClass;
-
-					if (pUnit->dwUnitType == UNIT_MONSTER)
+					if (pStatesTxtRecord->wGfxClass == 6 && *pMode == 4)
 					{
-						if (pStatesTxtRecord->wGfxClass != 6 || *pMode != 4)
-						{
-							*pMode = dword_6FDD2B98[*pMode];
-						}
-						else
-						{
-							*pMode = 12;
-						}
+						*pMode = 12;
 					}
-					return;
+					else
+					{
+						*pMode = dword_6FDD2B98[*pMode];
+					}
 				}
+				return;
 			}
 		}
 
@@ -2942,47 +2914,12 @@ void __stdcall D2COMMON_11013_ConvertMode(D2UnitStrc* pUnit, int* pType, int* pC
 	}
 
 	*pType = UNIT_MONSTER;
-	nMonsterId = pStatesTxtRecord->wGfxClass;
+	int nMonsterId = pStatesTxtRecord->wGfxClass;
 	*pClass = nMonsterId;
 
 	if (pUnit->dwUnitType == UNIT_PLAYER)
 	{
-		nMode = dword_6FDD2BD8[*pMode];
-		while (1)
-		{
-			pMonStats2TxtRecord = UNITS_GetMonStats2TxtRecord(nMonsterId);
-			if (pMonStats2TxtRecord && pMonStats2TxtRecord->dwModeFlags & gdwBitMasks[nMode])
-			{
-				break;
-			}
-
-			switch (nMode)
-			{
-			case 15:
-				nMode = 2;
-				continue;
-			case 9:
-			case 10:
-			case 11:
-				nMode = 8;
-				continue;
-			case 5:
-			case 7:
-				nMode = 4;
-				continue;
-			case 6:
-				nMode = 3;
-				continue;
-			default:
-				nMode = 1;
-				continue;
-			case 1:
-				*pMode = nMode;
-				return;
-			}
-		}
-
-		*pMode = nMode;
+		*pMode = D2Common_11014_ConvertShapeShiftedMode(*pMode, nMonsterId);
 	}
 }
 
@@ -3138,7 +3075,7 @@ int __stdcall D2Common_11024(D2UnitStrc* pUnit, D2UnitStrc* pItem, D2SkillStrc* 
 		return 0;
 	}
 
-	for (int i = 0; i < D2Common_11270(pUnit, nStatId, pStat, ARRAY_SIZE(pStat)); ++i)
+	for (int i = 0; i < STATLIST_CopyStats(pUnit, nStatId, pStat, ARRAY_SIZE(pStat)); ++i)
 	{
 		if (ITEMS_CheckItemTypeId(pItem, pStat[i].nLayer) && pStat[i].nValue > nValue)
 		{
@@ -3190,7 +3127,7 @@ int __stdcall SKILLS_GetWeaponMasteryBonus(D2UnitStrc* pUnit, D2UnitStrc* pItem,
 			}
 
 			nValue = 0;
-			for (int i = 0; i < D2Common_11270(pUnit, nStatId, pStat, ARRAY_SIZE(pStat)); ++i)
+			for (int i = 0; i < STATLIST_CopyStats(pUnit, nStatId, pStat, ARRAY_SIZE(pStat)); ++i)
 			{
 				if (ITEMS_CheckItemTypeId(pItem, pStat[i].nLayer))
 				{
@@ -3260,7 +3197,7 @@ BOOL __stdcall D2Common_11025(int nX1, int nY1, int nX2, int nY2, D2RoomStrc* pR
 	pCoords2.nX = nX2;
 	pCoords2.nY = nY2;
 
-	return D2Common_11263(pRoom, &pCoords1, &pCoords2, a6) == 0;
+	return COLLISION_RayTrace(pRoom, &pCoords1, &pCoords2, a6) == 0;
 }
 
 //D2Common.0x6FDB3960 (#11026)
@@ -3274,7 +3211,7 @@ BOOL __stdcall D2Common_11026(int nX, int nY, D2UnitStrc* pUnit, int a4)
 	
 	UNITS_GetCoords(pUnit, &pCoords2);
 
-	return D2Common_11263(UNITS_GetRoom(pUnit), &pCoords1, &pCoords2, a4) == 0;
+	return COLLISION_RayTrace(UNITS_GetRoom(pUnit), &pCoords1, &pCoords2, a4) == 0;
 }
 
 //D2Common.0x6FDB3A10 (#11027)
@@ -3351,7 +3288,7 @@ int __stdcall D2COMMON_11036_GetMonCurseResistanceSubtraction(int nLevel, int nS
 }
 
 //D2Common.0x6FDB3CB0 (#11037)
-BOOL __stdcall D2Common_11037(D2UnitStrc* pUnit1, D2UnitStrc* pUnit2, int* pX, int* pY)
+BOOL __stdcall SKILLS_CheckIfCanLeapTo(D2UnitStrc* pUnit1, D2UnitStrc* pUnit2, int* pX, int* pY)
 {
 	D2RoomStrc* pRoom = NULL;
 	int nDivisor = 0;
@@ -3386,19 +3323,19 @@ BOOL __stdcall D2Common_11037(D2UnitStrc* pUnit1, D2UnitStrc* pUnit2, int* pX, i
 		pRoom = UNITS_GetRoom(pUnit1);
 		D2_ASSERT(pRoom);
 
-		if (COLLISION_CheckMaskWithPattern2(pRoom, pCoord.nX, pCoord.nY, PATH_GetUnitCollisionPattern(pUnit1), 0x1C09))
+		if (COLLISION_CheckAnyCollisionWithPattern(pRoom, pCoord.nX, pCoord.nY, PATH_GetUnitCollisionPattern(pUnit1), COLLIDE_MASK_WALKING_UNIT))
 		{
 			pCoord.nX = pCoords2.nX;
 			pCoord.nY = pCoords2.nY;
 
-			pRoom = COLLISION_GetFreeCoordinates(pRoom, &pCoord, UNITS_GetUnitSizeX(pUnit1), 0x1C09, 0);
+			pRoom = COLLISION_GetFreeCoordinates(pRoom, &pCoord, UNITS_GetUnitSizeX(pUnit1), COLLIDE_MASK_WALKING_UNIT, 0);
 			if (!pRoom)
 			{
 				return FALSE;
 			}
 		}
 		
-		if (!D2Common_11263(pRoom, &pCoords1, &pCoord, 0x804))
+		if (!COLLISION_RayTrace(pRoom, &pCoords1, &pCoord, COLLIDE_DOOR | COLLIDE_WALL))
 		{
 			*pX = pCoord.nX;
 			*pY = pCoord.nY;
@@ -3432,7 +3369,7 @@ int __stdcall D2COMMON_11039_CheckWeaponIsMissileBased(D2UnitStrc* pUnit, int* p
 
 	if (pUnit->dwUnitType != UNIT_PLAYER)
 	{
-		nValue = STATLIST_GetUnitStatSigned(pUnit, STAT_ITEM_MAGICARROW, 0);
+		nValue = STATLIST_UnitGetItemStatOrSkillStatValue(pUnit, STAT_ITEM_MAGICARROW, 0);
 		if (nValue > 0)
 		{
 			if (pValue)
@@ -3442,7 +3379,7 @@ int __stdcall D2COMMON_11039_CheckWeaponIsMissileBased(D2UnitStrc* pUnit, int* p
 			return 27;
 		}
 
-		nValue = STATLIST_GetUnitStatSigned(pUnit, STAT_ITEM_EXPLOSIVEARROW, 0);
+		nValue = STATLIST_UnitGetItemStatOrSkillStatValue(pUnit, STAT_ITEM_EXPLOSIVEARROW, 0);
 		if (nValue > 0)
 		{
 			if (pValue)
@@ -3459,7 +3396,7 @@ int __stdcall D2COMMON_11039_CheckWeaponIsMissileBased(D2UnitStrc* pUnit, int* p
 		nWeaponClass = UNITS_GetWeaponClass(pUnit);
 		if (nWeaponClass == WEAPONCLASS_BOW)
 		{
-			nValue = STATLIST_GetUnitStatSigned(pUnit, STAT_ITEM_MAGICARROW, 0);
+			nValue = STATLIST_UnitGetItemStatOrSkillStatValue(pUnit, STAT_ITEM_MAGICARROW, 0);
 			if (nValue > 0)
 			{
 				if (pValue)
@@ -3469,7 +3406,7 @@ int __stdcall D2COMMON_11039_CheckWeaponIsMissileBased(D2UnitStrc* pUnit, int* p
 				return 27;
 			}
 
-			nValue = STATLIST_GetUnitStatSigned(pUnit, STAT_ITEM_EXPLOSIVEARROW, 0);
+			nValue = STATLIST_UnitGetItemStatOrSkillStatValue(pUnit, STAT_ITEM_EXPLOSIVEARROW, 0);
 			if (nValue > 0)
 			{
 				if (pValue)
@@ -3483,7 +3420,7 @@ int __stdcall D2COMMON_11039_CheckWeaponIsMissileBased(D2UnitStrc* pUnit, int* p
 		}
 		else if (nWeaponClass == WEAPONCLASS_XBW)
 		{
-			nValue = STATLIST_GetUnitStatSigned(pUnit, STAT_ITEM_MAGICARROW, 0);
+			nValue = STATLIST_UnitGetItemStatOrSkillStatValue(pUnit, STAT_ITEM_MAGICARROW, 0);
 			if (nValue > 0)
 			{
 				if (pValue)
@@ -3493,7 +3430,7 @@ int __stdcall D2COMMON_11039_CheckWeaponIsMissileBased(D2UnitStrc* pUnit, int* p
 				return 27;
 			}
 
-			nValue = STATLIST_GetUnitStatSigned(pUnit, STAT_ITEM_EXPLOSIVEARROW, 0);
+			nValue = STATLIST_UnitGetItemStatOrSkillStatValue(pUnit, STAT_ITEM_EXPLOSIVEARROW, 0);
 			if (nValue > 0)
 			{
 				if (pValue)
@@ -3554,7 +3491,7 @@ BOOL __stdcall SKILLS_RemoveTransformStatesFromShapeshiftedUnit(D2UnitStrc* pUni
 //D2Common.0x6FDB4100 (#11041)
 int __stdcall SKILLS_GetClassSkillId(int nClassId, int nPosition)
 {
-	if (nClassId >= 0 && nClassId < 7 && nPosition >= 0 && nPosition < sgptDataTables->nClassSkillCount[nClassId])
+	if (nClassId >= 0 && nClassId < NUMBER_OF_PLAYERCLASSES && nPosition >= 0 && nPosition < sgptDataTables->nClassSkillCount[nClassId])
 	{
 		return sgptDataTables->nClassSkillList[nPosition + nClassId * sgptDataTables->nHighestClassSkillCount];
 	}
@@ -3594,7 +3531,7 @@ int __stdcall D2Common_11043(D2UnitStrc* pUnit)
 		}
 	}
 
-	return (pUnit->dwFrameCount & 0xFFFFFF00) / nAttackSpeed;
+	return (pUnit->dwFrameCountPrecise & 0xFFFFFF00) / nAttackSpeed;
 }
 
 //D2Common.0x6FDB41D0 (#11047)
@@ -3635,7 +3572,7 @@ void __stdcall SKILLS_CalculateKickDamage(D2UnitStrc* pUnit, int* pMinDamage, in
 
 	if (pUnit)
 	{
-		nKickDamage = STATLIST_GetUnitStatSigned(pUnit, STAT_ITEM_KICKDAMAGE, 0);
+		nKickDamage = STATLIST_UnitGetItemStatOrSkillStatValue(pUnit, STAT_ITEM_KICKDAMAGE, 0);
 		*pMinDamage += nKickDamage;
 		*pMaxDamage += nKickDamage;
 
@@ -3678,16 +3615,16 @@ void __stdcall SKILLS_CalculateKickDamage(D2UnitStrc* pUnit, int* pMinDamage, in
 					nStrBonus = ITEMS_GetStrengthBonus(pBoots);
 					if (nStrBonus)
 					{
-						nDamagePercent += nStrBonus * STATLIST_GetUnitStatUnsigned(pUnit, STAT_STRENGTH, 0) / 100;
+						nDamagePercent += nStrBonus * STATLIST_UnitGetStatValue(pUnit, STAT_STRENGTH, 0) / 100;
 					}
 
 					nDexBonus = ITEMS_GetDexBonus(pBoots);
 					if (nDexBonus)
 					{
-						nDamagePercent += nDexBonus * STATLIST_GetUnitStatUnsigned(pUnit, STAT_DEXTERITY, 0) / 100;
+						nDamagePercent += nDexBonus * STATLIST_UnitGetStatValue(pUnit, STAT_DEXTERITY, 0) / 100;
 					}
 
-					nDamagePercent += STATLIST_GetUnitStatUnsigned(pUnit, STAT_DAMAGEPERCENT, 0);
+					nDamagePercent += STATLIST_UnitGetStatValue(pUnit, STAT_DAMAGEPERCENT, 0);
 					if (nDamagePercent <= -90)
 					{
 						nDamagePercent = -90;
@@ -3698,7 +3635,7 @@ void __stdcall SKILLS_CalculateKickDamage(D2UnitStrc* pUnit, int* pMinDamage, in
 						nMaxDamage = nMinDamage;
 					}
 
-					*pDamagePercent += STATLIST_GetUnitStatUnsigned(pUnit, STAT_ITEM_MAXDAMAGE_PERCENT, 0) + nDamagePercent;
+					*pDamagePercent += STATLIST_UnitGetStatValue(pUnit, STAT_ITEM_MAXDAMAGE_PERCENT, 0) + nDamagePercent;
 					*pMinDamage += nMinDamage;
 					*pMaxDamage += nMaxDamage;
 				}

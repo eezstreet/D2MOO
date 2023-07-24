@@ -25,8 +25,8 @@ struct D2ObjectsTxt
 	uint8_t nSelectable[8];					//0xC4
 	uint8_t nTrapProb;						//0xCC
 	uint8_t pad0xCD[3];						//0xCD
-	uint32_t dwSizeX;						//0xD0
-	uint32_t dwSizeY;						//0xD4
+	int32_t dwSizeX;						//0xD0
+	int32_t dwSizeY;						//0xD4
 	uint32_t dwFrameCnt[8];					//0xD8
 	uint16_t wFrameDelta[8];				//0xF8
 	uint8_t nCycleAnim[8];					//0x108
@@ -140,7 +140,7 @@ struct D2ShrinesTxt
 //D2Common.0x6FD6FDF0
 void __fastcall DATATBLS_LoadObjectsTxt(void* pMemPool);
 //D2Common.0x6FD718F0 (#10626)
-D2ObjectsTxt* __stdcall DATATBLS_GetObjectsTxtRecord(int nObjectId);
+D2COMMON_DLL_DECL D2ObjectsTxt* __stdcall DATATBLS_GetObjectsTxtRecord(int nObjectId);
 //D2Common.0x6FD71960
 void __fastcall DATATBLS_UnloadObjectsTxt();
 //D2Common.0x6FD71980
@@ -148,13 +148,13 @@ void __fastcall DATATBLS_UnloadObjGroupTxt();
 //D2Common.0x6FD719A0
 void __fastcall DATATBLS_LoadObjGroupTxt(void* pMemPool);
 //D2Common.0x6FD71E00 (#10627)
-D2ObjGroupTxt* __stdcall DATATBLS_GetObjGroupTxtRecord(int nId);
+D2COMMON_DLL_DECL D2ObjGroupTxt* __stdcall DATATBLS_GetObjGroupTxtRecord(int nId);
 //D2Common.0x6FD71E30
 void __fastcall DATATBLS_LoadShrinesTxt(void* pMemPool);
 //D2Common.0x6FD72000 (#10624)
-D2ShrinesTxt* __stdcall DATATBLS_GetShrinesTxtRecord(int nShrineId);
+D2COMMON_DLL_DECL D2ShrinesTxt* __stdcall DATATBLS_GetShrinesTxtRecord(int nShrineId);
 //D2Common.0x6FD72070 (#10625)
-int __stdcall DATATBLS_GetShrinesTxtRecordCount();
+D2COMMON_DLL_DECL int __stdcall DATATBLS_GetShrinesTxtRecordCount();
 //D2Common.0x6FD72080
 void __fastcall DATATBLS_UnloadShrinesTxt();
 

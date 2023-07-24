@@ -2,6 +2,8 @@
 
 #include "CommonDefinitions.h"
 
+struct D2DrlgLevelStrc;
+
 #pragma pack(1)
 
 
@@ -22,7 +24,7 @@ void __fastcall DRLGOUTSIEGE_AddACt5SecondaryBorder(D2DrlgLevelStrc* pLevel);
 //D2Common.0x6FD84780
 int __fastcall sub_6FD84780(D2DrlgLevelStrc* pLevel, int nStyle, int a3);
 //D2Common.0x6FD84820
-BOOL __fastcall sub_6FD84820(D2DrlgLevelStrc* pLevel, int a2, int a3, int a4, int a5, unsigned int a6);
+BOOL __fastcall sub_6FD84820(D2DrlgLevelStrc* pLevel, int nX, int nY, int a4, int a5, unsigned int a6);
 //D2Common.0x6FD84870
 void __fastcall DRLGOUTSIEGE_PlaceSpecialPresets(D2DrlgLevelStrc* pLevel);
 //D2Common.0x6FD84910

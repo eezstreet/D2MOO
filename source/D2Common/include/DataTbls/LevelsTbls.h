@@ -1,14 +1,35 @@
 #pragma once 
 
 #include <D2BasicTypes.h>
+#include <Drlg/D2DrlgDrlg.h>
 #include <Drlg/D2DrlgDrlgGrid.h>
 
 #pragma pack(1)
 
+enum D2C_LevelSubstitutionType
+{
+	LVLSUBTYPE_None = -1,
+	LVLSUBTYPE_BORDER_CLIFFS = 0,
+	LVLSUBTYPE_BORDER_MIDDLE = 1,
+	LVLSUBTYPE_BORDER_CORNER = 2,
+	LVLSUBTYPE_BORDER_GENERAL = 3,
+	LVLSUBTYPE_BORDER_WILD_WAYPOINT = 4,
+	LVLSUBTYPE_BORDER_WILD_SHRINE = 5,
+	LVLSUBTYPE_BORDER_WILD_THEMES = 6,
+	LVLSUBTYPE_BORDER_DESERT_WAYPOINT = 7,
+	LVLSUBTYPE_BORDER_DESERT_SHRINE = 8,
+	LVLSUBTYPE_BORDER_DESERT_THEMES = 9,
+	LVLSUBTYPE_SIEGE_DIRT = 10,
+	LVLSUBTYPE_SIEGE_SNOW = 11,
+	LVLSUBTYPE_SIEGE_BARRICADE = 12,
+	LVLSUBTYPE_SIEGE_BROKEN_BARRICADE = 13,
+	LVLSUBTYPE_PREDEFINED_COUNT
+};
+
 struct D2AutomapTxt
 {
 	char szLevelName[16];				//0x00
-	char szTileName[8];					//0x10
+	char szTileName[8];					//0x10 Matches D2TileType
 	char nStyle;						//0x18
 	char nStartSequence;				//0x19
 	char nEndSequence;					//0x1A
@@ -25,7 +46,7 @@ struct D2AutomapRandStrc
 struct D2AutomapShortStrc
 {
 	uint32_t dwAutomapLevelType;		//0x00
-	uint32_t dwAutomapTileType;			//0x04
+	uint32_t dwAutomapTileType;			//0x04 See D2TileType
 	char nStyle;						//0x08
 	char nStartSequence;				//0x09
 	char nEndSequence;					//0x0A
@@ -46,7 +67,7 @@ struct D2LevelDefBin
 	uint32_t dwDepend;					//0x2C
 	uint32_t dwDrlgType;				//0x30
 	uint32_t dwLevelType;				//0x34
-	uint32_t dwSubType;					//0x38
+	uint32_t dwSubType;					//0x38 D2C_LevelSubstitutionType
 	uint32_t dwSubTheme;				//0x3C
 	uint32_t dwSubWaypoint;				//0x40
 	uint32_t dwSubShrine;				//0x44
@@ -150,20 +171,20 @@ struct D2LvlPrestTxt
 
 struct D2LvlSubTxt
 {
-	uint32_t dwType;						//0x00
+	uint32_t dwType;						//0x00 D2C_LevelSubstitutionType. Referenced as SubType in Levels.txt
 	char szFile[60];						//0x04
 	uint32_t dwCheckAll;					//0x40
-	uint32_t dwBordType;					//0x44
+	uint32_t dwBordType;					//0x44 Controls how often substituting tiles can work for border tiles. 0 = Substitute for 1 border in total. 1 = Substitute 1 for each cluster. Other = Allow to substitute for any border of the level.
 	uint32_t dwDt1Mask;						//0x48
-	uint32_t dwGridSize;					//0x4C
+	uint32_t dwGridSize;					//0x4C Size of a cluster for substituting tiles.
 	D2DrlgFileStrc* pDrlgFile;				//0x50
-	D2DrlgGridStrc pOrientationGrid[4];		//0x54
+	D2DrlgGridStrc pTileTypeGrid[4];		//0x54
 	D2DrlgGridStrc pWallGrid[4];			//0xA4
 	D2DrlgGridStrc pFloorGrid;				//0xF4
 	D2DrlgGridStrc pShadowGrid;				//0x108
-	uint32_t nProb[5];						//0x11C
-	int32_t nTrials[5];						//0x130
-	int32_t nMax[5];						//0x144
+	uint32_t nProb[5];						//0x11C Probability for each tile set to be used as substitutes.
+	int32_t nTrials[5];						//0x130 Number of attempts to substitute a tile. -1 for infinite attempts.
+	int32_t nMax[5];						//0x144 Maximum number of substitutions per tile.
 	uint32_t dwExpansion;					//0x158
 };
 
@@ -197,17 +218,17 @@ struct D2LvlWarpTxt
 //D2Common.0x6FD5EAE0
 void __fastcall DATATBLS_LoadLevelsTxt(void* pMemPool);
 //D2Common.0x6FD603C0 (#10631)
-D2LevelsTxt* __stdcall DATATBLS_GetLevelsTxtRecord(int nLevelId);
+D2COMMON_DLL_DECL D2LevelsTxt* __stdcall DATATBLS_GetLevelsTxtRecord(int nLevelId);
 //D2Common.0x6FD603F0 (#10632)
-uint8_t __stdcall DATATBLS_GetRainFromLevelsTxt(int nLevelId);
+D2COMMON_DLL_DECL uint8_t __stdcall DATATBLS_GetRainFromLevelsTxt(int nLevelId);
 //D2Common.0x6FD60430 (#10634)
-uint8_t __stdcall DATATBLS_GetNoPerFromLevelsTxt(int nLevelId);
+D2COMMON_DLL_DECL uint8_t __stdcall DATATBLS_GetNoPerFromLevelsTxt(int nLevelId);
 //D2Common.0x6FD60470 (#10633)
-uint8_t __stdcall DATATBLS_GetMudFromLevelsTxt(int nLevelId);
+D2COMMON_DLL_DECL uint8_t __stdcall DATATBLS_GetMudFromLevelsTxt(int nLevelId);
 //D2Common.0x6FD604B0
 void __fastcall DATATBLS_UnloadLevelsTxt();
 //D2Common.0x6FD604F0 (#11247)
-int __stdcall DATATBLS_GetMonsterLevelInArea(int nLevelId, uint8_t nDifficulty, BOOL bExpansion);
+D2COMMON_DLL_DECL int __stdcall DATATBLS_GetMonsterLevelInArea(int nLevelId, uint8_t nDifficulty, BOOL bExpansion);
 //D2Common.0x6FD60560
 int* __fastcall DATATBLS_GetPortalLevels(int* pnPortalLevels);
 //D2Common.0x6FD60570
@@ -215,23 +236,23 @@ void __fastcall DATATBLS_LoadLevelDefsBin(void* pMemPool);
 //D2Common.0x6FD60D60
 void __fastcall DATATBLS_UnloadLevelDefsBin();
 //D2Common.0x6FD60D90 (#10010)
-D2LevelDefBin* __fastcall DATATBLS_GetLevelDefRecord(int nLevelId);
+D2COMMON_DLL_DECL D2LevelDefBin* __fastcall DATATBLS_GetLevelDefRecord(int nLevelId);
 //D2Common.0x6FD60DC0
 void __fastcall DATATBLS_LoadLevelTypesTxt(void* pMemPool);
 //D2Common.0x6FD61450
 void __fastcall DATATBLS_UnloadLevelTypesTxt();
 //D2Common.0x6FD61460 (#10023)
-D2LvlTypesTxt* __stdcall DATATBLS_GetLevelTypesTxtRecord(int nLevelType);
+D2COMMON_DLL_DECL D2LvlTypesTxt* __stdcall DATATBLS_GetLevelTypesTxtRecord(int nLevelType);
 //D2Common.0x6FD614A0 (#11226)
-bool __stdcall DATATBLS_CheckActInLevelTypesTxt(int nLevelType, uint8_t nAct);
+D2COMMON_DLL_DECL bool __stdcall DATATBLS_CheckActInLevelTypesTxt(int nLevelType, uint8_t nAct);
 //D2Common.0x6FD61500 (#11227)
-void __stdcall DATATBLS_GetFileNameFromLevelTypeAndFileId(int nLevelType, int nFile, char* szFile);
+D2COMMON_DLL_DECL void __stdcall DATATBLS_GetFileNameFromLevelTypeAndFileId(int nLevelType, int nFile, char* szFile);
 //D2Common.0x6FD61570
 void __fastcall DATATBLS_LoadLvlPrestTxt(void* pMemPool, int a2);
 //D2Common.0x6FD61AD0
 void __fastcall DATATBLS_UnloadLvlPrestTxt();
 //D2Common.0x6FD61B50 (#10024)
-D2LvlPrestTxt* __stdcall DATATBLS_GetLvlPrestTxtRecord(int nId);
+D2COMMON_DLL_DECL D2LvlPrestTxt* __stdcall DATATBLS_GetLvlPrestTxtRecord(int nId);
 //D2Common.0x6FD61B80
 D2LvlPrestTxt* __fastcall DATATBLS_GetLvlPrestTxtRecordFromLevelId(int nLevelId);
 //D2Common.0x6FD61BC0
@@ -259,7 +280,7 @@ void __fastcall DATATBLS_FreeGlobalTileLibraryHash();
 //D2Common.0x6FD628C0
 void __fastcall DATATBLS_LoadAutomapTxt(void* pMemPool);
 //D2Common.0x6FD62D30 (#10011)
-int __fastcall DATATBLS_GetAutomapCellId(uint32_t dwAutomapLevelType, uint32_t dwAutomapTileType, int nStyle, int nSequence);
+D2COMMON_DLL_DECL int __fastcall DATATBLS_GetAutomapCellId(uint32_t dwAutomapLevelType, uint32_t dwAutomapTileType, int nStyle, int nSequence);
 //D2Common.0x6FD62E70
 void __fastcall DATATBLS_FreeAutomap();
 

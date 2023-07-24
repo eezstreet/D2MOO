@@ -14,10 +14,14 @@
 #include "Drlg/D2DrlgOutSiege.h"
 #include "Drlg/D2DrlgRoomTile.h"
 #include "Drlg/D2DrlgTileSub.h"
+#include "Drlg/D2DrlgPreset.h"
 #include "Path/PathMisc.h"
 #include "D2Seed.h"
 #include <assert.h>
 #include <DataTbls/LevelsIds.h>
+
+#include <cmath>
+#include <algorithm>
 
 int dword_6FDEA6FC;
 
@@ -48,6 +52,7 @@ static D2DrlgLinkStrc gAct2OutdoorDrlgLink[15] =
 {
 	{ sub_6FD81330, LEVEL_LUTGHOLEIN, -1, -1 },
 	{ sub_6FD81B30, LEVEL_ROCKYWASTE, 0, -1 },
+	{ sub_6FD81530, LEVEL_DRYHILLS, 1, -1 },
 	{ sub_6FD81530, LEVEL_FAROASIS, 2, -1 },
 	{ sub_6FD81530, LEVEL_LOSTCITY, 3, -1 },
 	{ sub_6FD81BF0, LEVEL_VALLEYOFSNAKES, 4, -1 },
@@ -209,74 +214,32 @@ struct D2UnkOutPlaceStrc12
 };
 #pragma pack()
 
-uint8_t byte_6FDCFB70[8] = { 0, 1, 2, 3, 0, 1, 1, 1 };
+uint8_t byte_6FDCFB70[4*4] = { 
+	0, 1, 2, 3,
+	0, 1, 1, 1,
+	3, 2, 1, 2,
+	0, 3, 2, 1,
+};
 
 char byte_6FDCFB80[] = { 1, 0, -1, 0 };
 char byte_6FDCFB84[] = { 0, 1, 0, -1 };
 
-//D2Common.0x6FD80750) --------------------------------------------------------
-//TODO: Finish
+//D2Common.0x6FD80750
 BOOL __fastcall sub_6FD80750(D2DrlgLevelStrc* pLevel, int nVertexId)
 {
-	int v18; // eax@7
-	D2UnkOutPlaceStrc12 *v21; // esi@15
-	int v23; // eax@18
-	int v24; // ebp@18
-	int v25; // ebx@18
-	D2UnkOutPlaceStrc12 *v28; // eax@22
-	signed int v29; // eax@27
-	int v30; // edx@29
-	int v31; // eax@29
-	int v32; // ecx@31
-	int v33; // edi@33
-	int v34; // eax@36
-	int v35; // ecx@36
-	int v36; // eax@37
-	char v37; // bl@38
-	uint8_t *v38; // ecx@38
-	int v39; // eax@39
-	char v40; // bl@41
-	uint8_t *v41; // ebp@41
-	int v42; // eax@41
-	D2UnkOutPlaceStrc12 *v50; // edi@51
-	void *v51; // edi@52
-	D2UnkOutPlaceStrc12 *v52; // ST3C_4@52
-	int v53; // eax@55
-	uint8_t *v54; // ecx@55
-	int v55; // ecx@57
-	int v58; // [sp+10h] [bp-8D08h]@14
-	int v64; // [sp+38h] [bp-8CE0h]@14
-	D2UnkOutPlaceStrc12 v66; // [sp+48h] [bp-8CD0h]@7
-	D2UnkOutPlaceStrc12 *v67; // [sp+70h] [bp-8CA8h]@14
-	D2UnkOutPlaceStrc12 v68[900]; // [sp+74h] [bp-8CA4h]@14
-	int v69; // [sp+8D14h] [bp-4h]@14
+	int nX1 = (pLevel->pOutdoors->pVertices[6 + nVertexId].nPosX - pLevel->nPosX) / 8;
+	int nY1 = (pLevel->pOutdoors->pVertices[6 + nVertexId].nPosY - pLevel->nPosY) / 8;
 
+	int nX2 = (pLevel->pOutdoors->pVertices[12 + nVertexId].nPosX - pLevel->nPosX) / 8;
+	int nY2 = (pLevel->pOutdoors->pVertices[12 + nVertexId].nPosY - pLevel->nPosY) / 8;
 
-	D2DrlgVertexStrc* pPreviousVertex = NULL;
-	D2DrlgVertexStrc* pDrlgVertex = NULL;
-	int nXDiff = 0;
-	int nYDiff = 0;
-	int nMin = 0;
-	int nMax = 0;
-	int nX1 = 0;
-	int nY1 = 0;
-	int nX2 = 0;
-	int nY2 = 0;
-
-
-	nX1 = (pLevel->pOutdoors->pVertices[6 + nVertexId].nPosX - pLevel->nPosX) / 8;
-	nY1 = (pLevel->pOutdoors->pVertices[6 + nVertexId].nPosY - pLevel->nPosY) / 8;
-
-	nX2 = (pLevel->pOutdoors->pVertices[12 + nVertexId].nPosX - pLevel->nPosX) / 8;
-	nY2 = (pLevel->pOutdoors->pVertices[12 + nVertexId].nPosY - pLevel->nPosY) / 8;
-
-	nXDiff = nX1 - nX2;
+	int nXDiff = nX1 - nX2;
 	if (nXDiff < 0)
 	{
 		nXDiff = -nXDiff;
 	}
 
-	nYDiff = nY1 - nY2;
+	int nYDiff = nY1 - nY2;
 	if (nYDiff < 0)
 	{
 		nYDiff = -nYDiff;
@@ -284,8 +247,10 @@ BOOL __fastcall sub_6FD80750(D2DrlgLevelStrc* pLevel, int nVertexId)
 
 	if (nXDiff + nYDiff >= 2)
 	{
-		v18 = sub_6FDAB750(nX1, nY1, nX2, nY2) / 2;
+		const int v18 = sub_6FDAB750(nX1, nY1, nX2, nY2) / 2;
 
+		int nMin = 0;
+		int nMax = 0;
 		if (nXDiff < nYDiff)
 		{
 			nMin = nXDiff;
@@ -297,58 +262,63 @@ BOOL __fastcall sub_6FD80750(D2DrlgLevelStrc* pLevel, int nVertexId)
 			nMax = nXDiff;
 		}
 
-		memset(v68, 0x00, sizeof(D2UnkOutPlaceStrc12));
+		D2UnkOutPlaceStrc12 tOutPlaceArray[900];
+		memset(tOutPlaceArray, 0x00, sizeof(D2UnkOutPlaceStrc12));
 
-		v66.field_0 = nMin + 2 * nMax;
-		v66.field_4 = v66.field_0;
-		v66.field_8 = 0;
-		v66.nX = nX1;
-		v66.nY = nY1;
-		v66.field_14 = -1;
-		v66.field_18 = byte_6FDCFB70;
-		v66.nIndex = v18 & 3;
-		v66.pNext = NULL;
-		v66.field_24 = NULL;
+		D2UnkOutPlaceStrc12 tInitOutPlace;
+		tInitOutPlace.field_0 = nMin + 2 * nMax;
+		tInitOutPlace.field_4 = tInitOutPlace.field_0;
+		tInitOutPlace.field_8 = 0;
+		tInitOutPlace.nX = nX1;
+		tInitOutPlace.nY = nY1;
+		tInitOutPlace.field_14 = -1;
+		tInitOutPlace.field_18 = byte_6FDCFB70;
+		tInitOutPlace.nIndex = v18 & 3;
+		tInitOutPlace.pNext = nullptr;
+		tInitOutPlace.field_24 = nullptr;
 
-		v58 = v66.field_4 + v66.field_4 / 2;
-		v64 = v58 + 35;
+		int v58 = tInitOutPlace.field_4 + tInitOutPlace.field_4 / 2;
+		int v64 = v58 + 35;
 
-		v67 = v68;
+		
+		D2UnkOutPlaceStrc12* pCurrentOutPlace = nullptr;
+		D2UnkOutPlaceStrc12* pNextOutPlace = tOutPlaceArray;
 
-		v69 = 1;
+		int nNextIdx = 1;
+		int v29 = 0;
 		while (1)
 		{
-			memcpy(v67, &v66, sizeof(D2UnkOutPlaceStrc12));
-			v21 = v67;
+			memcpy(pNextOutPlace, &tInitOutPlace, sizeof(D2UnkOutPlaceStrc12));
+			pCurrentOutPlace = pNextOutPlace;
 
 LABEL_16:
-			while (v21->nX != nX2 || v21->nY != nY2)
+			while (pCurrentOutPlace->nX != nX2 || pCurrentOutPlace->nY != nY2)
 			{
-				v23 = v21->nIndex;
-				v24 = v21->nX + byte_6FDCFB80[v23];
-				v25 = v21->nY + byte_6FDCFB84[v23];
-				if (v24 == nX2 && v25 == nY2)
+				const int nOffsetsIndex = pCurrentOutPlace->nIndex;
+				const int nTestCoordX = pCurrentOutPlace->nX + byte_6FDCFB80[nOffsetsIndex];
+				const int nTestCoordY = pCurrentOutPlace->nY + byte_6FDCFB84[nOffsetsIndex];
+				if (nTestCoordX == nX2 && nTestCoordY == nY2)
 				{
 LABEL_26:
-					if (v21->nX == v24 || (v29 = 3, v21->nY == v25))
+					if (pCurrentOutPlace->nX == nTestCoordX || (v29 = 3, pCurrentOutPlace->nY == nTestCoordY))
 					{
 						v29 = 2;
 					}
 
-					v30 = v29 + v21->field_8;
-					v31 = v24 - nX2;
+					int v30 = v29 + pCurrentOutPlace->field_8;
+					int v31 = nTestCoordX - nX2;
 					if (v31 < 0)
 					{
 						v31 = -v31;
 					}
 
-					v32 = v25 - nY2;
+					int v32 = nTestCoordY - nY2;
 					if (v32 < 0)
 					{
 						v32 = -v32;
 					}
 
-					v33 = v31;
+					int v33 = v31;
 					if (v31 >= v32)
 					{
 						v33 = v32;
@@ -358,90 +328,76 @@ LABEL_26:
 						}
 					}
 
-					v34 = v33 + 2 * v32;
-					v35 = v34 + v30;
+					int v34 = v33 + 2 * v32;
+					int v35 = v34 + v30;
 					if (v35 <= v58)
 					{
-						if (!v21->field_24)
+						if (!pCurrentOutPlace->field_24)
 						{
-							if (v69 == 900)
+							D2UnkOutPlaceStrc12* v50 = nullptr;
+							if(nNextIdx != 900)
 							{
-								v50 = 0;
-							}
-							else
-							{
-								v51 = &v68[v69];
-								v52 = &v68[v69];
-								++v69;
-								memset(v51, 0x00, sizeof(D2UnkOutPlaceStrc12));
-								v50 = v52;
-								v35 = v34 + v30;
+								++nNextIdx;
+								v50 = &tOutPlaceArray[nNextIdx];
+								memset(v50, 0x00, sizeof(D2UnkOutPlaceStrc12));
 							}
 
-							v21->field_24 = v50;
+							pCurrentOutPlace->field_24 = v50;
 							if (!v50)
 							{
-								v21 = 0;
+								pCurrentOutPlace = 0;
 								break;
 							}
-							v50->pNext = v21;
+							v50->pNext = pCurrentOutPlace;
 						}
 
-						v21 = v21->field_24;
+						pCurrentOutPlace = pCurrentOutPlace->field_24;
 
-						v21->field_0 = v35;
-						v21->field_8 = v30;
-						v21->field_4 = v34;
-						v21->field_14 = 0;
-						v53 = sub_6FDAB750(v24, v25, nX2, nY2) / 2;
-						v54 = &byte_6FDCFB70[4 * ((v21->pNext->nIndex - (uint8_t)v53) & 3)];
-						v21->field_18 = v54;
-						v21->nX = v24;
-						v21->nY = v25;
-						v21->nIndex = (v53 + *v54) & 3;
+						pCurrentOutPlace->field_0 = v35;
+						pCurrentOutPlace->field_8 = v30;
+						pCurrentOutPlace->field_4 = v34;
+						pCurrentOutPlace->field_14 = 0;
+						int v53 = sub_6FDAB750(nTestCoordX, nTestCoordY, nX2, nY2) / 2;
+						pCurrentOutPlace->field_18 = &byte_6FDCFB70[4 * ((pCurrentOutPlace->pNext->nIndex - (uint8_t)v53) & 3)];
+						pCurrentOutPlace->nX = nTestCoordX;
+						pCurrentOutPlace->nY = nTestCoordY;
+						pCurrentOutPlace->nIndex = (v53 + *pCurrentOutPlace->field_18) & 3;
 					}
 					else
 					{
-						v36 = v21->field_14;
-						if (v36 < 4)
+						if (pCurrentOutPlace->field_14 < 4)
 						{
-							v37 = v21->nIndex;
-							v38 = v21->field_18 + 1;
-							v21->field_18 = v38;
-							v21->nIndex = (v37 + *v38) & 3;
+							pCurrentOutPlace->field_18++;
+							pCurrentOutPlace->nIndex = (pCurrentOutPlace->nIndex + *pCurrentOutPlace->field_18) & 3;
 						}
 
-						v39 = v36 + 1;
-						v21->field_14 = v39;
-						if (v39 == 3)
+						pCurrentOutPlace->field_14++;
+						if (pCurrentOutPlace->field_14 == 3)
 						{
-							while (v21 != v67)
+							while (pCurrentOutPlace != pNextOutPlace)
 							{
-								v21 = v21->pNext;
-								v40 = v21->nIndex;
-								v41 = v21->field_18 + 1;
-								v21->field_18 = v41;
-								v21->nIndex = (v40 + *v41) & 3;
-								v42 = v21->field_14 + 1;
-								v21->field_14 = v42;
-								if (v42 != 3)
+								pCurrentOutPlace = pCurrentOutPlace->pNext;
+								pCurrentOutPlace->field_18++;
+								pCurrentOutPlace->nIndex = (pCurrentOutPlace->nIndex + *pCurrentOutPlace->field_18) & 3;
+								pCurrentOutPlace->field_14++;
+								if (pCurrentOutPlace->field_14 != 3)
 								{
 									goto LABEL_16;
 								}
 							}
-							v21 = 0;
+							pCurrentOutPlace = 0;
 							break;
 						}
 					}
 				}
 				else
 				{
-					if (DRLGROOM_AreXYInsideCoordinates(&pLevel->pOutdoors->pCoord, v24, v25))
+					if (DRLGROOM_AreXYInsideCoordinates(&pLevel->pOutdoors->pCoord, nTestCoordX, nTestCoordY))
 					{
-						if (!(DRLGGRID_GetGridFlags(&pLevel->pOutdoors->pGrid[2], v24, v25) & 0x200))
+						if (!(DRLGGRID_GetGridEntry(&pLevel->pOutdoors->pGrid[2], nTestCoordX, nTestCoordY) & 0x200))
 						{
-							v28 = v21;
-							while (v28->nX != v24 || v28->nY != v25)
+							D2UnkOutPlaceStrc12* v28 = pCurrentOutPlace;
+							while (v28->nX != nTestCoordX || v28->nY != nTestCoordY)
 							{
 								v28 = v28->pNext;
 								if (!v28)
@@ -452,57 +408,58 @@ LABEL_26:
 						}
 					}
 
-					if (v21->field_14 < 4)
+					if (pCurrentOutPlace->field_14 < 4)
 					{
-						++v21->field_18;
-						v21->nIndex = (v21->nIndex + *v21->field_18) & 3;
+						++pCurrentOutPlace->field_18;
+						pCurrentOutPlace->nIndex = (pCurrentOutPlace->nIndex + *pCurrentOutPlace->field_18) & 3;
 					}
 
-					++v21->field_14;
-					if (v21->field_14 == 3)
+					++pCurrentOutPlace->field_14;
+					if (pCurrentOutPlace->field_14 == 3)
 					{
-						while (v21 != v67)
+						while (pCurrentOutPlace != pNextOutPlace)
 						{
-							v21 = v21->pNext;
+							pCurrentOutPlace = pCurrentOutPlace->pNext;
 
-							++v21->field_18;
-							v21->nIndex = (v21->nIndex + *v21->field_18) & 3;
-							++v21->field_14;
-							if (v21->field_14 != 3)
+							++pCurrentOutPlace->field_18;
+							pCurrentOutPlace->nIndex = (pCurrentOutPlace->nIndex + *pCurrentOutPlace->field_18) & 3;
+							++pCurrentOutPlace->field_14;
+							if (pCurrentOutPlace->field_14 != 3)
 							{
 								goto LABEL_16;
 							}
 						}
 
-						v21 = 0;
+						pCurrentOutPlace = 0;
 						break;
 					}
 				}
 			}
 
-			v55 = v58 + 5;
 			v58 += 5;
-			if (v69 >= 900)
+			if (nNextIdx >= 900)
 			{
 				return 0;
 			}
 
-			v69 = 1;
-			if (v21)
+			nNextIdx = 1;
+			if (pCurrentOutPlace)
 			{
 				break;
 			}
 
-			if (v55 >= v64)
+			if (v58 >= v64)
 			{
 				return 0;
 			}
 		}
 
-		pPreviousVertex = NULL;
+		D2DrlgVertexStrc* pPreviousVertex = nullptr;
+		D2DrlgVertexStrc* pDrlgVertex = nullptr;
+		pPreviousVertex = nullptr;
 		do
 		{
-			if (pLevel->pOutdoors->unk0x68[nVertexId])
+			if (pLevel->pOutdoors->pPathStarts[nVertexId])
 			{
 				pDrlgVertex = DRLGVER_AllocVertex(pLevel->pDrlg->pMempool, 0);
 				pPreviousVertex->pNext = pDrlgVertex;
@@ -510,26 +467,26 @@ LABEL_26:
 			else
 			{
 				pDrlgVertex = DRLGVER_AllocVertex(pLevel->pDrlg->pMempool, 0);
-				pLevel->pOutdoors->unk0x68[nVertexId] = pDrlgVertex;
+				pLevel->pOutdoors->pPathStarts[nVertexId] = pDrlgVertex;
 			}
 
 			pPreviousVertex = pDrlgVertex;
-			pDrlgVertex->nPosX = v21->nX;
-			pDrlgVertex->nPosY = v21->nY;
+			pDrlgVertex->nPosX = pCurrentOutPlace->nX;
+			pDrlgVertex->nPosY = pCurrentOutPlace->nY;
 
-			v21 = v21->pNext;
+			pCurrentOutPlace = pCurrentOutPlace->pNext;
 		}
-		while (v21);
+		while (pCurrentOutPlace);
 	}
 	else
 	{
-		pLevel->pOutdoors->unk0x68[nVertexId] = DRLGVER_AllocVertex(pLevel->pDrlg->pMempool, 0);
-		pLevel->pOutdoors->unk0x68[nVertexId]->nPosX = nX1;
-		pLevel->pOutdoors->unk0x68[nVertexId]->nPosY = nY1;
+		pLevel->pOutdoors->pPathStarts[nVertexId] = DRLGVER_AllocVertex(pLevel->pDrlg->pMempool, 0);
+		pLevel->pOutdoors->pPathStarts[nVertexId]->nPosX = nX1;
+		pLevel->pOutdoors->pPathStarts[nVertexId]->nPosY = nY1;
 
-		pLevel->pOutdoors->unk0x68[nVertexId]->pNext = DRLGVER_AllocVertex(pLevel->pDrlg->pMempool, 0);
-		pLevel->pOutdoors->unk0x68[nVertexId]->pNext->nPosX = nX2;
-		pLevel->pOutdoors->unk0x68[nVertexId]->pNext->nPosY = nY2;
+		pLevel->pOutdoors->pPathStarts[nVertexId]->pNext = DRLGVER_AllocVertex(pLevel->pDrlg->pMempool, 0);
+		pLevel->pOutdoors->pPathStarts[nVertexId]->pNext->nPosX = nX2;
+		pLevel->pOutdoors->pPathStarts[nVertexId]->pNext->nPosY = nY2;
 	}
 
 	return TRUE;
@@ -585,7 +542,7 @@ static const D2C_LvlPrestIds levelPrestBorder[13][4] = {
 int __fastcall sub_6FD80BE0(int a1, int a2, int a3)
 {
 	const int lutIndex = a1 + 3 * a2 + 4;
-	assert(lutIndex >= 0 && lutIndex <= _countof(nBorderIndices));
+	assert(lutIndex >= 0 && lutIndex <= ARRAY_SIZE(nBorderIndices));
 	int nIndex = nBorderIndices[a1 + 3 * a2 + nBorderIndicesOffset_sub_6FD80BE0];
 
 	if (a3 < 4)
@@ -627,7 +584,7 @@ int __fastcall sub_6FD80C10(int a1, int a2, int a3, int a4, int a5)
 		a3 -= 2;
 	}
 	const int lutIndex = a2 + a1 + 9 * (a4 + a3) + nBorderIndicesOffset_sub_6FD80C10;
-	assert(lutIndex >= 0 && lutIndex <= _countof(nBorderIndices));
+	assert(lutIndex >= 0 && lutIndex <= ARRAY_SIZE(nBorderIndices));
 
 	v6 = nBorderIndices[lutIndex];
 
@@ -674,9 +631,9 @@ void __fastcall DRLGOUTPLACE_SetBlankBorderGridCells(D2DrlgLevelStrc* pLevel)
 		nOffsetX = nCoordinates[4 * k + 2];
 		nOffsetY = nCoordinates[4 * k + 3];
 
-		for (int j = nY; !(DRLGGRID_GetGridFlags(pDrlgGrid, nX, j) & 1); j += nOffsetY)
+		for (int j = nY; !(DRLGGRID_GetGridEntry(pDrlgGrid, nX, j) & 1); j += nOffsetY)
 		{
-			for (int i = nX; !(DRLGGRID_GetGridFlags(pDrlgGrid, i, j) & 1); i += nOffsetX)
+			for (int i = nX; !(DRLGGRID_GetGridEntry(pDrlgGrid, i, j) & 1); i += nOffsetX)
 			{
 				DRLGGRID_AlterGridFlag(pDrlgGrid, i, j, 256, FLAG_OPERATION_OR);
 			}
@@ -1494,7 +1451,7 @@ void __fastcall DRLGOUTPLACE_CreateLevelConnections(D2DrlgStrc* pDrlg, uint8_t n
 		pLevel->nWidth = pLevelDefBinRecord->dwSizeX[pDrlg->nDifficulty];
 		pLevel->nHeight = pLevelDefBinRecord->dwSizeY[pDrlg->nDifficulty];
 
-		pLevel = sub_6FD82820(pLevel);
+		pLevel = DRLG_GenerateJungles(pLevel);
 
 		nPosY = 0;
 		for (int i = LEVEL_LOWERKURAST; i <= LEVEL_TRAVINCAL; ++i)
@@ -1560,7 +1517,7 @@ BOOL __fastcall sub_6FD82050(D2DrlgLevelLinkDataStrc* pLevelLinkData, int nItera
 	{
 		if (i != nLevelLink)
 		{
-			if (!sub_6FD777B0(&pLevelLinkData->pLevelCoord[nIteration], &pLevelLinkData->pLevelCoord[i], 0))
+			if (!DRLG_ComputeRectanglesManhattanDistance(&pLevelLinkData->pLevelCoord[nIteration], &pLevelLinkData->pLevelCoord[i], 0))
 			{
 				return FALSE;
 			}
@@ -1598,7 +1555,7 @@ BOOL __fastcall sub_6FD82130(D2DrlgLevelLinkDataStrc* pLevelLinkData, int nItera
 
 	while (nCounter < nIteration)
 	{
-		if (nCounter != gAct1MonasteryDrlgLink[nIteration].nLevelLink && !sub_6FD777B0(&pLevelLinkData->pLevelCoord[nIteration], &pLevelLinkData->pLevelCoord[nCounter], 0))
+		if (nCounter != gAct1MonasteryDrlgLink[nIteration].nLevelLink && !DRLG_ComputeRectanglesManhattanDistance(&pLevelLinkData->pLevelCoord[nIteration], &pLevelLinkData->pLevelCoord[nCounter], 0))
 		{
 			return FALSE;
 		}
@@ -1612,7 +1569,7 @@ BOOL __fastcall sub_6FD82130(D2DrlgLevelLinkDataStrc* pLevelLinkData, int nItera
 		pLevelLinkData->pLevelCoord[0].nHeight += 200;
 		pLevelLinkData->pLevelCoord[0].nPosY -= 200;
 
-		bResult = sub_6FD777B0(pLevelLinkData->pLevelCoord, &pLevelLinkData->pLevelCoord[nCounter], 0);
+		bResult = DRLG_ComputeRectanglesManhattanDistance(pLevelLinkData->pLevelCoord, &pLevelLinkData->pLevelCoord[nCounter], 0);
 
 		pLevelLinkData->pLevelCoord[0].nHeight -= 200;
 		pLevelLinkData->pLevelCoord[0].nPosY += 200;
@@ -1628,7 +1585,7 @@ BOOL __fastcall DRLGOUTPLACE_LinkAct2Outdoors(D2DrlgLevelLinkDataStrc* pLevelLin
 
 	for (int i = 0; i < nIteration; ++i)
 	{
-		if (i != nLevelLink && !sub_6FD777B0(&pLevelLinkData->pLevelCoord[nIteration], &pLevelLinkData->pLevelCoord[i], 0))
+		if (i != nLevelLink && !DRLG_ComputeRectanglesManhattanDistance(&pLevelLinkData->pLevelCoord[nIteration], &pLevelLinkData->pLevelCoord[i], 0))
 		{
 			return FALSE;
 		}
@@ -1644,7 +1601,7 @@ BOOL __fastcall DRLGOUTPLACE_LinkAct2Canyon(D2DrlgLevelLinkDataStrc* pLevelLinkD
 
 	for (int i = 0; i < nIteration; ++i)
 	{
-		if (i != nLevelLink && !sub_6FD777B0(&pLevelLinkData->pLevelCoord[nIteration], &pLevelLinkData->pLevelCoord[i], 0))
+		if (i != nLevelLink && !DRLG_ComputeRectanglesManhattanDistance(&pLevelLinkData->pLevelCoord[nIteration], &pLevelLinkData->pLevelCoord[i], 0))
 		{
 			return FALSE;
 		}
@@ -1660,7 +1617,7 @@ BOOL __fastcall DRLGOUTPLACE_LinkAct4Outdoors(D2DrlgLevelLinkDataStrc* pLevelLin
 
 	for (int i = 0; i < nIteration; ++i)
 	{
-		if (i != nLevelLink && !sub_6FD777B0(&pLevelLinkData->pLevelCoord[nIteration], &pLevelLinkData->pLevelCoord[i], 0))
+		if (i != nLevelLink && !DRLG_ComputeRectanglesManhattanDistance(&pLevelLinkData->pLevelCoord[nIteration], &pLevelLinkData->pLevelCoord[i], 0))
 		{
 			return FALSE;
 		}
@@ -1676,7 +1633,7 @@ BOOL __fastcall DRLGOUTPLACE_LinkAct4ChaosSanctum(D2DrlgLevelLinkDataStrc* pLeve
 
 	for (int i = 0; i < nIteration; ++i)
 	{
-		if (i != nLevelLink && !sub_6FD777B0(&pLevelLinkData->pLevelCoord[nIteration], &pLevelLinkData->pLevelCoord[i], 0))
+		if (i != nLevelLink && !DRLG_ComputeRectanglesManhattanDistance(&pLevelLinkData->pLevelCoord[nIteration], &pLevelLinkData->pLevelCoord[i], 0))
 		{
 			return FALSE;
 		}
@@ -1917,972 +1874,653 @@ void __fastcall sub_6FD82750(D2DrlgStrc* pDrlg, int nStartId, int nEndId)
 }
 
 
-int dword_6FDD0828[] = { 0, 545, 546, 547, 548, 0, 549, 550, 0, 0, 551, 552, 553, 554, 0, 555, 0, 556, 0, 557, 558, 0, 0, 559, 0, 0, 0, 560, 561, 562, 563, 0, 0, 564, 565, 0, 566, 0, 567, 0, 0, 0, 568, 0, 569, 570, 0, 0, 0, 571, 0, 0, 572, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-int dword_6FDD0924[] = { 0, 575, 576, 577, 578, 579, 580, 0, 581, 582, 583, 0, 584, 0, 0, 0, 0 };
+//D2Common.0x6FDD0828
+static const D2C_LvlPrestIds gJunglePresets[] = {
+	LVLPREST_NONE, LVLPREST_ACT3_JUNGLE_W_E, LVLPREST_ACT3_JUNGLE_W_S, LVLPREST_ACT3_JUNGLE_W_N,
+	LVLPREST_ACT3_JUNGLE_E_W, LVLPREST_NONE, LVLPREST_ACT3_JUNGLE_E_S, LVLPREST_ACT3_JUNGLE_E_N,
+	LVLPREST_NONE, LVLPREST_NONE, LVLPREST_ACT3_JUNGLE_EW_S, LVLPREST_ACT3_JUNGLE_EW_N,
+	LVLPREST_ACT3_JUNGLE_S_W, LVLPREST_ACT3_JUNGLE_S_E, LVLPREST_NONE, LVLPREST_ACT3_JUNGLE_S_N,
+	LVLPREST_NONE, LVLPREST_ACT3_JUNGLE_SW_E, LVLPREST_NONE, LVLPREST_ACT3_JUNGLE_SW_N,
+	LVLPREST_ACT3_JUNGLE_SE_W, LVLPREST_NONE, LVLPREST_NONE, LVLPREST_ACT3_JUNGLE_SE_N,
+	LVLPREST_NONE, LVLPREST_NONE, LVLPREST_NONE, LVLPREST_ACT3_JUNGLE_SEW_N,
+	LVLPREST_ACT3_JUNGLE_N_W, LVLPREST_ACT3_JUNGLE_N_E, LVLPREST_ACT3_JUNGLE_N_S, LVLPREST_NONE,
+	LVLPREST_NONE, LVLPREST_ACT3_JUNGLE_NW_E, LVLPREST_ACT3_JUNGLE_NW_S, LVLPREST_NONE,
+	LVLPREST_ACT3_JUNGLE_NE_W, LVLPREST_NONE, LVLPREST_ACT3_JUNGLE_NE_S, LVLPREST_NONE,
+	LVLPREST_NONE, LVLPREST_NONE, LVLPREST_ACT3_JUNGLE_NEW_S, LVLPREST_NONE,
+	LVLPREST_ACT3_JUNGLE_NS_W, LVLPREST_ACT3_JUNGLE_NS_E, LVLPREST_NONE, LVLPREST_NONE,
+	LVLPREST_NONE, LVLPREST_ACT3_JUNGLE_NSW_E, LVLPREST_NONE, LVLPREST_NONE,
+	LVLPREST_ACT3_JUNGLE_NSE_W, LVLPREST_NONE, LVLPREST_NONE, LVLPREST_NONE,
+	LVLPREST_NONE, LVLPREST_NONE, LVLPREST_NONE, LVLPREST_NONE,
+};
+//D2Common.0x6FDD0924
+static const D2C_LvlPrestIds gSpiderForestPresets[] = {
+	LVLPREST_NONE, LVLPREST_ACT3_CLEARING_WEBBY_W, LVLPREST_ACT3_CLEARING_WEBBY_E, LVLPREST_ACT3_CLEARING_WEBBY_EW,
+	LVLPREST_ACT3_CLEARING_WEBBY_S, LVLPREST_ACT3_CLEARING_WEBBY_SW, LVLPREST_ACT3_CLEARING_WEBBY_SE, LVLPREST_NONE,
+	LVLPREST_ACT3_CLEARING_WEBBY_N, LVLPREST_ACT3_CLEARING_WEBBY_NW, LVLPREST_ACT3_CLEARING_WEBBY_NE, LVLPREST_NONE,
+	LVLPREST_ACT3_CLEARING_WEBBY_NS, LVLPREST_NONE, LVLPREST_NONE, LVLPREST_NONE,
+	LVLPREST_NONE,
+};
 
-////----- (6FD82820) --------------------------------------------------------
-////TODO: Finish
-//D2DrlgLevelStrc* __fastcall sub_6FD82820(D2DrlgLevelStrc* pLevel)
-//{
-//	D2LevelDefBin *pLevelDef; // eax@1
-//	unsigned int nBaseOn; // ebx@3
-//	int *v15; // edi@13
-//	int v16; // ecx@13
-//	bool v19; // zf@23
-//	signed int v20; // esi@27
-//	bool v21; // zf@27
-//	int v22; // eax@31
-//	int v23; // esi@31
-//	__int64 v32; // qax@44
-//	signed int v33; // ecx@44
-//	__int64 v34; // qax@44
-//	int v35; // edi@44
-//	int v37; // ebx@49
-//	int v38; // edi@51
-//	int v39; // eax@51
-//	int v40; // ebx@54
-//	int v41; // ecx@56
-//	int v42; // ebx@56
-//	bool v43; // sf@56
-//	signed int v44; // ebx@56
-//	int v45; // eax@61
-//	unsigned int v46; // ebp@66
-//	int v47; // ecx@67
-//	int m; // eax@67
-//	signed __int64 v49; // qax@71
-//	unsigned __int8 v50; // of@75
-//	int v51; // eax@77
-//	int v52; // edx@77
-//	int v53; // eax@77
-//	signed int v54; // edi@83
-//	int v59; // esi@89
-//	int n; // ecx@91
-//	int v61; // eax@93
-//	int v62; // ebp@103
-//	signed int v63; // ebx@104
-//	signed int v64; // edi@104
-//	int v65; // ecx@105
-//	signed int v66; // eax@105
-//	int v67; // eax@109
-//	signed int v68; // esi@109
-//	signed int v69; // edx@118
-//	int v70; // esi@120
-//	int v71; // ecx@143
-//	int v72; // eax@144
-//	int v73; // eax@148
-//	int v74; // eax@152
-//	int v75; // ecx@156
-//	int jj; // ecx@162
-//	int v77; // esi@165
-//	int v78; // eax@165
-//	int v79; // edx@165
-//	D2DrlgStrc *v80; // ecx@165
-//	int v81; // ebx@167
-//	int v82; // edi@167
-//	signed __int64 v83; // qax@167
-//	int v84; // ebp@167
-//	int v85; // eax@167
-//	signed int v86; // esi@168
-//	signed int v87; // edx@168
-//	int v88; // ecx@171
-//	signed int v89; // ecx@172
-//	int v90; // ecx@175
-//	signed int v91; // ecx@176
-//	signed int v92; // ecx@180
-//	signed int v93; // ecx@184
-//	D2DrlgStrc *v94; // ecx@189
-//	signed int v95; // edx@191
-//	signed int v96; // esi@191
-//	int v97; // ecx@194
-//	int v98; // ecx@197
-//	int v100; // esi@210
-//	int v102; // eax@212
-//	signed int v103; // edx@212
-//	signed int v104; // ecx@215
-//	signed int v105; // ecx@219
-//	signed int v106; // ecx@223
-//	signed int v107; // ecx@227
-//	int v108; // eax@234
-//	int v109; // eax@236
-//	int v110; // edx@236
-//	int v111; // eax@238
-//	int v112; // eax@240
-//	int v113; // edx@242
-//	int v114; // ebx@247
-//	void *v115; // ebp@247
-//	signed int *v116; // edi@249
-//	signed int v117; // eax@250
-//	int nPDef; // esi@250
-//	int v119; // eax@270
-//	int nCounter; // ecx@271
-//	int v123; // edx@272
-//	int v124; // eax@273
-//	bool bNotSorted; // ecx@280
-//	char *v126; // eax@280
-//	D2DrlgLevelStrc *pJungleLevel; // esi@286
-//	signed int v135; // [sp+44h] [bp-14Ch]@54
-//	int v136; // [sp+44h] [bp-14Ch]@88
-//	int ii; // [sp+44h] [bp-14Ch]@101
-//	int v138; // [sp+44h] [bp-14Ch]@163
-//	unsigned int pDrlgCoord2a; // [sp+48h] [bp-148h]@66
-//	int pDrlgCoord2b; // [sp+48h] [bp-148h]@88
-//	int pDrlgCoord2c; // [sp+48h] [bp-148h]@103
-//	int pDrlgCoord2d; // [sp+48h] [bp-148h]@165
-//	int nMaxX; // [sp+4Ch] [bp-144h]@1
-//	int nMaxXa; // [sp+4Ch] [bp-144h]@49
-//	D2UnkOutPlaceStrc **nMaxXb; // [sp+4Ch] [bp-144h]@57
-//	int nMaxXc; // [sp+4Ch] [bp-144h]@66
-//	unsigned int nMaxXd; // [sp+4Ch] [bp-144h]@84
-//	int nMaxXe; // [sp+4Ch] [bp-144h]@103
-//	int nMaxXf; // [sp+4Ch] [bp-144h]@167
-//	int v151; // [sp+50h] [bp-140h]@31
-//	int v152; // [sp+54h] [bp-13Ch]@54
-//	int v153; // [sp+54h] [bp-13Ch]@102
-//	int v154; // [sp+54h] [bp-13Ch]@164
-//	int v155; // [sp+58h] [bp-138h]@44
-//	int v156; // [sp+58h] [bp-138h]@103
-//	int v157; // [sp+58h] [bp-138h]@165
-//	int nSizeY; // [sp+5Ch] [bp-134h]@1
-//	int nSizeYa; // [sp+5Ch] [bp-134h]@44
-//	signed int nSizeYb; // [sp+5Ch] [bp-134h]@104
-//	int nSizeYc; // [sp+5Ch] [bp-134h]@165
-//	int *v163; // [sp+60h] [bp-130h]@31
-//	int *pFree; // [sp+64h] [bp-12Ch]@31
-//	int pDrlgCoord; // [sp+68h] [bp-128h]@47
-//	int pDrlgCoorda; // [sp+68h] [bp-128h]@103
-//	int pDrlgCoordb; // [sp+68h] [bp-128h]@167
-//	signed int v169; // [sp+6Ch] [bp-124h]@7
-//	int v170; // [sp+6Ch] [bp-124h]@32
-//	signed int v171; // [sp+70h] [bp-120h]@45
-//	int v172; // [sp+70h] [bp-120h]@104
-//	int *v173; // [sp+74h] [bp-11Ch]@31
-//	D2DrlgStrc *pDrlg; // [sp+78h] [bp-118h]@1
-//	int v175; // [sp+7Ch] [bp-114h]@1
-//	int *v176; // [sp+80h] [bp-110h]@31
-//	int v179; // [sp+88h] [bp-108h]@1
-//	int nMaxY; // [sp+8Ch] [bp-104h]@1
-//	int v181; // [sp+8Ch] [bp-104h]@69
-//	int v182; // [sp+8Ch] [bp-104h]@103
-//	int nSizeX; // [sp+90h] [bp-100h]@1
-//	int nSizeXa; // [sp+90h] [bp-100h]@103
-//	int v185; // [sp+94h] [bp-FCh]@44
-//	int v186; // [sp+94h] [bp-FCh]@103
-//	int nMinX; // [sp+98h] [bp-F8h]@1
-//	int nMinY; // [sp+9Ch] [bp-F4h]@1
-//	D2UnkOutPlaceStrc pJungles[3] = {};
-//	D2UnkOutPlaceStrc pTmp = {};
-//
-//	pLevelDef = DATATBLS_GetLevelDefRecord(LEVEL_SPIDERFOREST);
-//	pDrlg = pLevel->pDrlg;
-//	nSizeY = pLevelDef->dwSizeY[pLevel->pDrlg->nDifficulty];
-//	nSizeX = pLevelDef->dwSizeX[pLevel->pDrlg->nDifficulty];
-//	v179 = nSizeX / 32;
-//	v175 = nSizeY / 32;
-//	nMinX = pLevel->nPosX;
-//	nMaxY = pLevel->nPosY;
-//	nMinY = nMaxY - nSizeY;
-//	nMaxX = nSizeX + nMinX;
-//
-//	sub_6FD83970(&pLevel->pLevelCoords, pJungles, 0, nSizeX, nSizeY);
-//
-//	for (int i = 1; i < 3; ++i)
-//	{
-//		nBaseOn = SEED_RollLimitedRandomNumber(&pDrlg->pSeed, i);
-//
-//		sub_6FD83970(&pJungles[nBaseOn].pDrlgCoord, &pJungles[i], (unsigned int)SEED_RollRandomNumber(&pDrlg->pSeed) % 5, nSizeX, nSizeY);
-//
-//		v169 = 0;
-//		while (1)
-//		{
-//			if (!sub_6FD777B0(&pJungles[v169].pDrlgCoord, &pJungles[i].pDrlgCoord, 0))
-//			{
-//				break;
-//			}
-//
-//			++v169;
-//			if (v169 >= i)
-//			{
-//				goto LABEL_13;
-//			}
-//		}
-//		if (v169 < i)
-//		{
-//			continue;
-//		}
-//
-//LABEL_13:
-//		pJungles[nBaseOn].field_1C[pJungles[nBaseOn].nBranch] = &pJungles[i];
-//
-//		pJungles[i].field_18 = &pJungles[nBaseOn];
-//		++pJungles[nBaseOn].nBranch;
-//
-//		if (pJungles[nBaseOn].nBranch > 3)
-//		{
-//			FOG_10025("ptJungle[nBaseOn].nBranch <= JUNGLE_MAX_ATTACH", "C:\\projects\\D2\\head\\Diablo2\\Source\\D2Common\\DRLG\\OutPlace.cpp", 1570);
-//		}
-//
-//		if (nMinX > pJungles[i].pDrlgCoord.nPosX)
-//		{
-//			nMinX = pJungles[i].pDrlgCoord.nPosX;
-//		}
-//
-//		if (nMinY > pJungles[i].pDrlgCoord.nPosY)
-//		{
-//			nMinY = pJungles[i].pDrlgCoord.nPosY;
-//		}
-//
-//		if (nMaxX < pJungles[i].pDrlgCoord.nWidth + pJungles[i].pDrlgCoord.nPosX)
-//		{
-//			nMaxX = pJungles[i].pDrlgCoord.nWidth + pJungles[i].pDrlgCoord.nPosX;
-//		}
-//	}
-//
-//	v19 = ((nMaxX - nMinX) & 0x8000001F) == 0;
-//	if (((nMaxX - nMinX) & 0x8000001F) < 0)
-//	{
-//		v19 = ((((nMaxX - nMinX) & 0x8000001F) - 1) | 0xFFFFFFE0) == -1;
-//	}
-//
-//	if (!v19)
-//	{
-//		FOG_10025("(nMaxX - nMinX) % nPreset == 0", "C:\\projects\\D2\\head\\Diablo2\\Source\\D2Common\\DRLG\\OutPlace.cpp", 1585);
-//	}
-//
-//	v20 = nMaxY - nMinY;
-//	v21 = ((nMaxY - nMinY) & 0x8000001F) == 0;
-//	if (((nMaxY - nMinY) & 0x8000001F) < 0)
-//	{
-//		v21 = ((((nMaxY - nMinY) & 0x8000001F) - 1) | 0xFFFFFFE0) == -1;
-//	}
-//
-//	if (!v21)
-//	{
-//		FOG_10025("(nMaxY - nMinY) % nPreset == 0", "C:\\projects\\D2\\head\\Diablo2\\Source\\D2Common\\DRLG\\OutPlace.cpp", 1586);
-//	}
-//
-//	v22 = v20 / 32 + 2;
-//	v151 = (nMaxX - nMinX) / 32 + 2;
-//	v23 = 4 * v151 * v22;
-//
-//	pFree = (int*)FOG_AllocServerMemory(pLevel->pDrlg->pMempool, v23, "C:\\projects\\D2\\head\\Diablo2\\Source\\D2Common\\DRLG\\OutPlace.cpp", 1596, 0);
-//	v176 = (int*)FOG_AllocServerMemory(pLevel->pDrlg->pMempool, v23, "C:\\projects\\D2\\head\\Diablo2\\Source\\D2Common\\DRLG\\OutPlace.cpp", 1597, 0);
-//	v173 = (int*)FOG_AllocServerMemory(pLevel->pDrlg->pMempool, v23, "C:\\projects\\D2\\head\\Diablo2\\Source\\D2Common\\DRLG\\OutPlace.cpp", 1598, 0);
-//	v163 = (int*)FOG_AllocServerMemory(pLevel->pDrlg->pMempool, v23, "C:\\projects\\D2\\head\\Diablo2\\Source\\D2Common\\DRLG\\OutPlace.cpp", 1599, 0);
-//
-//LABEL_32:
-//	memset(pFree, 0, v23);
-//	memset(v176, 0, v23);
-//	memset(v173, 0, v23);
-//	memset(v163, 0, v23);
-//
-////	v170 = 0;
-////	do
-////	{
-////		v185 = v170;
-////		v32 = pJungles[v170].pDrlgCoord.nPosX - nMinX;
-////		v33 = (BYTE4(v32) & 0x1F) + v32;
-////		v34 = pJungles[v170].pDrlgCoord.nPosY - nMinY;
-////		nSizeYa = (v33 >> 5) + 1;
-////		v35 = (((BYTE4(v34) & 0x1F) + (signed int)v34) >> 5) + 1;
-////		pJungles[v170].field_28 = nSizeYa;
-////		v155 = v35;
-////		pJungles[v170].field_2C = v35;
-////		pJungles[v170].pJungleDefs = (int*)FOG_AllocServerMemory(pLevel->pDrlg->pMempool, 4 * v179 * v175, "C:\\projects\\D2\\head\\Diablo2\\Source\\D2Common\\DRLG\\OutPlace.cpp", 1619, 0);
-////		if (v170)
-////		{
-////			v171 = pJungles[v170].field_10 % 2 == 1;
-////		}
-////		else
-////		{
-////			v171 = SEED_RollRandomNumber(&pDrlg->pSeed) & 1;
-////		}
-////
-////		pDrlgCoord = v35 + v175 - 1;
-////		do
-////		{
-////			if (v175 > 0)
-////			{
-////				nMaxXa = v175;
-////				v37 = (int)((char *)v176 + 4 * (nSizeYa + v151 * v155));
-////				do
-////				{
-////					if (v179 > 0)
-////					{
-////						v38 = v179;
-////						v39 = v37;
-////						do
-////						{
-////							*(_DWORD *)(pFree - v176 + v39) = v170 + 1;
-////							*(_DWORD *)v39 = 0;
-////							*(_DWORD *)(v173 - v176 + v39) = 0;
-////							*(_DWORD *)(v163 - v176 + v39) = 0;
-////							v39 += 4;
-////							--v38;
-////						}
-////						while (v38);
-////					}
-////					v37 += 4 * v151;
-////					--nMaxXa;
-////				}
-////				while (nMaxXa);
-////			}
-////
-////			v40 = nSizeYa + v171;
-////			v135 = pDrlgCoord;
-////			v152 = nSizeYa + v171;
-////			if (v170)
-////			{
-////				*((_DWORD *)v173 + pDrlgCoord * v151 + v40) = 1;
-////				*((_DWORD *)v173 + v40 + pDrlgCoord * v151 + 2 * (v171 == 0) - 1) = 2;
-////			}
-////
-////			v41 = 0;
-////			v42 = pJungles[v185].nBranch;
-////			v19 = v42 == 0;
-////			v43 = v42 < 0;
-////			v44 = v155;
-////			if (!(v43 | v19))
-////			{
-////				nMaxXb = pJungles[v185].field_1C;
-////				do
-////				{
-////					switch ((*nMaxXb)->field_10)
-////					{
-////					case 0:
-////						*((_DWORD *)v173 + nSizeYa + v151 * v155) = 1;
-////						break;
-////					case 1:
-////						*((_DWORD *)v173 + nSizeYa + v151 * (v155 + 3)) = 1;
-////						break;
-////					case 2:
-////						v45 = v155 + 3;
-////						*((_DWORD *)v173 + nSizeYa + v151 * v45 + 1) = 1;
-////						break;
-////					case 3:
-////						*((_DWORD *)v173 + nSizeYa + v151 * (v155 + 1)) = 1;
-////						break;
-////					case 4:
-////						v45 = v155 + 1;
-////						*((_DWORD *)v173 + nSizeYa + v151 * v45 + 1) = 1;
-////						break;
-////					default:
-////						break;
-////					}
-////					++v41;
-////					++nMaxXb;
-////				}
-////				while (v41 < pJungles[v185].nBranch);
-////			}
-////
-////			v46 = v170 != 0;
-////			pDrlgCoord2a = v170 != 0;
-////			nMaxXc = 0;
-////			if (pDrlgCoord >= v155)
-////			{
-////				v47 = pDrlgCoord * v151;
-////				for (m = 20 * (5 * v170 + 5); ; m = v181)
-////				{
-////					*((_DWORD *)v176 + v47 + v152) = m;
-////					v181 = m + 1;
-////					if (!nMaxXc
-////						|| v135 == v44
-////						|| (v49 = pDrlg->pSeed.nHighSeed + 1791398085i64 * pDrlg->pSeed.nLowSeed, *(_QWORD *)&pDrlg->pSeed.nLowSeed = v49, v44 = v155, (unsigned int)v49 % 3))
-////					{
-////						v46 = pDrlgCoord2a;
-////						v50 = __OFSUB__(nMaxXc + 1, 2);
-////						v43 = nMaxXc++ - 1 < 0;
-////						if (!(v43 ^ v50))
-////						{
-////							if (v135 > 1)
-////							{
-////								v51 = v152 + v47 + 2 * (v171 == 0) - 1;
-////								v52 = *((_DWORD *)v173 + v51);
-////								v53 = (int)((char *)v173 + 4 * v51);
-////								if (!v52)
-////								{
-////									v46 = pDrlgCoord2a + 1;
-////									*(_DWORD *)v53 = 2;
-////									++pDrlgCoord2a;
-////								}
-////							}
-////						}
-////						v47 -= v151;
-////						--v135;
-////					}
-////					else
-////					{
-////						v46 = pDrlgCoord2a;
-////						nMaxXc = 0;
-////						if (v171)
-////						{
-////							v171 = 0;
-////							--v152;
-////						}
-////						else
-////						{
-////							v171 = 1;
-////							++v152;
-////						}
-////					}
-////					if (v135 < v44)
-////						break;
-////				}
-////			}
-////		}
-////		while ((signed int)v46 < 2);
-////
-////		while ((signed int)v46 > 3)
-////		{
-////			v54 = 0;
-////			nMaxXd = SEED_RollLimitedRandomNumber(&pDrlg->pSeed, v46);
-////
-////			pDrlgCoord2b = 0;
-////			v136 = 0;
-////			if (v175 > 0)
-////			{
-////				v59 = nSizeYa + v151 * v155;
-////				do
-////				{
-////					if (v54)
-////						break;
-////					for (n = 0; n < v179; ++n)
-////					{
-////						if (v54)
-////							break;
-////						v61 = (int)((char *)v173 + 4 * (v59 + n));
-////						if (*(_DWORD *)v61 == 2)
-////						{
-////							if (nMaxXd == pDrlgCoord2b)
-////							{
-////								*(_DWORD *)v61 = 0;
-////								v54 = 1;
-////								--v46;
-////							}
-////							++pDrlgCoord2b;
-////						}
-////					}
-////					v59 += v151;
-////					++v136;
-////				}
-////				while (v136 < v175);
-////			}
-////		}
-////		v50 = __OFSUB__(v170 + 1, 3);
-////		v43 = v170++ - 2 < 0;
-////	}
-////	while (v43 ^ v50);
-////
-////	for (ii = 0; ii < v22; ++ii)
-////	{
-////		v153 = 0;
-////		if (v151 > 0)
-////		{
-////			nMaxXe = (int)((char *)pFree + 4 * ii * v151);
-////			pDrlgCoord2c = (int)((char *)v176 + 4 * ii * v151 + 4);
-////			v62 = (int)((char *)v163 + 4 * ii * v151 - 4);
-////			v156 = (int)((char *)v163 + 4 * ii * v151 - 4);
-////			nSizeXa = pFree - v163;
-////			pDrlgCoorda = v176 - v163;
-////			v186 = pFree - v176;
-////			v182 = v173 - pFree;
-////			do
-////			{
-////				v63 = 0;
-////				v64 = 2147483647;
-////				nSizeYb = 0;
-////				v172 = *(_DWORD *)nMaxXe;
-////				if (*(_DWORD *)(v182 + nMaxXe) == 1)
-////				{
-////					v65 = 4 * (v153 + v151 * (ii - 1));
-////					v66 = *(_DWORD *)((char *)v176 + v65);
-////					if (v66)
-////					{
-////						if (v66 < 2147483647)
-////						{
-////							v62 = v156;
-////							if (*(_DWORD *)((char *)pFree + v65) == v172)
-////							{
-////								v63 = 8;
-////								v64 = *(_DWORD *)((char *)v176 + v65);
-////								nSizeYb = 8;
-////							}
-////						}
-////					}
-////					v67 = 4 * (v153 + v151 * (ii + 1));
-////					v68 = *(_DWORD *)((char *)v176 + v67);
-////					if (v68)
-////					{
-////						if (v68 < v64)
-////						{
-////							v62 = v156;
-////							if (*(_DWORD *)((char *)pFree + v67) == v172)
-////							{
-////								v63 = 4;
-////								v64 = *(_DWORD *)((char *)v176 + v67);
-////								nSizeYb = 4;
-////							}
-////						}
-////					}
-////					if (*(_DWORD *)pDrlgCoord2c && *(_DWORD *)pDrlgCoord2c < v64)
-////					{
-////						v62 = v156;
-////						if (*(_DWORD *)(pDrlgCoord2c + v186) == v172)
-////						{
-////							v63 = 2;
-////							v64 = *(_DWORD *)pDrlgCoord2c;
-////						}
-////						else
-////						{
-////							v63 = nSizeYb;
-////						}
-////					}
-////					v69 = *(_DWORD *)(pDrlgCoorda + v62);
-////					if (v69 && v69 < v64)
-////					{
-////						v70 = *(_DWORD *)nMaxXe;
-////						if (*(_DWORD *)(nSizeXa + v62) == v172)
-////							v63 = 1;
-////					}
-////					else
-////					{
-////						v70 = *(_DWORD *)nMaxXe;
-////					}
-////					if (v63 & 8)
-////						*(_DWORD *)((char *)v163 + v65) |= 4u;
-////					if (v63 & 4)
-////						*(_DWORD *)((char *)v163 + v67) |= 8u;
-////					if (v63 & 2)
-////						*(_DWORD *)(v62 + 8) |= 1u;
-////					if (v63 & 1)
-////						*(_DWORD *)v62 |= 2u;
-////					if (*(_DWORD *)((char *)v173 + v65) == 1 && *(_DWORD *)((char *)pFree + v65) != v70)
-////						v63 |= 8u;
-////					if (*(_DWORD *)((char *)v173 + v67) == 1 && *(_DWORD *)((char *)pFree + v67) != v70)
-////						v63 |= 4u;
-////					if (*(_DWORD *)(pDrlgCoord2c + v186 + v182) == 1 && *(_DWORD *)(pDrlgCoord2c + v186) != v70)
-////						v63 |= 2u;
-////					if (*(_DWORD *)(v173 - v163 + v62) == 1 && *(_DWORD *)(nSizeXa + v62) != v70)
-////						v63 |= 1u;
-////				}
-////				v71 = *(_DWORD *)(pDrlgCoord2c - 4);
-////				if (v71)
-////				{
-////					v72 = v71 - *((_DWORD *)v176 + v153 + v151 * (ii - 1));
-////					if (v72 < 0)
-////						v72 = -v72;
-////					if (v72 == 1)
-////						v63 |= 8u;
-////					v73 = v71 - *((_DWORD *)v176 + v153 + v151 * (ii + 1));
-////					if (v73 < 0)
-////						v73 = -v73;
-////					if (v73 == 1)
-////						v63 |= 4u;
-////					v74 = v71 - *(_DWORD *)pDrlgCoord2c;
-////					if (v71 - *(_DWORD *)pDrlgCoord2c < 0)
-////						v74 = -v74;
-////					if (v74 == 1)
-////						v63 |= 2u;
-////					v75 = v71 - *(_DWORD *)(pDrlgCoorda + v62);
-////					if (v75 < 0)
-////						v75 = -v75;
-////					if (v75 == 1)
-////						v63 |= 1u;
-////				}
-////				*(_DWORD *)(v62 + 4) |= v63;
-////				v62 += 4;
-////				++v153;
-////				nMaxXe += 4;
-////				pDrlgCoord2c += 4;
-////				v156 = v62;
-////			}
-////			while (v153 < v151);
-////		}
-////	}
-////
-////	for (jj = 0; ; ++jj)
-////	{
-////		v138 = jj;
-////		if (jj >= v22)
-////			break;
-////		v154 = 0;
-////		if (v151 > 0)
-////		{
-////			pDrlgCoord2d = jj * v151;
-////			v77 = pFree - v173;
-////			v78 = (int)((char *)v163 + 4 * jj * v151);
-////			v79 = v173 - v163;
-////			v80 = pDrlg;
-////			v157 = v78;
-////			nSizeYc = pFree - v173;
-////			while (1)
-////			{
-////				v81 = *(_DWORD *)v78;
-////				nMaxXf = v78 + v79;
-////				v82 = *(_DWORD *)(v78 + v79 + v77);
-////				v83 = v80->pSeed.nHighSeed + 1791398085i64 * v80->pSeed.nLowSeed;
-////				*(_QWORD *)&v80->pSeed.nLowSeed = v83;
-////				v84 = v83 & 3;
-////				pDrlgCoordb = v83 & 3;
-////				v85 = v81 == 0;
-////				if (*(_DWORD *)nMaxXf == 2)
-////				{
-////					v86 = 0;
-////					v87 = 1;
-////					do
-////					{
-////						if (!v87)
-////							break;
-////						switch ((v86 + v84) % 4)
-////						{
-////						case 0:
-////							v88 = 4 * (v154 + v151 * (v138 - 1));
-////							if (*(_DWORD *)((char *)pFree + v88) == v82)
-////							{
-////								v89 = *(_DWORD *)((char *)v163 + v88);
-////								if (v89)
-////								{
-////									if (v89 < 15)
-////									{
-////										LOBYTE(v81) = v81 | 0x80;
-////										goto LABEL_187;
-////									}
-////								}
-////							}
-////							break;
-////						case 1:
-////							v90 = 4 * (v154 + v151 * (v138 + 1));
-////							if (*(_DWORD *)((char *)pFree + v90) == v82)
-////							{
-////								v91 = *(_DWORD *)((char *)v163 + v90);
-////								if (v91)
-////								{
-////									if (v91 < 15)
-////									{
-////										v81 |= 0x40u;
-////										goto LABEL_187;
-////									}
-////								}
-////							}
-////							break;
-////						case 2:
-////							if (*((_DWORD *)pFree + pDrlgCoord2d + 1) == v82)
-////							{
-////								v92 = *((_DWORD *)v163 + pDrlgCoord2d + 1);
-////								if (v92)
-////								{
-////									if (v92 < 15)
-////									{
-////										v81 |= 0x20u;
-////										goto LABEL_187;
-////									}
-////								}
-////							}
-////							break;
-////						case 3:
-////							if (*(_DWORD *)(nMaxXf + nSizeYc - 4) == v82)
-////							{
-////								v93 = *(_DWORD *)(v157 - 4);
-////								if (v93)
-////								{
-////									if (v93 < 15)
-////									{
-////										v81 |= 0x10u;
-////LABEL_187:
-////										v87 = 0;
-////									}
-////								}
-////							}
-////							break;
-////						default:
-////							break;
-////						}
-////						v84 = pDrlgCoordb;
-////						++v86;
-////					}
-////					while (v86 < 4);
-////					v94 = pDrlg;
-////					if (!v81)
-////					{
-////						goto LABEL_32;
-////					}
-////					if (v85)
-////					{
-////						v95 = 0;
-////						v96 = 1;
-////						do
-////						{
-////							if (!v96)
-////								break;
-////							switch ((v95 + v84) % 4)
-////							{
-////							case 0:
-////								v97 = 4 * (v154 + v151 * (v138 - 1));
-////								if (*(_DWORD *)((char *)pFree + v97) != v82 && *(_DWORD *)((char *)v173 + v97) == 2)
-////								{
-////									LOBYTE(v81) = v81 | 0x80;
-////									goto LABEL_206;
-////								}
-////								break;
-////							case 1:
-////								v98 = 4 * (v154 + v151 * (v138 + 1));
-////								if (*(_DWORD *)((char *)pFree + v98) != v82 && *(_DWORD *)((char *)v173 + v98) == 2)
-////								{
-////									v81 |= 0x40u;
-////									goto LABEL_206;
-////								}
-////								break;
-////							case 2:
-////								if (*((_DWORD *)pFree + pDrlgCoord2d + 1) != v82
-////									&& *((_DWORD *)v173 + pDrlgCoord2d + 1) == 2)
-////								{
-////									v81 |= 0x20u;
-////									goto LABEL_206;
-////								}
-////								break;
-////							case 3:
-////								if (*(_DWORD *)(nMaxXf + nSizeYc - 4) != v82 && *(_DWORD *)(nMaxXf - 4) == 2)
-////								{
-////									v81 |= 0x10u;
-////LABEL_206:
-////									v96 = 0;
-////								}
-////								break;
-////							default:
-////								break;
-////							}
-////							v94 = pDrlg;
-////							++v95;
-////						}
-////						while (v95 < 4);
-////
-////						v100 = SEED_RollRandomNumber(&v94->pSeed) & 1 && v96;
-////						v102 = SEED_RollRandomNumber(&v94->pSeed) & 3;
-////						v103 = 0;
-////						do
-////						{
-////							if (!v100)
-////								break;
-////							switch ((v102 + v103) % 4)
-////							{
-////							case 0:
-////								v104 = *((_DWORD *)v163 + v154 + v151 * (v138 - 1));
-////								if (v104 && v104 < 15 && (char)v81 >= 0)
-////								{
-////									LOBYTE(v81) = v81 | 0x80;
-////									goto LABEL_231;
-////								}
-////								break;
-////							case 1:
-////								v105 = *((_DWORD *)v163 + v154 + v151 * (v138 + 1));
-////								if (v105 && v105 < 15 && !(v81 & 0x40))
-////								{
-////									v81 |= 0x40u;
-////									goto LABEL_231;
-////								}
-////								break;
-////							case 2:
-////								v106 = *((_DWORD *)v163 + pDrlgCoord2d + 1);
-////								if (v106 && v106 < 15 && !(v81 & 0x20))
-////								{
-////									v81 |= 0x20u;
-////									goto LABEL_231;
-////								}
-////								break;
-////							case 3:
-////								v107 = *(_DWORD *)(v157 - 4);
-////								if (v107 && v107 < 15 && !(v81 & 0x10))
-////								{
-////									v81 |= 0x10u;
-////LABEL_231:
-////									v100 = 0;
-////								}
-////								break;
-////							default:
-////								break;
-////							}
-////							++v103;
-////						}
-////						while (v103 < 4);
-////					}
-////					if ((char)v81 < 0)
-////					{
-////						v108 = (int)((char *)v163 + 4 * (v154 + v151 * (v138 - 1)));
-////						*(_DWORD *)v108 |= 0x40u;
-////					}
-////					if (v81 & 0x40)
-////					{
-////						v109 = (int)((char *)v163 + 4 * (v154 + v151 * (v138 + 1)));
-////						v110 = *(_DWORD *)v109;
-////						LOBYTE(v110) = *(_DWORD *)v109 | 0x80;
-////						*(_DWORD *)v109 = v110;
-////					}
-////					if (v81 & 0x20)
-////					{
-////						v111 = *(_DWORD *)(v157 + 4);
-////						LOBYTE(v111) = v111 | 0x10;
-////						*(_DWORD *)(v157 + 4) = v111;
-////					}
-////					if (v81 & 0x10)
-////					{
-////						v112 = *(_DWORD *)(v157 - 4);
-////						LOBYTE(v112) = v112 | 0x20;
-////						*(_DWORD *)(v157 - 4) = v112;
-////					}
-////					*(_DWORD *)nMaxXf = 0;
-////					v80 = pDrlg;
-////				}
-////				v78 = v157 + 4;
-////				v113 = v81 | *(_DWORD *)v157;
-////				v157 = v78;
-////				*(_DWORD *)(v78 - 4) = v113;
-////				v50 = __OFSUB__(v154 + 1, v151);
-////				v43 = v154++ + 1 - v151 < 0;
-////				++pDrlgCoord2d;
-////				if (!(v43 ^ v50))
-////				{
-////					jj = v138;
-////					break;
-////				}
-////				v77 = pFree - v173;
-////				v79 = v173 - v163;
-////			}
-////		}
-////	}
-//
-//	v114 = v151;
-//	v115 = v163;
-//
-//	for (int i = v22; i > 0; --i)
-//	{
-//		v116 = (signed int *)v115;
-//
-//		while (v114 > 0)
-//		{
-//			v117 = *v116;
-//			nPDef = *v116 % 16;
-//			if (nPDef)
-//			{
-//				if (v117 < 16)
-//				{
-//					nPDef += 529;
-//				}
-//				else
-//				{
-//					if (v117 & 0x10)
-//					{
-//						nPDef = dword_6FDD0828[4 * nPDef - 4];
-//					}
-//
-//					if (v117 & 0x20)
-//					{
-//						nPDef = dword_6FDD0828[4 * nPDef - 3];
-//					}
-//
-//					if (v117 & 0x40)
-//					{
-//						nPDef = dword_6FDD0828[4 * nPDef - 2];
-//					}
-//
-//					if (v117 & 0x80)
-//					{
-//						nPDef = dword_6FDD0828[4 * nPDef - 1];
-//					}
-//
-//					if (!nPDef)
-//					{
-//						FOG_10025("nPDef != PRESET_DEF_NONE", "C:\\projects\\D2\\head\\Diablo2\\Source\\D2Common\\DRLG\\OutPlace.cpp", 1904);
-//					}
-//				}
-//			}
-//			else
-//			{
-//				if (v117 >= 16)
-//				{
-//					nPDef = dword_6FDD0924[v117 >> 4];
-//					if (!nPDef)
-//					{
-//						FOG_10025("nPDef != PRESET_DEF_NONE", "C:\\projects\\D2\\head\\Diablo2\\Source\\D2Common\\DRLG\\OutPlace.cpp", 1917);
-//					}
-//				}
-//			}
-//
-//			*v116 = nPDef;
-//			++v116;
-//
-//			--v114;
-//		}
-//
-//		v114 = v151;
-//		v115 = (char *)v115 + 4 * v114;
-//	}
-//
-//	for (int i = 0; i < 3; ++i)
-//	{
-//		nCounter = 0;
-//		for (int j = 0; j < v175; ++j)
-//		{
-//			for (int k = 0; k < v179; ++k)
-//			{
-//				pJungles[i].pJungleDefs[nCounter] = v163[k + pJungles[i].field_28 + v151 * (j + pJungles[i].field_2C)];
-//				if (pJungles[i].pJungleDefs[nCounter] > 574)
-//				{
-//					++pJungles[i].nJungleDefs;
-//				}
-//				++nCounter;
-//			}
-//		}
-//	}
-//
-//	do
-//	{
-//		bNotSorted = false;
-//		for (int i = 0; i < 2; ++i)
-//		{
-//			if (pJungles[i + 1].pDrlgCoord.nPosY > pJungles[i].pDrlgCoord.nPosY)
-//			{
-//				memcpy(&pTmp, &pJungles[i + 1], sizeof(D2UnkOutPlaceStrc));
-//				memcpy(&pJungles[i + 1], &pJungles[i], sizeof(D2UnkOutPlaceStrc));
-//				memcpy(&pJungles[i], &pTmp, sizeof(D2UnkOutPlaceStrc));
-//				bNotSorted = true;
-//			}
-//		}
-//	}
-//	while (bNotSorted);
-//
-//	for (int i = 0; i < 3; ++i)
-//	{
-//		pJungleLevel = DRLG_GetLevel(pDrlg, i + LEVEL_SPIDERFOREST);
-//
-//		pJungleLevel->pJungleDefs = pJungles[i].pJungleDefs;
-//		pJungleLevel->nJungleDefs = pJungles[i].nJungleDefs;
-//		pJungleLevel->nPosX = pJungles[i].pDrlgCoord.nPosX;
-//		pJungleLevel->nPosY = pJungles[i].pDrlgCoord.nPosY;
-//		pJungleLevel->nWidth = pJungles[i].pDrlgCoord.nWidth;
-//		pJungleLevel->nHeight = pJungles[i].pDrlgCoord.nHeight;
-//	}
-//
-//	FOG_FreeServerMemory(pLevel->pDrlg->pMempool, pFree, "C:\\projects\\D2\\head\\Diablo2\\Source\\D2Common\\DRLG\\OutPlace.cpp", 1974, 0);
-//	FOG_FreeServerMemory(pLevel->pDrlg->pMempool, v176, "C:\\projects\\D2\\head\\Diablo2\\Source\\D2Common\\DRLG\\OutPlace.cpp", 1975, 0);
-//	FOG_FreeServerMemory(pLevel->pDrlg->pMempool, v173, "C:\\projects\\D2\\head\\Diablo2\\Source\\D2Common\\DRLG\\OutPlace.cpp", 1976, 0);
-//	FOG_FreeServerMemory(pLevel->pDrlg->pMempool, v163, "C:\\projects\\D2\\head\\Diablo2\\Source\\D2Common\\DRLG\\OutPlace.cpp", 1977, 0);
-//
-//	return pJungleLevel;
-//}
+static const int nPresetBlocksDimensions = 32;
 
-
-//TODO:Remove
-D2DrlgLevelStrc* __fastcall sub_6FD82820(D2DrlgLevelStrc* pLevel)
+static void DRLG_GenerateJunglesAttachPoints(
+	D2DrlgStrc* pDrlg,
+	D2JungleStrc* tJungles,
+	int32_t nMinX, int32_t nMinY,
+	int32_t nSpiderForestLevelSizeX, int32_t nSpiderForestLevelSizeY,
+	int32_t nPresetsWidth, int32_t nPresetsHeight,
+	int32_t* pPreset0, int32_t* pPreset1, int32_t* pPreset2, int32_t* pLevelPresetId
+)
 {
-	REMOVE_LATER_WriteToLogFile("sub_6FD82820: Not yet implemented");
-	return 0;
+	const int32_t nPresets = nPresetsWidth * nPresetsHeight;
+	memset(pPreset0, 0, nPresets * sizeof(int32_t));
+	memset(pPreset1, 0, nPresets * sizeof(int32_t));
+	memset(pPreset2, 0, nPresets * sizeof(int32_t));
+	memset(pLevelPresetId, 0, nPresets * sizeof(int32_t));
+
+	const int32_t nSpiderForestLevelPresetsBlocksSizeX = nSpiderForestLevelSizeX / nPresetBlocksDimensions;
+	const int32_t nSpiderForestLevelPresetsBlocksSizeY = nSpiderForestLevelSizeY / nPresetBlocksDimensions;
+
+	for (int nJungleIdx = 0; nJungleIdx < JUNGLE_MAX_ATTACH; nJungleIdx++)
+	{
+		D2JungleStrc& tCurrentJungle = tJungles[nJungleIdx];
+		const int32_t nJungleOffsetX = tCurrentJungle.pDrlgCoord.nPosX - nMinX;
+		const int32_t nJungleOffsetY = tCurrentJungle.pDrlgCoord.nPosY - nMinY;
+
+		tCurrentJungle.nPresetsBlocksX = (((nJungleOffsetX & 0x1F) + nJungleOffsetX) >> 5) + 1;
+		tCurrentJungle.nPresetsBlocksY = (((nJungleOffsetY & 0x1F) + nJungleOffsetY) >> 5) + 1;
+
+		// Note: Original game could leak memory here (if jungle generation fails, we would realloc without freeing)
+		if (tCurrentJungle.pJungleDefs)
+		{
+			D2_FREE_POOL(pDrlg->pMempool, tCurrentJungle.pJungleDefs);
+		}
+
+		tCurrentJungle.pJungleDefs = (int32_t*)D2_ALLOC_POOL(pDrlg->pMempool, nSpiderForestLevelPresetsBlocksSizeX * nSpiderForestLevelPresetsBlocksSizeY * sizeof(int32_t));
+
+		// Could be the choice of direction on X axis
+		bool bLineStartWithOffset;
+		if (nJungleIdx != 0)
+		{
+			bLineStartWithOffset = tCurrentJungle.field_10 % 2;
+		}
+		else
+		{
+			bLineStartWithOffset = SEED_RollLimitedRandomNumber(&pDrlg->pSeed, 2);
+		}
+
+		// Generate potential attach points
+		int nJungleAttachPoints = 0;
+		while (nJungleAttachPoints < 2)
+		{
+			// Initialize data
+			int32_t nPresetBlockRowOffset = tCurrentJungle.nPresetsBlocksX + nPresetsWidth * tCurrentJungle.nPresetsBlocksY;
+			for (int32_t nPresetBlockY = 0; nPresetBlockY < nSpiderForestLevelPresetsBlocksSizeY; nPresetBlockY++)
+			{
+				for (int32_t nPresetBlockX = 0; nPresetBlockX < nSpiderForestLevelPresetsBlocksSizeX; nPresetBlockX++)
+				{
+					const int nPresetBlockIndex = nPresetBlockRowOffset + nPresetBlockX;
+					pPreset0[nPresetBlockIndex] = nJungleIdx + 1;
+					pPreset1[nPresetBlockIndex] = 0;
+					pPreset2[nPresetBlockIndex] = 0;
+					pLevelPresetId[nPresetBlockIndex] = 0;
+				}
+				nPresetBlockRowOffset += nPresetsWidth;
+			}
+
+
+			const int32_t nFirstPresetsBlockY = tCurrentJungle.nPresetsBlocksY;
+			const int32_t nLastPresetsBlockY = nFirstPresetsBlockY + nSpiderForestLevelPresetsBlocksSizeY - 1;
+
+			if (nJungleIdx != 0)
+			{
+				const int32_t nFirstPresetsBlockIndex = nLastPresetsBlockY * nPresetsWidth + tCurrentJungle.nPresetsBlocksX;
+				// Either |1|2| or |2|1| based on bLineStartWithOffset
+				pPreset2[nFirstPresetsBlockIndex + bLineStartWithOffset] = 1;
+				pPreset2[nFirstPresetsBlockIndex + (!bLineStartWithOffset)] = JUNGLE_PRESET2_ATTACH_POINT;
+			}
+
+
+			for (int32_t nBranchIdx = 0; nBranchIdx < tCurrentJungle.nBranch; nBranchIdx++)
+			{
+				D2JungleStrc* pJungleBranch = tCurrentJungle.pJungleBranches[nBranchIdx];
+				int32_t nPresetOffsetX = 0;
+				int32_t nPresetOffsetY = 0;
+				switch (pJungleBranch->field_10)
+				{
+				case 0:
+					break;
+				case 1:
+					nPresetOffsetY = 3;
+					break;
+				case 2:
+					nPresetOffsetX = 1;
+					nPresetOffsetY = 3;
+					break;
+				case 3:
+					nPresetOffsetY = 1;
+					break;
+				case 4:
+					nPresetOffsetX = 1;
+					nPresetOffsetY = 1;
+					break;
+				default:
+					D2_UNREACHABLE;
+					break;
+				}
+				pPreset2[tCurrentJungle.nPresetsBlocksX + nPresetOffsetX + nPresetsWidth * (tCurrentJungle.nPresetsBlocksY + nPresetOffsetY)] = 1;
+			}
+			
+			nJungleAttachPoints = nJungleIdx != 0;
+
+
+			// This loop is tracing a wave in the first two columns of the map, in zigzags, starting from last Y
+			// X will either be nPresetsBlocksY or nPresetsBlocksY + 1
+			//  0 1 2 3 4 5 6
+			//  _ _ _ _ _ _ _
+			// | |X| | | | | |
+			// | |X| | | | | |
+			// |X| | | | | | |
+			// |X| | | | | | |
+			// | |X| | | | | |
+			// |X| | | | | | |
+			// |X| | | | | | |
+			int32_t nCurrentPresetsBlockX = tCurrentJungle.nPresetsBlocksX;
+			int32_t i = 20 * (5 * nJungleIdx + 5);
+			int32_t nColumnSize = 0;
+			for (int32_t nCurrentPresetsBlockY = nLastPresetsBlockY; nCurrentPresetsBlockY >= nFirstPresetsBlockY; )
+			{
+				const int32_t nCurrentPresetsBlockRowOffset = nCurrentPresetsBlockY * nPresetsWidth;
+
+				pPreset1[nCurrentPresetsBlockRowOffset + nCurrentPresetsBlockX + bLineStartWithOffset] = i;
+				i++;
+
+				if (nColumnSize == 0
+					|| nCurrentPresetsBlockY == nFirstPresetsBlockY
+					|| SEED_RollLimitedRandomNumber(&pDrlg->pSeed, 3))
+				{
+					nColumnSize++;
+
+					// Mark opposite cell with '2' (attach point?) if not already set once the column has at least 2 pixels.
+					if (nColumnSize >= 2 && nCurrentPresetsBlockY > 1)
+					{
+						int32_t nNextPresetIdx = nCurrentPresetsBlockRowOffset + nCurrentPresetsBlockX + (!bLineStartWithOffset);
+
+						if (pPreset2[nNextPresetIdx] == 0)
+						{
+							pPreset2[nNextPresetIdx] = JUNGLE_PRESET2_ATTACH_POINT;
+							nJungleAttachPoints++;
+						}
+					}
+					nCurrentPresetsBlockY--;
+				}
+				else
+				{
+					nColumnSize = 0;
+					bLineStartWithOffset = !bLineStartWithOffset;
+				}
+			}
+		}
+
+		// We now need to reduce the number of attach points to 3, as we may have generated a lot more
+		while (nJungleAttachPoints > 3)
+		{
+			bool bFinished = false;
+			uint32_t nAttachPointsFound = 0;
+			uint32_t nAttachPointToRemove = SEED_RollLimitedRandomNumber(&pDrlg->pSeed, nJungleAttachPoints);
+
+			// Starts from the first Y (opposite of previous step)
+			for (int32_t nCurrentPresetsBlockY = 0; nCurrentPresetsBlockY < nSpiderForestLevelPresetsBlocksSizeY && !bFinished; nCurrentPresetsBlockY++)
+			{
+				int32_t nCurrentPresetsBlockOffset = tCurrentJungle.nPresetsBlocksX + (tCurrentJungle.nPresetsBlocksY+ nCurrentPresetsBlockY) * nPresetsWidth;
+
+				for (int32_t nCurrentPresetsBlockX = 0; nCurrentPresetsBlockX < nSpiderForestLevelPresetsBlocksSizeX && !bFinished; nCurrentPresetsBlockX++)
+				{
+					// This is an attach point
+					const int32_t nCurrentPresetBlockIdx = nCurrentPresetsBlockOffset + nCurrentPresetsBlockX;
+					if (pPreset2[nCurrentPresetBlockIdx] == JUNGLE_PRESET2_ATTACH_POINT)
+					{
+						if (nAttachPointsFound == nAttachPointToRemove)
+						{
+							// Unmark this attach point
+							pPreset2[nCurrentPresetBlockIdx] = 0;
+							bFinished = true;
+							nJungleAttachPoints--;
+						}
+						++nAttachPointsFound;
+					}
+				}
+			}
+
+		}
+
+	}
+}
+
+static void DRLG_JungleComputeConnexity(
+	D2DrlgStrc* pDrlg,
+	int32_t nPresetsWidth,
+	int32_t nPresetsHeight,
+	int32_t* pPreset0,
+	int32_t* pPreset1,
+	int32_t* pPreset2,
+	int32_t* pLevelPresetId)
+{
+
+
+	// Seems to compute some kind of connexity graph
+	for (int32_t nCurrentPresetY = 0; nCurrentPresetY < nPresetsHeight; nCurrentPresetY++)
+	{
+		for (int32_t nCurrentPresetX = 0; nCurrentPresetX < nPresetsWidth; nCurrentPresetX++)
+		{
+
+			static const int32_t nMinValue = 0;
+			static const int32_t nMaxValue = 0x7FFFFFFF;
+
+			int32_t nFlags = 0;
+			int32_t nLastDirPreset1Value = nMaxValue;
+
+			const int32_t nCurrentPresetIndex = nCurrentPresetY * nPresetsWidth + nCurrentPresetX;
+			const int32_t nRightPresetIndex = nCurrentPresetY * nPresetsWidth + nCurrentPresetX + 1;
+			const int32_t nLeftPresetIndex = nCurrentPresetY * nPresetsWidth + nCurrentPresetX - 1;
+			const int32_t nTopPresetIndex = (nCurrentPresetY - 1) * nPresetsWidth + nCurrentPresetX;
+			const int32_t nBottomPresetIndex = (nCurrentPresetY + 1) * nPresetsWidth + nCurrentPresetX;
+			if (pPreset2[nCurrentPresetIndex] == 1)
+			{
+				const int32_t nPreset0CurrentValue = pPreset0[nCurrentPresetIndex];
+
+				auto UpdateAccordingToPreset1 = [pPreset0, pPreset1, nPreset0CurrentValue, &nLastDirPreset1Value, &nFlags](int32_t nPresetIndex, int32_t nDirectionFlag)
+				{
+					const int32_t nPreset1Value = pPreset1[nPresetIndex];
+					if (nPreset1Value != 0 && nPreset1Value < nLastDirPreset1Value
+						&& pPreset0[nPresetIndex] == nPreset0CurrentValue)
+					{
+						nFlags = nDirectionFlag;
+						nLastDirPreset1Value = nPreset1Value;
+					}
+				};
+
+				UpdateAccordingToPreset1(nTopPresetIndex, JUNGLE_FLAG_TOP_);
+				UpdateAccordingToPreset1(nBottomPresetIndex, JUNGLE_FLAG_BOTTOM_);
+				UpdateAccordingToPreset1(nRightPresetIndex, JUNGLE_FLAG_RIGHT_);
+				UpdateAccordingToPreset1(nLeftPresetIndex, JUNGLE_FLAG_LEFT_);
+
+
+
+				if (nFlags & JUNGLE_FLAG_TOP_)	pLevelPresetId[nTopPresetIndex] |= JUNGLE_FLAG_BOTTOM_;
+				if (nFlags & JUNGLE_FLAG_BOTTOM_) pLevelPresetId[nBottomPresetIndex] |= JUNGLE_FLAG_TOP_;
+				if (nFlags & JUNGLE_FLAG_RIGHT_)	pLevelPresetId[nRightPresetIndex] |= JUNGLE_FLAG_LEFT_;
+				if (nFlags & JUNGLE_FLAG_LEFT_)	pLevelPresetId[nLeftPresetIndex] |= JUNGLE_FLAG_RIGHT_;
+
+				if (pPreset2[nTopPresetIndex] == 1 && pPreset0[nTopPresetIndex] != nPreset0CurrentValue)
+				{
+					nFlags |= JUNGLE_FLAG_TOP_;
+				}
+				if (pPreset2[nBottomPresetIndex] == 1 && pPreset0[nBottomPresetIndex] != nPreset0CurrentValue)
+				{
+					nFlags |= JUNGLE_FLAG_BOTTOM_;
+				}
+				if (pPreset2[nRightPresetIndex] == 1 && pPreset0[nRightPresetIndex] != nPreset0CurrentValue)
+				{
+					nFlags |= JUNGLE_FLAG_RIGHT_;
+				}
+				if (pPreset2[nLeftPresetIndex] == 1 && pPreset0[nLeftPresetIndex] != nPreset0CurrentValue)
+				{
+					nFlags |= JUNGLE_FLAG_LEFT_;
+				}
+			}
+			if (const int32_t nPreset1CurrentValue = pPreset1[nCurrentPresetIndex])
+			{
+				if (1 == std::abs(pPreset1[nTopPresetIndex] - nPreset1CurrentValue))
+				{
+					nFlags |= JUNGLE_FLAG_TOP_;
+				}
+				if (1 == std::abs(pPreset1[nBottomPresetIndex] - nPreset1CurrentValue))
+				{
+					nFlags |= JUNGLE_FLAG_BOTTOM_;
+				}
+				if (1 == std::abs(pPreset1[nRightPresetIndex] - nPreset1CurrentValue))
+				{
+					nFlags |= JUNGLE_FLAG_RIGHT_;
+				}
+				if (1 == std::abs(pPreset1[nLeftPresetIndex] - nPreset1CurrentValue))
+				{
+					nFlags |= JUNGLE_FLAG_LEFT_;
+				}
+			}
+
+			pLevelPresetId[nCurrentPresetIndex] |= nFlags;
+		}
+	}
+}
+
+
+// Returns false if we need to generate a new map due to invalid attach points
+static bool DRLG_JungleUpdateAttachPointsDirections(
+	D2DrlgStrc* pDrlg,
+	int32_t nPresetsWidth,
+	int32_t nPresetsHeight,
+	int32_t* pPreset0,
+	int32_t* pPreset2,
+	int32_t* pLevelPresetId)
+{
+
+	for (int32_t nCurrentPresetY = 0; nCurrentPresetY < nPresetsHeight; nCurrentPresetY++)
+	{
+		for (int32_t nCurrentPresetX = 0; nCurrentPresetX < nPresetsWidth; nCurrentPresetX++)
+		{
+			const int32_t nCurrentPresetIndex = nCurrentPresetY * nPresetsWidth + nCurrentPresetX;
+
+			int nDirectionBase = SEED_RollLimitedRandomNumber(&pDrlg->pSeed, DIRECTION_COUNT);
+
+			if (pPreset2[nCurrentPresetIndex] == JUNGLE_PRESET2_ATTACH_POINT)
+			{
+				const int32_t nRightPresetIndex = nCurrentPresetY * nPresetsWidth + nCurrentPresetX + 1;
+				const int32_t nLeftPresetIndex = nCurrentPresetY * nPresetsWidth + nCurrentPresetX - 1;
+				const int32_t nTopPresetIndex = (nCurrentPresetY - 1) * nPresetsWidth + nCurrentPresetX;
+				const int32_t nBottomPresetIndex = (nCurrentPresetY + 1) * nPresetsWidth + nCurrentPresetX;
+
+				const int32_t nPreset0CurrentValue = pPreset0[nCurrentPresetIndex];
+
+
+				int32_t nCurrentPresetLevelId = pLevelPresetId[nCurrentPresetIndex];
+				const int32_t nPrevPreset3RowFlags = nCurrentPresetLevelId;
+				bool bHadNoPresetLeveld = nCurrentPresetLevelId == 0;
+
+				bool bLookAtNextDirection;
+				auto LookForDirection = [&](auto&& CheckDirectionFunction)
+				{
+					for (int i = 0; i < DIRECTION_COUNT && bLookAtNextDirection; i++)
+					{
+						switch ((nDirectionBase + i) % DIRECTION_COUNT)
+						{
+						case DIRECTION_SOUTHWEST:
+							CheckDirectionFunction(nTopPresetIndex, JUNGLE_FLAG_TOP_);
+							break;
+						case DIRECTION_NORTHWEST:
+							CheckDirectionFunction(nBottomPresetIndex, JUNGLE_FLAG_BOTTOM_);
+							break;
+						case DIRECTION_SOUTHEAST:
+							CheckDirectionFunction(nRightPresetIndex, JUNGLE_FLAG_RIGHT_);
+							break;
+						case DIRECTION_NORTHEAST:
+							CheckDirectionFunction(nLeftPresetIndex, JUNGLE_FLAG_LEFT_);
+							break;
+						default:
+							break;
+						}
+					}
+				};
+
+
+				bLookAtNextDirection = true;
+				LookForDirection([&](int32_t nPresetIndex, D2JunglePresetFlags nFlagToAdd) {
+					if (pPreset0[nPresetIndex] == nPreset0CurrentValue
+						&& pLevelPresetId[nPresetIndex] && pLevelPresetId[nPresetIndex] < 15)
+					{
+						nCurrentPresetLevelId |= (nFlagToAdd << 4);
+						bLookAtNextDirection = false;
+					}
+					}
+				);
+
+				// If we found nothing, start generation all over
+				if (!nCurrentPresetLevelId)
+				{
+					return false;
+				}
+				if (bHadNoPresetLeveld)
+				{
+					bLookAtNextDirection = true;
+					LookForDirection([&](int32_t nPresetIndex, D2JunglePresetFlags nFlagToAdd) {
+
+						if (pPreset0[nPresetIndex] != nPreset0CurrentValue
+							&& pPreset2[nPresetIndex] == JUNGLE_PRESET2_ATTACH_POINT)
+						{
+							nCurrentPresetLevelId |= (nFlagToAdd << 4);
+							bLookAtNextDirection = false;
+						}
+						}
+					);
+
+					bLookAtNextDirection = SEED_RollLimitedRandomNumber(&pDrlg->pSeed, 2) != 0 && bLookAtNextDirection;
+
+					// Roll a new direction start
+					nDirectionBase = SEED_RollLimitedRandomNumber(&pDrlg->pSeed, DIRECTION_COUNT);
+
+					LookForDirection([&](int32_t nPresetIndex, D2JunglePresetFlags nFlagToAdd) {
+
+						if (pLevelPresetId[nPresetIndex] && pLevelPresetId[nPresetIndex] < 15
+							&& ((nCurrentPresetLevelId & (nFlagToAdd << 4)) == 0)
+							)
+						{
+							nCurrentPresetLevelId |= (nFlagToAdd << 4);
+							bLookAtNextDirection = false;
+						}
+						}
+					);
+				}
+
+				if ((nCurrentPresetLevelId & (JUNGLE_FLAG_TOP_ << 4)) != 0)
+				{
+					pLevelPresetId[nTopPresetIndex] |= (JUNGLE_FLAG_BOTTOM_ << 4);
+				}
+				if ((nCurrentPresetLevelId & (JUNGLE_FLAG_BOTTOM_ << 4)) != 0)
+				{
+					pLevelPresetId[nBottomPresetIndex] |= (JUNGLE_FLAG_TOP_ << 4);
+				}
+				if ((nCurrentPresetLevelId & (JUNGLE_FLAG_RIGHT_ << 4)) != 0)
+				{
+					pLevelPresetId[nRightPresetIndex] |= (JUNGLE_FLAG_LEFT_ << 4);
+				}
+				if ((nCurrentPresetLevelId & (JUNGLE_FLAG_LEFT_ << 4)) != 0)
+				{
+					pLevelPresetId[nLeftPresetIndex] |= (JUNGLE_FLAG_RIGHT_ << 4);
+				}
+
+				pPreset2[nCurrentPresetIndex] = 0;
+				pLevelPresetId[nCurrentPresetIndex] |= nCurrentPresetLevelId;
+			}
+		}
+	}
+
+	return true;
+}
+
+static D2C_LvlPrestIds DRLG_JungleNormalizeLevelPresetId(int32_t nLevelPresetId)
+{
+	const int32_t nbDirections = 16;
+	int32_t nPDef = nLevelPresetId % nbDirections;
+	if (nPDef != 0)
+	{
+		if (nLevelPresetId < nbDirections)
+		{
+			nPDef += LVLPREST_ACT3_TOWN;
+		}
+		else
+		{
+			const int nPresetDefinitionOffset = 4 * (nPDef - 1); // Note: nPDef > 0
+			if ((nLevelPresetId & (JUNGLE_FLAG_LEFT_ << 4)) != 0)
+				nPDef = gJunglePresets[nPresetDefinitionOffset];
+			if ((nLevelPresetId & (JUNGLE_FLAG_RIGHT_ << 4)) != 0)
+				nPDef = gJunglePresets[nPresetDefinitionOffset + 1];
+			if ((nLevelPresetId & (JUNGLE_FLAG_BOTTOM_ << 4)) != 0)
+				nPDef = gJunglePresets[nPresetDefinitionOffset + 2];
+			if ((nLevelPresetId & (JUNGLE_FLAG_TOP_ << 4)) != 0)
+				nPDef = gJunglePresets[nPresetDefinitionOffset + 3];
+
+			if (nPDef == LVLPREST_NONE) FOG_DisplayWarning("nPDef != PRESET_DEF_NONE", __FILE__, __LINE__);
+		}
+	}
+	else if (nLevelPresetId >= nbDirections)
+	{
+		nPDef = gSpiderForestPresets[nLevelPresetId >> 4];
+		if (nPDef == LVLPREST_NONE) FOG_DisplayWarning("nPDef != PRESET_DEF_NONE", __FILE__, __LINE__);
+	}
+	return (D2C_LvlPrestIds)nPDef;
+}
+
+// D2Common.0x6FD82820
+// Checked to be working correctly, but with a single save only
+// See https://web.archive.org/web/20220928163841/http://www.dos486.com/diablo/jungle/ for an overview about act 3 jungles
+D2DrlgLevelStrc* __fastcall DRLG_GenerateJungles(D2DrlgLevelStrc* pLevel)
+{
+	D2LevelDefBin* pSpiderForestLevelDef = DATATBLS_GetLevelDefRecord(LEVEL_SPIDERFOREST);
+	D2DrlgStrc* pDrlg = pLevel->pDrlg;
+	uint8_t nDifficulty = pDrlg->nDifficulty;
+	int32_t nSpiderForestLevelSizeX = pSpiderForestLevelDef->dwSizeX[nDifficulty];
+	int32_t nSpiderForestLevelSizeY = pSpiderForestLevelDef->dwSizeY[nDifficulty];
+	int32_t nMinX = pLevel->nPosX;
+	int32_t nMaxX = nSpiderForestLevelSizeX + nMinX;
+	// y axis inverted
+	int32_t nMaxY = pLevel->nPosY;
+	int32_t nMinY = nMaxY - nSpiderForestLevelSizeY;
+
+
+	D2JungleStrc tJungles[JUNGLE_MAX_ATTACH];
+	memset(tJungles, 0, sizeof(tJungles));
+	sub_6FD83970(&pLevel->pLevelCoords, &tJungles[0], 0, nSpiderForestLevelSizeX, nSpiderForestLevelSizeY);
+
+	for (int nJungleAttachIdx = 1; nJungleAttachIdx < JUNGLE_MAX_ATTACH; nJungleAttachIdx++)
+	{
+		uint32_t nBaseOn = SEED_RollLimitedRandomNumber(&pDrlg->pSeed, nJungleAttachIdx);
+
+		D2JungleStrc* pCurrentJungle = &tJungles[nJungleAttachIdx];
+		sub_6FD83970(&tJungles[nBaseOn].pDrlgCoord, pCurrentJungle, SEED_RollLimitedRandomNumber(&pDrlg->pSeed, 5), nSpiderForestLevelSizeX, nSpiderForestLevelSizeY);
+
+		// Look for the first overlapping jungle
+		int nFirstOverlappingJungle;
+		for (nFirstOverlappingJungle = 0; nFirstOverlappingJungle < nJungleAttachIdx; nFirstOverlappingJungle++)
+		{
+			// DRLG_ComputeRectanglesManhattanDistance Returns true if not overlapping and or sharing border ( distance >= 0 )
+			const bool levelsOverlaps = !DRLG_ComputeRectanglesManhattanDistance(&tJungles[nFirstOverlappingJungle].pDrlgCoord, &pCurrentJungle->pDrlgCoord, 0);
+			if (levelsOverlaps)
+			{
+				break;
+			}
+		}
+		// If we found a jungle that overlaps, we need to try again
+		if (nFirstOverlappingJungle < nJungleAttachIdx)
+		{
+			// Try again
+			nJungleAttachIdx--;
+			continue;
+		}
+		
+		// Link to the jungle we are based on
+		pCurrentJungle->pBasedOnJungle = &tJungles[nBaseOn];
+
+		// Note: this assert used to be done AFTER assignation, which could lead to overriding the next field. We do it before instead
+		D2_ASSERT(tJungles[nBaseOn].nBranch < JUNGLE_MAX_ATTACH);
+		// Link the jungle we are based on to current jungle
+		tJungles[nBaseOn].pJungleBranches[tJungles[nBaseOn].nBranch++] = &tJungles[nJungleAttachIdx];
+
+#if 0 // This assert would always come too late, overriding content.
+		if (!(tJungles[nBaseOn].nBranch <= JUNGLE_MAX_ATTACH))
+		{
+			FOG_DisplayWarning(
+				"ptJungle[nBaseOn].nBranch <= JUNGLE_MAX_ATTACH",
+				"C:\\projects\\D2\\head\\Diablo2\\Source\\D2Common\\DRLG\\OutPlace.cpp",
+				1570);
+		}
+#endif
+
+		if (nMinX > pCurrentJungle->pDrlgCoord.nPosX)
+			nMinX = pCurrentJungle->pDrlgCoord.nPosX;
+		if (nMinY > pCurrentJungle->pDrlgCoord.nPosY)
+			nMinY = pCurrentJungle->pDrlgCoord.nPosY;
+		if (nMaxX < pCurrentJungle->pDrlgCoord.nWidth + pCurrentJungle->pDrlgCoord.nPosX)
+			nMaxX = pCurrentJungle->pDrlgCoord.nWidth + pCurrentJungle->pDrlgCoord.nPosX;
+		// Original game does not change nMinY: error or just never happens ?
+	}
+	// Note: Original game uses FOG_DisplayWarning not FOG_DisplayAssert
+	D2_ASSERT((nMaxX - nMinX) % nPresetBlocksDimensions == 0);
+	D2_ASSERT((nMaxY - nMinY) % nPresetBlocksDimensions == 0);
+
+
+	const int32_t nPresetsWidth = (nMaxX - nMinX) / nPresetBlocksDimensions + 2;
+	const int32_t nPresetsHeight = (nMaxY - nMinY) / nPresetBlocksDimensions + 2;
+	const int32_t nPresets = nPresetsWidth * nPresetsHeight;
+
+	const size_t nPresetsAllocSize = nPresets * sizeof(uint32_t);
+	int32_t* pPreset0 = (int32_t*)D2_ALLOC_POOL(pDrlg->pMempool, nPresetsAllocSize);
+	int32_t* pPreset1 = (int32_t*)D2_ALLOC_POOL(pDrlg->pMempool, nPresetsAllocSize); // Could be some kind of distance field ?
+	int32_t* pPreset2 = (int32_t*)D2_ALLOC_POOL(pDrlg->pMempool, nPresetsAllocSize);
+	int32_t* pLevelPresetId = (int32_t*)D2_ALLOC_POOL(pDrlg->pMempool, nPresetsAllocSize);
+
+	do {
+		DRLG_GenerateJunglesAttachPoints(pDrlg, tJungles,
+			nMinX, nMinY,
+			nSpiderForestLevelSizeX, nSpiderForestLevelSizeY,
+			nPresetsWidth, nPresetsHeight,
+			pPreset0, pPreset1, pPreset2, pLevelPresetId);
+		DRLG_JungleComputeConnexity(pDrlg, nPresetsWidth, nPresetsHeight, pPreset0, pPreset1, pPreset2, pLevelPresetId);
+	} while (!DRLG_JungleUpdateAttachPointsDirections(pDrlg, nPresetsWidth, nPresetsHeight, pPreset0, pPreset2, pLevelPresetId));
+
+
+	for (int32_t nCurrentPresetY = 0; nCurrentPresetY < nPresetsHeight; nCurrentPresetY++)
+	{
+		for (int32_t nCurrentPresetX = 0; nCurrentPresetX < nPresetsWidth; nCurrentPresetX++)
+		{
+			const int32_t nCurrentPresetIndex = nCurrentPresetY * nPresetsWidth + nCurrentPresetX;
+			pLevelPresetId[nCurrentPresetIndex] = DRLG_JungleNormalizeLevelPresetId(pLevelPresetId[nCurrentPresetIndex]);
+		}
+	}
+
+	for (int nJungleIdx = 0; nJungleIdx < JUNGLE_MAX_ATTACH; ++nJungleIdx)
+	{
+		D2JungleStrc& tCurrentJungle = tJungles[nJungleIdx];
+		const int32_t nSpiderForestLevelPresetsBlocksSizeX = nSpiderForestLevelSizeX / nPresetBlocksDimensions;
+		const int32_t nSpiderForestLevelPresetsBlocksSizeY = nSpiderForestLevelSizeY / nPresetBlocksDimensions;
+
+		int nJungleDefsIndex = 0;
+		for (int nBlockY = 0; nBlockY < nSpiderForestLevelPresetsBlocksSizeY; ++nBlockY)
+		{
+			for (int nBlockX = 0; nBlockX < nSpiderForestLevelPresetsBlocksSizeX; ++nBlockX)
+			{
+				const int32_t nCurrentPresetIndex = nBlockX + tCurrentJungle.nPresetsBlocksX + nPresetsWidth * (nBlockY + tCurrentJungle.nPresetsBlocksY);
+				const int32_t nLevelPresetId = pLevelPresetId[nCurrentPresetIndex];
+				tCurrentJungle.pJungleDefs[nJungleDefsIndex] = nLevelPresetId;
+				if (nLevelPresetId > LVLPREST_ACT3_JUNGLE_TAIL)
+					++tCurrentJungle.nJungleDefs;
+				++nJungleDefsIndex;
+			}
+		}
+	}
+
+	std::sort(tJungles, tJungles + JUNGLE_MAX_ATTACH, 
+		[](const auto& lhs, const auto& rhs) 
+		{ // Order from higher to lower nPosY
+			return lhs.pDrlgCoord.nPosY > rhs.pDrlgCoord.nPosY; 
+		});
+
+	D2DrlgLevelStrc* pJungleLevel = nullptr;
+	for (int i = 0; i < JUNGLE_MAX_ATTACH; ++i)
+	{
+		pJungleLevel = DRLG_GetLevel(pDrlg, i + LEVEL_SPIDERFOREST);
+	
+		pJungleLevel->pJungleDefs = tJungles[i].pJungleDefs;
+		pJungleLevel->nJungleDefs = tJungles[i].nJungleDefs;
+		pJungleLevel->nPosX       = tJungles[i].pDrlgCoord.nPosX;
+		pJungleLevel->nPosY       = tJungles[i].pDrlgCoord.nPosY;
+		pJungleLevel->nWidth      = tJungles[i].pDrlgCoord.nWidth;
+		pJungleLevel->nHeight     = tJungles[i].pDrlgCoord.nHeight;
+	}
+
+	D2_FREE_POOL(pDrlg->pMempool, pPreset0);
+	D2_FREE_POOL(pDrlg->pMempool, pPreset1);
+	D2_FREE_POOL(pDrlg->pMempool, pPreset2);
+	D2_FREE_POOL(pDrlg->pMempool, pLevelPresetId);
+
+	return pJungleLevel;
 }
 /////////////
 
 
 
 //D2Common.0x6FD83970
-void __fastcall sub_6FD83970(D2DrlgCoordStrc* pDrlgCoord, D2UnkOutPlaceStrc* a2, int nRand, int nSizeX, int nSizeY)
+void __fastcall sub_6FD83970(D2DrlgCoordStrc* pDrlgCoord, D2JungleStrc* pJungle, int nRand, int nSizeX, int nSizeY)
 {
 	unsigned int nTemp = 0;
 	int nX = 0;
@@ -2923,33 +2561,27 @@ void __fastcall sub_6FD83970(D2DrlgCoordStrc* pDrlgCoord, D2UnkOutPlaceStrc* a2,
 		break;
 	}
 
-	a2->pDrlgCoord.nPosX = nX + pDrlgCoord->nPosX;
-	a2->pDrlgCoord.nHeight = nSizeY;
-	a2->pDrlgCoord.nWidth = nSizeX;
-	a2->pDrlgCoord.nPosY = nY + pDrlgCoord->nPosY;
-	a2->field_10 = nRand;
+	pJungle->pDrlgCoord.nPosX = nX + pDrlgCoord->nPosX;
+	pJungle->pDrlgCoord.nHeight = nSizeY;
+	pJungle->pDrlgCoord.nWidth = nSizeX;
+	pJungle->pDrlgCoord.nPosY = nY + pDrlgCoord->nPosY;
+	pJungle->field_10 = nRand;
 }
 
 //D2Common.0x6FD83A20
 void __fastcall DRLGOUTPLACE_InitOutdoorRoomGrids(D2RoomExStrc* pRoomEx)
 {
-	D2LevelDefBin* pLevelDefBinRecord = NULL;
-	unsigned int nFlags = 0;
-	int nWaypointSubTheme = 0;
-	int nShrineSubTheme = 0;
-	int nHeight = 0;
-	int nWidth = 0;
 	D2UnkOutdoorStrc2 a1 = {};
 
-	pLevelDefBinRecord = DATATBLS_GetLevelDefRecord(pRoomEx->pLevel->nLevelId);
+	D2LevelDefBin* pLevelDefBinRecord = DATATBLS_GetLevelDefRecord(pRoomEx->pLevel->nLevelId);
 
-	nWaypointSubTheme = (pRoomEx->dwFlags & (ROOMEXFLAG_HAS_WAYPOINT|ROOMEXFLAG_HAS_WAYPOINT_SMALL)) >> 16;
-	nShrineSubTheme = (uint16_t)pRoomEx->dwFlags >> 12;
+	uint32_t nWaypointSubTheme = (pRoomEx->dwFlags & ROOMEXFLAG_HAS_WAYPOINT_MASK) >> ROOMEXFLAG_HAS_WAYPOINT_FIRST_BIT;
+	uint32_t nShrineSubTheme = (pRoomEx->dwFlags & ROOMEXFLAG_SUBSHRINE_ROWS_MASK) >> ROOMEXFLAG_SUBSHRINE_ROWS_FIRST_BIT;
 
-	nWidth = pRoomEx->nTileWidth + 1;
-	nHeight = pRoomEx->nTileHeight + 1;
+	int nWidth = pRoomEx->nTileWidth + 1;
+	int nHeight = pRoomEx->nTileHeight + 1;
 
-	DRLGGRID_InitializeGridCells(pRoomEx->pLevel->pDrlg->pMempool, &pRoomEx->pOutdoor->pOrientationGrid, nWidth, nHeight);
+	DRLGGRID_InitializeGridCells(pRoomEx->pLevel->pDrlg->pMempool, &pRoomEx->pOutdoor->pTileTypeGrid, nWidth, nHeight);
 	DRLGGRID_InitializeGridCells(pRoomEx->pLevel->pDrlg->pMempool, &pRoomEx->pOutdoor->pWallGrid, nWidth, nHeight);
 	DRLGGRID_InitializeGridCells(pRoomEx->pLevel->pDrlg->pMempool, &pRoomEx->pOutdoor->pFloorGrid, nWidth, nHeight);
 
@@ -2963,15 +2595,15 @@ void __fastcall DRLGOUTPLACE_InitOutdoorRoomGrids(D2RoomExStrc* pRoomEx)
 
 	if (DRLG_GetActNoFromLevelId(pRoomEx->pLevel->nLevelId) == ACT_I)
 	{
-		sub_6FD7EFE0(pRoomEx->pLevel, pRoomEx);
+		DRLG_OUTDOORS_GenerateDirtPath(pRoomEx->pLevel, pRoomEx);
 	}
 
 	DRLGROOMTILE_AllocTileGrid(pRoomEx);
 
 	memset(&a1, 0, sizeof(a1));
 	a1.pRoomEx = pRoomEx;
-	a1.pOutdoorRoom = pRoomEx->pOutdoor;
-	a1.pWallGrid = &pRoomEx->pOutdoor->pWallGrid;
+	a1.pOutdoorRooms[0] = pRoomEx->pOutdoor;
+	a1.pWallsGrids[0] = &pRoomEx->pOutdoor->pWallGrid;
 	a1.pFloorGrid = &pRoomEx->pOutdoor->pFloorGrid;
 	a1.field_28 = 0;
 	a1.field_2C = 1;
@@ -2997,6 +2629,7 @@ void __fastcall DRLGOUTPLACE_InitOutdoorRoomGrids(D2RoomExStrc* pRoomEx)
 	a1.nSubThemePicked = pRoomEx->pOutdoor->nSubThemePicked;
 	sub_6FD8AA80(&a1);
 
+	unsigned int nFlags = 0;
 	switch (pRoomEx->pLevel->nLevelType)
 	{
 	case LVLTYPE_ACT2_DESERT:
@@ -3027,13 +2660,13 @@ void __fastcall DRLGOUTPLACE_InitOutdoorRoomGrids(D2RoomExStrc* pRoomEx)
 		break;
 	}
 
-	for (int i = 0; i < nHeight; ++i)
+	for (int nY = 0; nY < nHeight; ++nY)
 	{
-		for (int j = 0; j < nWidth; ++j)
+		for (int nX = 0; nX < nWidth; ++nX)
 		{
-			if (!(DRLGGRID_GetGridFlags(&pRoomEx->pOutdoor->pFloorGrid, j, i) & 0x3F0FF80))
+			if (!(DRLGGRID_GetGridEntry(&pRoomEx->pOutdoor->pFloorGrid, nX, nY) & 0x3F0FF80))
 			{
-				DRLGGRID_AlterGridFlag(&pRoomEx->pOutdoor->pFloorGrid, j, i, nFlags, FLAG_OPERATION_OR);
+				DRLGGRID_AlterGridFlag(&pRoomEx->pOutdoor->pFloorGrid, nX, nY, nFlags, FLAG_OPERATION_OR);
 			}
 		}
 	}

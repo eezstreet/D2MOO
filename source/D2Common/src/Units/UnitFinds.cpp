@@ -140,9 +140,8 @@ void __stdcall UNITFINDS_InitializeUnitFindData(void* pMemPool, D2UnitFindDataSt
 {
 	D2_ASSERT(pUnitFindData);
 
-	pUnitFindData->pUnitsArray = (D2UnitStrc**)FOG_AllocServerMemory(pMemPool, sizeof(D2UnitStrc*) * UNIT_FIND_ARRAY_SIZE, __FILE__, __LINE__, 0);
+	pUnitFindData->pUnitsArray = (D2UnitStrc**)D2_CALLOC_POOL(pMemPool, sizeof(D2UnitStrc*) * UNIT_FIND_ARRAY_SIZE);
 	D2_ASSERT(pUnitFindData->pUnitsArray);
-	memset(pUnitFindData->pUnitsArray, 0x00, sizeof(D2UnitStrc*) * UNIT_FIND_ARRAY_SIZE);
 
 	pUnitFindData->nIndex = 0;
 	pUnitFindData->nFlags = 0;
@@ -161,7 +160,7 @@ void __stdcall UNITFINDS_FreeUnitFindData(D2UnitFindDataStrc* pUnitFindData)
 {
 	if (pUnitFindData && pUnitFindData->pUnitsArray)
 	{
-		FOG_FreeServerMemory(pUnitFindData->pMemPool, pUnitFindData->pUnitsArray, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(pUnitFindData->pMemPool, pUnitFindData->pUnitsArray);
 		pUnitFindData->pUnitsArray = NULL;
 	}
 }
@@ -237,7 +236,7 @@ void __stdcall UNITFINDS_FindAllMatchingUnitsInNeighboredRooms(D2UnitFindDataStr
 						if (nIndex == pUnitFindData->nMaxArrayEntries)
 						{
 							pUnitFindData->nMaxArrayEntries += UNIT_FIND_ARRAY_SIZE;
-							pUnitFindData->pUnitsArray = (D2UnitStrc**)FOG_ReallocServerMemory(pUnitFindData->pMemPool, pUnitFindData->pUnitsArray, sizeof(D2UnitStrc*) * pUnitFindData->nMaxArrayEntries, __FILE__, __LINE__, 0);
+							pUnitFindData->pUnitsArray = (D2UnitStrc**)D2_REALLOC_POOL(pUnitFindData->pMemPool, pUnitFindData->pUnitsArray, sizeof(D2UnitStrc*) * pUnitFindData->nMaxArrayEntries);
 						}
 					}
 				}

@@ -1,5 +1,20 @@
 #include <DetoursPatch.h>
 
+#include <D2DataTbls.h>
+#include <Drlg/D2DrlgPreset.h>
+#include <Drlg/D2DrlgOutRoom.h>
+#include <Drlg/D2DrlgRoomTile.h>
+#include <Drlg/D2DrlgActivate.h>
+#include <Drlg/D2DrlgOutdoors.h>
+#include <Drlg/D2DrlgTileSub.h>
+#include <Drlg/D2DrlgOutPlace.h>
+
+//#define DISABLE_ALL_PATCHES
+
+#if defined(__clang__)
+#pragma clang diagnostic ignored "-Wmicrosoft-cast"
+#endif
+
 extern "C" {
     __declspec(dllexport)
     constexpr int __cdecl GetBaseOrdinal() { return 10'000; }
@@ -12,17 +27,15 @@ extern "C" {
 // /*C*/ to mean that the function has been "Checked" and works
 // /*B*/ to mean wean know it is "Broken" and needs fixing.
 //`     ` (spaces) to mean that it is "Unknown" wether it works or not
-
 static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DRLG_GetLevelTypeFromLevelId                                        @10000
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DRLG_GetActNoFromLevelId                                            @10001
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DRLG_GetLOSDrawFromLevelId                                          @10002
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10003                                                      @10003
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DRLGACTIVATE_Update                                                 @10003
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DRLG_GetSaveMonstersFromLevelId                                     @10004
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DRLG_GetLevel                                                       @10005
 
-    // Note: ends up crashing somewhere in original without callstack, see if can fix later
-    PatchAction::FunctionReplacePatchByOriginal,       //   DRLG_InitLevel                                                      @10006
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DRLG_InitLevel                                                      @10006
 
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetRoomExFromRoom                                           @10007
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DRLGPRESET_GetLevelPrestIdFromRoomEx                                @10008
@@ -32,13 +45,12 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     // Don't patch, datatable
     PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetAutomapCellId                                           @10011
 
-    // Need to get DRLG_AllocDrlg to work first, which needs DATATBLS_LoadLvlPrestTxt so wait until we load datatables
-    PatchAction::FunctionReplacePatchByOriginal,       //   DRLG_FreeDrlg                                                       @10012
-    PatchAction::FunctionReplacePatchByOriginal,       //   DRLG_AllocLevel                                                     @10013
-    PatchAction::FunctionReplacePatchByOriginal,       //   DRLG_AllocDrlg                                                      @10014
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DRLG_FreeDrlg                                                       @10012
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DRLG_AllocLevel                                                     @10013
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DRLG_AllocDrlg                                                      @10014
 
     // Uses globals
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10015                                                      @10015
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DRLGACTIVATE_GetRoomsAllocationStats                                @10015
 
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10016_Return0                                              @10016
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DRLGROOMTILE_GetNumberOfShadowsFromRoom                             @10017
@@ -55,7 +67,7 @@ static PatchAction patchActions[GetOrdinalCount()] = {
 
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetWarpCoordinatesFromRoom                                  @10025
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_ToggleRoomTilesEnableFlag                                   @10026
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetWarpTileFromRoomAndSourceLevelId                         @10027
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetWarpTileFromRoomAndSourceLevelId                         @10027
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetLvlWarpTxtRecordFromRoomAndUnit                          @10028
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetFirstUnitInRoom                                          @10029
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetFloorTilesFromRoom                                       @10030
@@ -67,106 +79,104 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetAlliedCountFromRoom                                      @10036
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetTownLevelIdFromAct                                       @10037
 
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_AllocAct                                                    @10038
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_FreeAct                                                     @10039
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_AllocAct                                                    @10038
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_FreeAct                                                     @10039
 
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_DoRoomsTouchOrOverlap                                       @10040
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_FindRoomBySubtileCoordinates                                @10041
     PatchAction::PointerReplacePatchByOriginal,  /*C*/ //   sgptDataTables                                                      @10042
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_AreTileCoordinatesInsideRoom                                @10043
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_CheckLOSDraw                                                @10044
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_FindActSpawnLocationEx                                      @10045
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_FindActSpawnLocation                                        @10046
 
-    // Waypoint misplaced, probably because of sub_6FD8AA80?
-    PatchAction::FunctionReplacePatchByOriginal, /*B*/ //   DUNGEON_FindActSpawnLocationEx                                      @10045
-    PatchAction::FunctionReplacePatchByOriginal, /*B*/ //   DUNGEON_FindActSpawnLocation                                        @10046
-
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetHoradricStaffTombLevelId                                 @10047
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10048                                                      @10048
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_CallRoomCallback                                            @10049
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetAdjacentRoomByCoordinates                                @10050
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_FindRoomByTileCoordinates                                   @10051
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10052                                                      @10052
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetSubtileRect                                              @10053
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetRGB_IntensityFromRoom                                    @10054
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetPresetUnitsFromRoom                                      @10055
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetRoomFromAct                                              @10056
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetLevelIdFromRoom                                          @10057
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetWarpDestinationLevel                                     @10058
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetLevelIdFromPopulatedRoom                                 @10059
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_HasWaypoint                                                 @10060
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetPickedLevelPrestFilePathFromRoom                         @10061
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10062                                                      @10062
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10063_AddRoomData                                          @10063
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10064_RemoveRoomData                                       @10064
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10065_GetRoomFromActAndCoord                               @10065
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_AllocDrlgDelete                                             @10066
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_FreeDrlgDelete                                              @10067
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetDrlgDeleteFromRoom                                       @10068
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10069                                                      @10069
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10070                                                      @10070
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_TestRoomCanUnTile                                           @10071
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10072                                                      @10072
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10073                                                      @10073
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10074                                                      @10074
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10075                                                      @10075
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_RemoveRoomFromAct                                           @10076
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10077                                                      @10077
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10078                                                      @10078
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_AddClientToRoom                                             @10079
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_RemoveClientFromRoom                                        @10080
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10081_GetTileCountFromRoom                                 @10081
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetHoradricStaffTombLevelId                                 @10047
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_CheckRoomsOverlapping_BROKEN                                                      @10048
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_CallRoomCallback                                            @10049
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetAdjacentRoomByTileCoordinates                                @10050
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_FindRoomByTileCoordinates                                   @10051
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10052                                                      @10052
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetSubtileRect                                              @10053
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetRGB_IntensityFromRoom                                    @10054
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetPresetUnitsFromRoom                                      @10055
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetRoomFromAct                                              @10056
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetLevelIdFromRoom                                          @10057
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetWarpDestinationLevel                                     @10058
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetLevelIdFromPopulatedRoom                                 @10059
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_HasWaypoint                                                 @10060
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetPickedLevelPrestFilePathFromRoom                         @10061
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_ChangeClientRoom                                            @10062
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_SetClientIsInSight                                          @10063
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_UnsetClientIsInSight                                        @10064
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_StreamRoomAtCoords                                          @10065
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_AllocDrlgDelete                                             @10066
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_FreeDrlgDelete                                              @10067
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetDrlgDeleteFromRoom                                       @10068
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetARoomInClientSight                                       @10069
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetARoomInSightButWithoutClient                             @10070
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_TestRoomCanUnTile                                           @10071
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetRoomStatusFlags                                          @10072
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10073                                                      @10073
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10074                                                      @10074
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10075                                                      @10075
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_RemoveRoomFromAct                                           @10076
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10077                                                      @10077
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_UpdateAndFreeInactiveRooms                                                      @10078
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_AddClientToRoom                                             @10079
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_RemoveClientFromRoom                                        @10080
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10081_GetTileCountFromRoom                                 @10081
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_IsRoomInTown                                                @10082
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10083_Return0                                              @10083
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10084                                                      @10084
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetTownLevelIdFromActNo                                     @10085
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_IsTownLevelId                                               @10086
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10087                                                      @10087
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetDrlgFromAct                                              @10088
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetInitSeedFromAct                                          @10089
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetNumberOfPopulatedRoomsInLevel                            @10090
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_UpdateWarpRoomSelect                                        @10091
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_UpdateWarpRoomDeselect                                      @10092
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_UpdatePops                                                  @10093
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetTombStoneTileCoords                                      @10094
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10095                                                      @10095
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10096                                                      @10096
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetRoomCoordList                                            @10097
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetPortalLevelArrayFromPortalFlags                          @10098
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_GetPortalFlagFromLevelId                                    @10099
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_IncreaseAlliedCountOfRoom                                   @10100
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_DecreaseAlliedCountOfRoom                                   @10101
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_ToggleHasPortalFlag                                         @10102
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_SetActCallbackFunc                                          @10103
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_AnimateTiles                                                @10104
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_InitRoomTileAnimation                                       @10105
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_SaveKilledUnitGUID                                          @10106
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10107                                                      @10107
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_ScreenToWorldCoords                                         @10108
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10109                                                      @10109
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_ExpandTileCoords                                            @10110
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_WorldToScreenCoords                                         @10111
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_FlattenCoords_IsoToCartesian                                @10112
-    PatchAction::FunctionReplacePatchByOriginal,       //   DUNGEON_ExpandCoords                                                @10113
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10114                                                      @10114
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10115                                                      @10115
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10116                                                      @10116
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10117                                                      @10117
-    PatchAction::FunctionReplacePatchByOriginal,       //   COLLISION_CheckMask                                                 @10118
-    PatchAction::FunctionReplacePatchByOriginal,       //   COLLISION_CheckMaskWithSize                                         @10119
-    PatchAction::FunctionReplacePatchByOriginal,       //   COLLISION_CheckMaskWithSizeXY                                       @10120
-    PatchAction::FunctionReplacePatchByOriginal,       //   COLLISION_CheckMaskWithPattern1                                     @10121
-    PatchAction::FunctionReplacePatchByOriginal,       //   COLLISION_CheckMaskWithPattern2                                     @10122
-    PatchAction::FunctionReplacePatchByOriginal,       //   COLLISION_ResetMask                                                 @10123
-    PatchAction::FunctionReplacePatchByOriginal,       //   COLLISION_ResetMaskWithSize                                         @10124
-    PatchAction::FunctionReplacePatchByOriginal,       //   COLLISION_ResetMaskWithSizeXY                                       @10125
-    PatchAction::FunctionReplacePatchByOriginal,       //   COLLISION_ResetMaskWithPattern                                      @10126
-    PatchAction::FunctionReplacePatchByOriginal,       //   COLLISION_SetMask                                                   @10127
-    PatchAction::FunctionReplacePatchByOriginal,       //   COLLISION_SetMaskWithSize                                           @10128
-    PatchAction::FunctionReplacePatchByOriginal,       //   COLLISION_SetMaskWithSizeXY                                         @10129
-    PatchAction::FunctionReplacePatchByOriginal,       //   COLLISION_SetMaskWithPattern                                        @10130
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10131                                                      @10131
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10132                                                      @10132
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10133                                                      @10133
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10087                                                      @10087
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetDrlgFromAct                                              @10088
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetInitSeedFromAct                                          @10089
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetNumberOfPopulatedRoomsInLevel                            @10090
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_UpdateWarpRoomSelect                                        @10091
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_UpdateWarpRoomDeselect                                      @10092
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_UpdatePops                                                  @10093
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetTombStoneTileCoords                                      @10094
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10095                                                      @10095
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10096                                                      @10096
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetRoomCoordList                                            @10097
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetPortalLevelArrayFromPortalFlags                          @10098
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GetPortalFlagFromLevelId                                    @10099
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_IncreaseAlliedCountOfRoom                                   @10100
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_DecreaseAlliedCountOfRoom                                   @10101
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_ToggleHasPortalFlag                                         @10102
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_SetActCallbackFunc                                          @10103
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_AnimateTiles                                                @10104
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_InitRoomTileAnimation                                       @10105
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_SaveKilledUnitGUID                                          @10106
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_ClientToGameTileCoords                                      @10107
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_ClientToGameSubtileCoords                                   @10108
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_ClientToGameCoords                                          @10109
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GameTileToClientCoords                                      @10110
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GameSubtileToClientCoords                                   @10111
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GameToClientCoords                                          @10112
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GameTileToSubtileCoords                                     @10113
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_ClientTileDrawPositionToGameCoords                          @10114
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GameToClientTileDrawPositionCoords                          @10115
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_ClientSubileDrawPositionToGameCoords                        @10116
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DUNGEON_GameToClientSubtileDrawPositionCoords                       @10117
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_CheckMask                                                 @10118
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_CheckMaskWithSize                                         @10119
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_CheckMaskWithSizeXY                                       @10120
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_CheckMaskWithPattern                                      @10121
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_CheckAnyCollisionWithPattern                              @10122
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_ResetMask                                                 @10123
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_ResetMaskWithSize                                         @10124
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_ResetMaskWithSizeXY                                       @10125
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_ResetMaskWithPattern                                      @10126
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_SetMask                                                   @10127
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_SetMaskWithSize                                           @10128
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_SetMaskWithSizeXY                                         @10129
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_SetMaskWithPattern                                        @10130
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_TryMoveUnitCollisionMask                                  @10131
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_TryTeleportUnitCollisionMask                              @10132
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_SetUnitCollisionMask                                      @10133
     PatchAction::FunctionReplacePatchByOriginal,       //   COLLISION_GetFreeCoordinates                                        @10134
     PatchAction::FunctionReplacePatchByOriginal,       //   COLLISION_GetFreeCoordinatesWithMaxDistance                         @10135
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10136                                                      @10136
@@ -174,89 +184,89 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplacePatchByOriginal,       //   COLLISION_GetFreeCoordinatesWithField                               @10138
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10139_Return                                               @10139
     PatchAction::Ignore                        , /*C*/ //   D2COMMON_10140_Return                                               @10140
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10141                                                      @10141
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10142                                                      @10142
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10143                                                      @10143
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10144                                                      @10144
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10145                                                      @10145
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_SetVelocity                                                    @10146
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetVelocity                                                    @10147
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10148                                                      @10148
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10149                                                      @10149
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10150                                                      @10150
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10151                                                      @10151
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_AllocDynamicPath                                               @10152
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetClientCoordsVelocity                                        @10141
+    PatchAction::FunctionReplacePatchByOriginal, /*B*/ //   D2Common_10142                                                      @10142
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetUnitDeadCollision                                           @10143
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetUnitAliveCollision                                          @10144
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetUnusedFlag_0x00004                                          @10145
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetVelocity                                                    @10146
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetVelocity                                                    @10147
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetMaxVelocity                                                 @10148
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetMaxVelocity                                                 @10149
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetAcceleration                                                @10150
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetAcceleration                                                @10151
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_AllocDynamicPath                                               @10152
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10153                                                      @10153
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10154                                                      @10154
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetNumberOfPathPoints                                @10154
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10155                                                      @10155
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_FreeDynamicPath                                                @10156
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetPathPoints                                                  @10157
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetDirection                                                   @10158
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetNewDirection                                                @10159
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10160_PathUpdateDirection                                  @10160
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_SetDirection                                                   @10161
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetXPosition                                                   @10162
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetYPosition                                                   @10163
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetTargetX                                                     @10164
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetTargetY                                                     @10165
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetRoom                                                        @10166
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_SetRoom                                                        @10167
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetNextRoom                                                    @10168
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_ClearNextRoom                                                  @10169
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10170_PathSetTargetPos                                     @10170
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetTargetTypeAndGUID                                           @10171
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10172                                                      @10172
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10173                                                      @10173
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10174                                                      @10174
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10175_PathGetFirstPointX                                   @10175
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10176_PathGetFirstPointY                                   @10176
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10177_PATH_GetLastPointX                                   @10177
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10178_PATH_GetLastPointY                                   @10178
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_SetTargetUnit                                                  @10179
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetTargetUnit                                                  @10180
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetCollisionType                                               @10181
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_SetCollisionType                                               @10182
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10183                                                      @10183
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10184                                                      @10184
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_SetType                                                        @10185
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_ResetToPreviousType                                            @10186
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetType                                                        @10187
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_SetNewDistance                                                 @10188
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetMaxDistance                                                 @10189
-    PatchAction::FunctionReplacePatchByOriginal,       //   _10190_PATH_SetDistance                                             @10190
-    PatchAction::FunctionReplacePatchByOriginal,       //   _10191_PATH_GetDistance                                             @10191
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10192_PathSetIDAMax                                        @10192
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10193_PATH_AdjustDirection                                 @10193
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetPrecisionX                                                  @10194
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetPrecisionY                                                  @10195
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_SetPrecisionX                                                  @10196
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_SetPrecisionY                                                  @10197
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10198_PathGetSaveStep                                      @10198
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10199_PathGetSaveX                                         @10199
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10200_PathGetSaveY                                         @10200
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10201                                                      @10201
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10202                                                      @10202
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10203_PATH_SetRotateFlag                                   @10203
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10204_PATH_ClearPoint2                                     @10204
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_SetStepNum                                                     @10205
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetStepNum                                                     @10206
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10207                                                      @10207
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10208_PathSetPathingFlag                                   @10208
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10209_PathCheckPathingFlag                                 @10209
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetUnitCollisionPattern                                        @10210
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_SetUnitCollisionPattern                                        @10211
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10212_PATH_SetMoveFlags                                    @10212
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10213                                                      @10213
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10214                                                      @10214
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10215                                                      @10215
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10216                                                      @10216
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_SetDistance                                                    @10217
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetDistance                                                    @10218
-    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_AddToDistance                                                  @10219
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10220                                                      @10220
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10221                                                      @10221
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10222                                                      @10222
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10223                                                      @10223
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_FreeDynamicPath                                                @10156
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetPathPoints                                                  @10157
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetDirection                                                   @10158
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetNewDirection                                                @10159
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10160_PathUpdateDirection                                  @10160
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetDirection                                                   @10161
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetXPosition                                                   @10162
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetYPosition                                                   @10163
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetClientCoordX                                                @10164
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetClientCoordY                                                @10165
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetRoom                                                        @10166
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetRoom                                                        @10167
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetNextRoom                                                    @10168
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_ClearNextRoom                                                  @10169
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10170_PathSetTargetPos                                     @10170
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetTargetTypeAndGUID                                           @10171
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_IsCurrentRoomInvalid                                           @10172
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetCurrentRoomInvalid                                          @10173
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetUnusedFlag_0x00004                                          @10174
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10175_PathGetFirstPointX                                   @10175
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10176_PathGetFirstPointY                                   @10176
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10177_PATH_GetLastPointX                                   @10177
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10178_PATH_GetLastPointY                                   @10178
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetTargetUnit                                                  @10179
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetTargetUnit                                                  @10180
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetCollisionType                                               @10181
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetCollisionType                                               @10182
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10183                                                      @10183
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10184                                                      @10184
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetType                                                        @10185
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_ResetToPreviousType                                            @10186
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetType                                                        @10187
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetNewDistance                                                 @10188
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetMaxDistance                                                 @10189
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   _10190_PATH_SetDistance                                             @10190
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   _10191_PATH_GetDistance                                             @10191
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10192_PathSetIDAMax                                        @10192
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10193_PATH_AdjustDirection                                 @10193
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetPrecisionX                                                  @10194
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetPrecisionY                                                  @10195
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetPrecisionX                                                  @10196
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetPrecisionY                                                  @10197
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10198_PathGetSaveStep                                      @10198
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10199_PathGetSaveX                                         @10199
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10200_PathGetSaveY                                         @10200
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10201                                                      @10201
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10202                                                      @10202
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10203_PATH_SetRotateFlag                                   @10203
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10204_PATH_ClearPoint2                                     @10204
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetStepNum                                                     @10205
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetStepNum                                                     @10206
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10207                                                      @10207
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10208_PathSetPathingFlag                                   @10208
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10209_PathCheckPathingFlag                                 @10209
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetUnitCollisionPattern                                        @10210
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetUnitCollisionPattern                                        @10211
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10212_PATH_SetMoveFlags                                    @10212
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10213                                                      @10213
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10214                                                      @10214
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_ComputeDirection                                               @10215
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10216                                                      @10216
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetDistance                                                    @10217
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_GetDistance                                                    @10218
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_AddToDistance                                                  @10219
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_ComputeSquaredDistance                                         @10220
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_AddCollisionFootprintForOptionalUnit                           @10221
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_AddCollisionFootprintForUnit                                   @10222
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_RemoveCollisionFootprintForUnit                                @10223
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10224                                                      @10224
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10225                                                      @10225
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10226                                                      @10226
@@ -268,7 +278,7 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10232                                                      @10232
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10233                                                      @10233
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10234                                                      @10234
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10235_PATH_Last                                            @10235
+    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10235_PATH_UpdateRiderPath                                 @10235
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10236                                                      @10236
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10237                                                      @10237
     PatchAction::Ignore,                         /*C*/ //   D2COMMON_10238_Return                                               @10238
@@ -350,80 +360,80 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   INVENTORY_GetUnitGUIDFromCorpse                                     @10314
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10315                                                      @10315
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_10316                                                      @10316
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_CanSwitchAI                                                   @10317
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_IsInMovingMode                                                @10318
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_IsInMovingModeEx                                              @10319
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_CanSwitchAI                                                   @10317
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_IsInMovingMode                                                @10318
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_IsInMovingModeEx                                              @10319
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetStartSkill                                                 @10320
-    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetGetLeftSkill                                               @10321
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetLeftSkill                                                  @10321
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetRightSkill                                                 @10322
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetUsedSkill                                                  @10323
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_SetUsedSkill                                                  @10324
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_SetAnimData                                                   @10325
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_SetAnimData                                                   @10325
     PatchAction::Ignore,                         /*C*/ //; ------------------------UNUSED------------------------               @10326
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetPrecisionX                                                 @10327
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_SetXForStaticUnit                                             @10328
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_SetXForStaticUnit                                             @10328
     PatchAction::Ignore,                         /*C*/ //; ------------------------UNUSED------------------------               @10329
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetPrecisionY                                                 @10330
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_SetYForStaticUnit                                             @10331
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetCoords                                                     @10332
-    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetTargetX                                                    @10333
-    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetTargetY                                                    @10334
-    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetTargetCoords                                               @10335
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetClientCoordX                                               @10333
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetClientCoordY                                               @10334
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetClientCoords                                               @10335
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetUnitSizeX                                                  @10336
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetUnitSizeY                                                  @10337
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetCollisionType                                              @10338
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetStashGoldLimit                                             @10339
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_SetTargetX                                                    @10340
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_SetTargetY                                                    @10341
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetRoom                                                       @10342
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_ResetRoom                                                     @10343
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_SetTargetUnitForDynamicUnit                                   @10344
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetTargetTypeFromDynamicUnit                                  @10345
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetTargetGUIDFromDynamicUnit                                  @10346
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_SetTargetUnitForPlayerOrMonster                               @10347
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_ChangeAnimMode                                                @10348
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_SetAnimStartFrame                                             @10349
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_InitializeStaticPath                                          @10350
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetRoom                                                       @10342
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_ResetRoom                                                     @10343
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_SetTargetUnitForDynamicUnit                                   @10344
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetTargetTypeFromDynamicUnit                                  @10345
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetTargetGUIDFromDynamicUnit                                  @10346
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_SetTargetUnitForPlayerOrMonster                               @10347
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_ChangeAnimMode                                                @10348
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_SetAnimStartFrame                                             @10349
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_InitializeStaticPath                                          @10350
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_BlockCollisionPath                                            @10351
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_FreeCollisionPath                                             @10352
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetNameOffsetFromObject                                       @10353
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetNameOffsetFromObject                                       @10353
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetRunAndWalkSpeedForPlayer                                   @10354
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10355                                                      @10355
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10356                                                      @10356
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_IsCurrentRoomInvalid                                          @10355
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_SetCurrentRoomInvalid                                         @10356
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_RefreshInventory                                              @10357
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetSkillFromSkillId                                           @10358
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_IsSoftMonster                                                 @10359
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetSkillFromSkillId                                           @10358
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_IsSoftMonster                                                 @10359
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetMeleeRange                                                 @10360
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_IsInMeleeRange                                                @10361
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_TestCollisionWithUnit                                         @10362
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_TestCollisionBetweenInteractingUnits                          @10363
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_TestCollisionByCoordinates                                    @10364
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetHitClass                                                   @10365
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetWeaponClass                                                @10366
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetBeltType                                                   @10367
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetCurrentLifePercentage                                      @10368
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetAnimOrSeqMode                                              @10369
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_SetAnimOrSeqMode                                              @10370
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_InitializeSequence                                            @10371
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_SetAnimationFrame                                             @10372
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_StopSequence                                                  @10373
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_UpdateFrame                                                   @10374
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10375_UNITS_SetFrameNonRate                                @10375
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10376_UpdateAnimRateAndVelocity                            @10376
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_SetAnimationSpeed                                             @10377
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_IsAtEndOfFrameCycle                                           @10378
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetShiftedFrameMetrics                                        @10379
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetFrameMetrics                                               @10380
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_SetAnimActionFrame                                            @10381
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetEventFrameInfo                                             @10382
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetLightMap                                                   @10383
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITROOM_AddUnitToRoom                                              @10384
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetHitClass                                                   @10365
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetWeaponClass                                                @10366
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetBeltType                                                   @10367
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetCurrentLifePercentage                                      @10368
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetAnimOrSeqMode                                              @10369
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_SetAnimOrSeqMode                                              @10370
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_InitializeSequence                                            @10371
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_SetAnimationFrame                                             @10372
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_StopSequence                                                  @10373
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_UpdateFrame                                                   @10374
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_10375_UNITS_SetFrameNonRate                                @10375
+    PatchAction::FunctionReplacePatchByOriginal, /*B*/ //   D2COMMON_10376_UpdateAnimRateAndVelocity                            @10376
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_SetAnimationSpeed                                             @10377
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_IsAtEndOfFrameCycle                                           @10378
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetShiftedFrameMetrics                                        @10379
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetFrameMetrics                                               @10380
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_SetAnimActionFrame                                            @10381
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetEventFrameInfo                                             @10382
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_ResetLightMap                                                 @10383
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITROOM_AddUnitToRoom                                              @10384
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITROOM_RefreshUnit                                                @10385
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITROOM_RemoveUnitFromRoom                                         @10386
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITROOM_RemoveUnitFromUpdateQueue                                  @10387
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITROOM_SortUnitListByTargetY                                      @10388
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITROOM_IsUnitInRoom                                               @10389
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITROOM_UpdatePath                                                 @10390
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITROOM_UpdatePath                                                 @10390
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITROOM_ClearUpdateQueue                                           @10391
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_IsDoor                                                        @10392
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_IsShrine                                                      @10393
@@ -469,7 +479,7 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetBlockRate                                                  @10433
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10434                                                      @10434
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetEquippedWeaponFromMonster                                  @10435
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetFrameBonus                                                 @10436
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetFrameBonus                                                 @10436
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_SetOverlay                                                    @10437
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetHealingCost                                                @10438
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_GetInventoryGoldLimit                                         @10439
@@ -493,8 +503,8 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetDirection                                                  @10457
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_SetTimerArg                                                   @10458
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_GetTimerArg                                                   @10459
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_AllocStaticPath                                               @10460
-    PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_FreeStaticPath                                                @10461
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_AllocStaticPath                                               @10460
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   UNITS_FreeStaticPath                                                @10461
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_CanDualWield                                                  @10462
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_SetStat                                                    @10463
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_AddStat                                                    @10464
@@ -552,8 +562,8 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_UpdateStatListsExpiration                                  @10516
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_SetUnitStat                                                @10517
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_AddUnitStat                                                @10518
-    PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_GetUnitStat                                                @10519
-    PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_GetUnitStatSigned                                          @10520
+    PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_UnitGetStatValue                                           @10519
+    PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_UnitGetItemStatOrSkillStatValue                            @10520
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_GetUnitBaseStat                                            @10521
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_GetUnitStatBonus                                           @10522
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_MergeStatLists                                             @10523
@@ -565,7 +575,7 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_GetExpireFrame                                             @10529
     PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_10530_D2CheckStatlistFlagDMGRed                            @10530
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10531_SetStatInStatListLayer0                              @10531
-    PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_GetStatUnsigned_Layer0                                            @10532
+    PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_GetTotalStatValue_Layer0                                   @10532
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_RemoveAllStatsFromOverlay                                  @10533
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10534                                                      @10534
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_GetOwner                                                   @10535
@@ -673,8 +683,8 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetInventoryComponentGrid                                  @10637
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DATATBLS_GetBeltsTxtRecord                                          @10638
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DATATBLS_GetInvRectFromBeltsTxt                                     @10639
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10640                                                      @10640
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10641                                                      @10641
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DATATBLS_UnitAnimInfoDebugSet                                       @10640
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DATATBLS_GetAnimDataInfo                                            @10641
     PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_SetVelocityInMonStatsTxtRecord                             @10642
     PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetPlrMode_TypeDataTables                                  @10643
     PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetMonModeDataTables                                       @10644
@@ -697,9 +707,9 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::Ignore,                         /*C*/ //   D2COMMON_10661_Return0                                              @10661
     PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetMonItemPercentDataTables                                @10662
     PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetMonItemPercentTxtRecord                                 @10663
-    PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetCharTemplateTxtRecordCount                              @10664
-    PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetCharTemplateTxtRecord                                   @10665
-    PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetClassFromCharTemplateTxtRecord                          @10666
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DATATBLS_GetCharTemplateTxtRecordCount                              @10664
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DATATBLS_GetCharTemplateTxtRecord                                   @10665
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DATATBLS_GetClassFromCharTemplateTxtRecord                          @10666
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DATATBLS_UNUSED_Return0                                             @10667
     PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetSuperUniquesTxtRecord                                   @10668
     PatchAction::Ignore,                         /*C*/ //; ------------------------UNUSED------------------------               @10669
@@ -715,11 +725,11 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetRadiusAndColorFromOverlayTxt                            @10679
     PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_Get1OfNFromOverlayTxt                                      @10680
     PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetDirFromOverlayTxt                                       @10681
-    PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetMonSeqTxtRecordFromUnit                                 @10682
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10683                                                      @10683
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10684                                                      @10684
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_10685                                                      @10685
-    PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetSequenceEvent                                           @10686
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DATATBLS_GetMonSeqTxtRecordFromUnit                                 @10682
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DATATBLS_GetSeqFramePointsCount                                     @10683
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DATATBLS_GetSeqFrameCount                                           @10684
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DATATBLS_ComputeSequenceAnimation                                   @10685
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   DATATBLS_GetSequenceEvent                                           @10686
     PatchAction::FunctionReplacePatchByOriginal,       //   ITEMS_AllocItemData                                                 @10687
     PatchAction::FunctionReplacePatchByOriginal,       //   ITEMS_FreeItemData                                                  @10688
     PatchAction::FunctionReplacePatchByOriginal,       //   ITEMS_GetBodyLocation                                               @10689
@@ -924,7 +934,7 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplacePatchByOriginal,       //   COMPOSIT_GetWeaponClassId                                           @10888
     PatchAction::FunctionReplacePatchByOriginal,       //   COMPOSIT_IsArmorComponent                                           @10889
     PatchAction::FunctionReplacePatchByOriginal,       //   COMPOSIT_IsWeaponBowOrXBow                                          @10890
-    PatchAction::FunctionReplacePatchByOriginal,       //   COMPOSIT_GetArmorTypeFromComponent                                  @10891
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COMPOSIT_GetArmorTypeFromComponent                                  @10891
     PatchAction::FunctionReplacePatchByOriginal,       //   CHAT_AllocHoverMsg                                                  @10892
     PatchAction::FunctionReplacePatchByOriginal,       //   CHAT_FreeHoverMsg                                                   @10893
     PatchAction::FunctionReplacePatchByOriginal,       //   CHAT_GetDisplayTimeFromHoverMsg                                     @10894
@@ -1046,8 +1056,8 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplacePatchByOriginal,       //   SKILLS_IsPlayerClassSkill                                           @11010
     PatchAction::FunctionReplacePatchByOriginal,       //   SKILLS_GetQuantity                                                  @11011
     PatchAction::FunctionReplacePatchByOriginal,       //   SKILLS_SetQuantity                                                  @11012
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_11013_ConvertMode                                          @11013
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_11014                                                      @11014
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2COMMON_11013_ConvertMode                                          @11013
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   D2Common_11014_ConvertShapeShiftedMode                              @11014
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_11015                                                      @11015
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_11016                                                      @11016
     PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_11017_CheckUnitIfConsumeable                               @11017
@@ -1070,7 +1080,7 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_11034                                                      @11034
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_11035                                                      @11035
     PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_11036_GetMonCurseResistanceSubtraction                     @11036
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_11037                                                      @11037
+    PatchAction::FunctionReplacePatchByOriginal,       //   SKILLS_CheckIfCanLeapTo                                             @11037
     PatchAction::Ignore,                         /*C*/ //; ------------------------UNUSED------------------------               @11038
     PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_11039_CheckWeaponIsMissileBased                            @11039
     PatchAction::FunctionReplacePatchByOriginal,       //   SKILLS_IsEnhanceable                                                @11040
@@ -1090,7 +1100,7 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_11054                                                      @11054
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_11055                                                      @11055
     PatchAction::Ignore,                         /*C*/ //; ------------------------UNUSED------------------------               @11056
-    PatchAction::FunctionReplacePatchByOriginal,       //   MONSTESR_IsSandLeaper                                               @11057
+    PatchAction::FunctionReplacePatchByOriginal,       //   MONSTERS_IsSandLeaper                                               @11057
     PatchAction::FunctionReplacePatchByOriginal,       //   MONSTERS_IsDemon                                                    @11058
     PatchAction::FunctionReplacePatchByOriginal,       //   MONSTERS_IsUndead                                                   @11059
     PatchAction::FunctionReplacePatchByOriginal,       //   MONSTERS_IsBoss                                                     @11060
@@ -1296,14 +1306,14 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITS_FreeUnit                                                      @11260
     PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_CalculateMonsterStatsByLevel                               @11261
     PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetMonSeqTableRecord                                       @11262
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_11263                                                      @11263
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   COLLISION_RayTrace                                                      @11263
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_SetSkillId                                                 @11264
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_GetSkillId                                                 @11265
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_SetSkillLevel                                              @11266
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_GetSkillLevel                                              @11267
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_GetFullStatsDataFromUnit                                   @11268
     PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_11269_CopyStats                                            @11269
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_11270                                                      @11270
+    PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_CopyStats                                                      @11270
     PatchAction::FunctionReplacePatchByOriginal,       //   SKILLS_GetSpecialParamValue                                         @11271
     PatchAction::FunctionReplacePatchByOriginal,       //   STATES_CheckStateMaskRemHitOnUnit                                   @11272
     PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_11273                                                      @11273
@@ -1314,8 +1324,8 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   INVENTORY_GetItemsXPosition                                         @11278
     PatchAction::FunctionReplacePatchByOriginal,       //   UNITROOM_AddUnitToRoomEx                                            @11279
     PatchAction::FunctionReplacePatchByOriginal,       //   MONSTERS_GetSpawnMode_XY                                            @11280
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_11281_Unused                                               @11281
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_11282_Unused                                               @11282
+    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_11281_CollisionPatternFromSize                                               @11281
+    PatchAction::FunctionReplacePatchByOriginal,       //   PATH_GetCollisionPatternFromMonStats2Txt                            @11282
     PatchAction::FunctionReplacePatchByOriginal,       //   SKILLS_CalculateKickDamage                                          @11283
     PatchAction::FunctionReplacePatchByOriginal,       //   MISSILE_EvaluateMissileFormula                                      @11284
     PatchAction::FunctionReplacePatchByOriginal,       //   MISSILE_GetMinDamage                                                @11285
@@ -1324,13 +1334,13 @@ static PatchAction patchActions[GetOrdinalCount()] = {
     PatchAction::FunctionReplacePatchByOriginal,       //   MISSILE_GetMaxElemDamage                                            @11288
     PatchAction::FunctionReplacePatchByOriginal,       //   MISSILE_GetElemTypeFromMissileId                                    @11289
     PatchAction::FunctionReplacePatchByOriginal,       //   MISSILE_GetSpecialParamValue                                        @11290
-    PatchAction::FunctionReplacePatchByOriginal,       //   D2Common_11291                                                      @11291
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   PATH_SetNumberOfPathPoints                                                      @11291
     PatchAction::FunctionReplacePatchByOriginal,       //   D2COMMON_11292_ItemAssignProperty                                   @11292
     PatchAction::FunctionReplacePatchByOriginal,       //   ITEMMODS_GetItemCharges                                             @11293
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_SetBaseStat                                                @11294
     PatchAction::FunctionReplacePatchByOriginal,       //   STATLIST_SetBaseStat2                                               @11295
     PatchAction::Ignore,                         /*C*/ //   D2COMMON_11296_Return                                               @11296
-    PatchAction::FunctionReplacePatchByOriginal,       //   MONSTERS_SetMonsterNameInMonsterData                                @11297
+    PatchAction::FunctionReplaceOriginalByPatch, /*C*/ //   MONSTERS_SetMonsterNameInMonsterData                                @11297
     PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetUnitNameFromUnit                                        @11298
     PatchAction::FunctionReplacePatchByOriginal,       //   DATATBLS_GetUnitNameFromUnitTypeAndClassId                          @11299
     PatchAction::FunctionReplacePatchByOriginal,       //   ITEMMODS_EvaluateItemFormula                                        @11300
@@ -1349,33 +1359,74 @@ extern "C" {
 __declspec(dllexport)
 PatchAction __cdecl GetPatchAction(int ordinal)
 {
+#ifdef DISABLE_ALL_PATCHES
+    return PatchAction::Ignore;
+#else
+
     if (ordinal < GetBaseOrdinal() || ordinal > GetLastOrdinal())
         return PatchAction::FunctionReplacePatchByOriginal;
+    
+    static_assert(GetOrdinalCount() == (sizeof(patchActions) / sizeof(*patchActions)), "Make sure we have the right number of ordinal patch entries");
     return ::patchActions[ordinal - GetBaseOrdinal()];
+#endif
 }
 
 static const int D2CommonImageBase = 0x6FD40000;
 
 static ExtraPatchAction extraPatchActions[] = {
-    //{ 0x6FDB6300 - D2CommonImageBase, &STATLIST_FindStatIndex_6FDB6300 , PatchAction::FunctionReplaceOriginalByPatch },
-    //{ 0x6FDB6C10 - D2CommonImageBase, &sub_6FDB6C10, PatchAction::FunctionReplacePatchByOriginal },
-    //{ 0x6FDB64A0 - D2CommonImageBase, &sub_6FDB64A0, PatchAction::FunctionReplacePatchByOriginal },
-    //{ 0x6FDB6920 - D2CommonImageBase, &STATLIST_FindStat_6FDB6920, PatchAction::FunctionReplacePatchByOriginal },
-    //{ 0x6FDB6970 - D2CommonImageBase, &STATLIST_InsertStatOrFail_6FDB6970, PatchAction::FunctionReplaceOriginalByPatch },
-    //{ 0x6FDB6AB0 - D2CommonImageBase, &STATLIST_UpdateUnitStat_6FDB6AB0, PatchAction::FunctionReplaceOriginalByPatch },
-    //{ 0x6FDB63E0 - D2CommonImageBase, &STATLIST_GetTotalStat_6FDB63E0, PatchAction::FunctionReplaceOriginalByPatch },
-    //{ 0x6FD85A10 - D2CommonImageBase, &DRLGPRESET_ParseDS1File, PatchAction::FunctionReplaceOriginalByPatch },
+    // We need to cover all usage of gpLevelFilesList_6FDEA700 and gpLvlSubTypeFilesCriticalSection
+    //{ 0x6FDEA700 - D2CommonImageBase, &gpLevelFilesList_6FDEA700, PatchAction::PointerReplaceOriginalByPatch },
+    { 0x6FD86050 - D2CommonImageBase, &DRLGPRESET_LoadDrlgFile, PatchAction::FunctionReplaceOriginalByPatch },
+    { 0x6FD86190 - D2CommonImageBase, &DRLGPRESET_FreeDrlgFile, PatchAction::FunctionReplaceOriginalByPatch },
+    { 0x6FD87F20 - D2CommonImageBase, &DRLGPRESET_FreeDrlgMap, PatchAction::FunctionReplaceOriginalByPatch },
+    { 0x6FD62020 - D2CommonImageBase, &DATATBLS_LoadLvlSubTxt, PatchAction::FunctionReplaceOriginalByPatch },
+    { 0x6FD62600 - D2CommonImageBase, &DATATBLS_UnloadLvlSubTxt, PatchAction::FunctionReplaceOriginalByPatch },
+
+    // Only ever accessed through DATATBLS_LoadArenaTxt, DATATBLS_GetArenaTxtRecord and DATATBLS_UnloadArenaTxt
+    //{ 0x6FDE9600 - D2CommonImageBase, &gpArenaTxtTable, PatchAction::PointerReplaceOriginalByPatch },
+    { 0x6FD47840 - D2CommonImageBase, &DATATBLS_LoadArenaTxt, PatchAction::FunctionReplaceOriginalByPatch },
+    { 0x6FD479B0 - D2CommonImageBase, &DATATBLS_UnloadArenaTxt, PatchAction::FunctionReplaceOriginalByPatch },
+    
+    // Only ever accessed through DATATBLS_LoadCharTemplateTxt, DATATBLS_GetCharTemplateTxtRecord, DATATBLS_GetClassFromCharTemplateTxtRecord and DATATBLS_UnloadCharTemplateTxt
+    // Also need to have the count matching with DATATBLS_GetCharTemplateTxtRecordCount
+    //{ 0x6FDE95F8 - D2CommonImageBase, &gpCharTemplateTxtTable, PatchAction::PointerReplaceOriginalByPatch },
+    { 0x6FD479D0 - D2CommonImageBase, &DATATBLS_LoadCharTemplateTxt, PatchAction::FunctionReplaceOriginalByPatch },
+    { 0x6FD48770 - D2CommonImageBase, &DATATBLS_UnloadCharTemplateTxt, PatchAction::FunctionReplaceOriginalByPatch },
+
+    // Only ever accessed through DATATBLS_LoadCharTemplateTxt, DATATBLS_GetBeltsTxtRecord, DATATBLS_GetInvRectFromBeltsTxt and DATATBLS_UnloadBeltsTxt
+    //{ 0x6FDEA704 - D2CommonImageBase, &sgpBeltsTxtTable, PatchAction::PointerReplaceOriginalByPatch },
+    { 0x6FD48880 - D2CommonImageBase, &DATATBLS_LoadCharTemplateTxt, PatchAction::FunctionReplaceOriginalByPatch },
+    { 0x6FD493A0 - D2CommonImageBase, &DATATBLS_UnloadBeltsTxt, PatchAction::FunctionReplaceOriginalByPatch },
+    
+    // Can patch directly since it's pointing to the global static data tables
+    { 0x6FDDAF34 - D2CommonImageBase, &gpAutomapSeed, PatchAction::PointerReplacePatchByOriginal},
+
+    // Known broken (or at least unable to function without patching other functions/variables) functions
+
+    // Fixed or working
+    //{ 0x6FD83E20 - D2CommonImageBase, &DRLGOUTROOM_InitializeDrlgOutdoorRoom, PatchAction::PointerReplaceOriginalByPatch},
+    //{ 0x6FD8ACE0 - D2CommonImageBase, &sub_6FD8ACE0, PatchAction::FunctionReplacePatchByOriginal},
+    //{ 0x6FD7EFE0 - D2CommonImageBase, &DRLG_OUTDOORS_GenerateDirtPath, PatchAction::FunctionReplacePatchByOriginal},  
+    
+    // this is the one that leads to issues
+    //{ 0x6FD73450 - D2CommonImageBase, &DRLGACTIVATE_RoomExSetStatus_ClientInSight, PatchAction::FunctionReplacePatchByOriginal},
 
     { 0, 0, PatchAction::Ignore}, // Here because we need at least one element in the array
 };
 
 __declspec(dllexport)
-constexpr int __cdecl GetExtraPatchActionsCount() { return sizeof(extraPatchActions) / sizeof(ExtraPatchAction); }
+constexpr int __cdecl GetExtraPatchActionsCount() { 
+#ifdef DISABLE_ALL_PATCHES
+    return 0;
+#else
+    return sizeof(extraPatchActions) / sizeof(ExtraPatchAction); 
+#endif
+}
 
 __declspec(dllexport)
-ExtraPatchAction __cdecl GetExtraPatchAction(int index)
+ExtraPatchAction* __cdecl GetExtraPatchAction(int index)
 {
-    return extraPatchActions[index];
+    return &extraPatchActions[index];
 }
 
 }

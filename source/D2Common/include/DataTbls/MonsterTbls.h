@@ -1,6 +1,9 @@
 #pragma once 
 
 #include <D2BasicTypes.h>
+#include <D2Monsters.h>
+
+#include "ItemsTbls.h"
 
 #pragma pack(1)
 
@@ -15,19 +18,19 @@ struct D2UnkMonCompStrc
 
 struct D2TCExInfoStrc
 {
-	int32_t nClassic;
-	int32_t nProb;
-	int16_t nItemId;
-	int16_t nTxtRow;
-	uint8_t nFlags;
-	int8_t unk0x0D;
-	int16_t unk0x0E;
-	int16_t unk0x10;
-	int16_t unk0x12;
-	int16_t unk0x14;
-	int16_t unk0x16;
-	int16_t unk0x18;
-	int16_t unk0x1A;
+	int32_t nClassic;						//0x00
+	int32_t nProb;							//0x04
+	int16_t nItemId;						//0x08
+	int16_t nTxtRow;						//0x0A
+	uint8_t nFlags;							//0x0C
+	int8_t unk0x0D;							//0x0D
+	int16_t nMagic;							//0x0E
+	int16_t nRare;							//0x10
+	int16_t nSet;							//0x12
+	int16_t nUnique;						//0x14
+	int16_t nSuperior;						//0x16
+	int16_t nNormal;						//0x18
+	int16_t unk0x1A;						//0x1A
 };
 
 struct D2TCExShortStrc
@@ -161,7 +164,7 @@ enum D2C_MonStatsTxtFlagIndices
 	MONSTATSFLAGINDEX_BOSS,
 	MONSTATSFLAGINDEX_PRIMEEVIL,
 	MONSTATSFLAGINDEX_NPC,
-	MONSTATSFLAGINDEX_INTERACT,
+	MONSTATSFLAGINDEX_INTERACT, // Player may interact with the monster instead of attacking it.
 	MONSTATSFLAGINDEX_INTOWN,
 	MONSTATSFLAGINDEX_LUNDEAD,
 	MONSTATSFLAGINDEX_HUNDEAD,
@@ -226,8 +229,8 @@ enum D2C_MonStats2TxtFlagIndices
 	MONSTATS2FLAGINDEX_NOSEL,
 	MONSTATS2FLAGINDEX_SHIFTSEL,
 	MONSTATS2FLAGINDEX_CORPSESEL,
-	MONSTATS2FLAGINDEX_REVIVE,
-	MONSTATS2FLAGINDEX_ISATT,
+	MONSTATS2FLAGINDEX_REVIVE,// Monster may be revived.
+	MONSTATS2FLAGINDEX_ISATT, // Monster may be attacked.
 	MONSTATS2FLAGINDEX_SMALL,
 	MONSTATS2FLAGINDEX_LARGE,
 	MONSTATS2FLAGINDEX_SOFT,
@@ -306,44 +309,24 @@ enum D2C_MonStats2TxtComponentFlags
 	MONSTATS2COMPONENTFLAG_S8 = (1 << MONSTATS2COMPONENTFLAGINDEX_S8),
 };
 
-enum D2C_MonStats2TxtModeFlagIndices
-{
-	MONSTATS2MODEFLAGINDEX_DT = 0,
-	MONSTATS2MODEFLAGINDEX_NU,
-	MONSTATS2MODEFLAGINDEX_WL,
-	MONSTATS2MODEFLAGINDEX_GH,
-	MONSTATS2MODEFLAGINDEX_A1,
-	MONSTATS2MODEFLAGINDEX_A2,
-	MONSTATS2MODEFLAGINDEX_BL,
-	MONSTATS2MODEFLAGINDEX_SC,
-	MONSTATS2MODEFLAGINDEX_S1,
-	MONSTATS2MODEFLAGINDEX_S2,
-	MONSTATS2MODEFLAGINDEX_S3,
-	MONSTATS2MODEFLAGINDEX_S4,
-	MONSTATS2MODEFLAGINDEX_DD,
-	MONSTATS2MODEFLAGINDEX_KB,
-	MONSTATS2MODEFLAGINDEX_SQ,
-	MONSTATS2MODEFLAGINDEX_RN,
-};
-
 enum D2C_MonStats2TxtModeFlags
 {
-	MONSTATS2MODEFLAG_DT = (1 << MONSTATS2MODEFLAGINDEX_DT),
-	MONSTATS2MODEFLAG_NU = (1 << MONSTATS2MODEFLAGINDEX_NU),
-	MONSTATS2MODEFLAG_WL = (1 << MONSTATS2MODEFLAGINDEX_WL),
-	MONSTATS2MODEFLAG_GH = (1 << MONSTATS2MODEFLAGINDEX_GH),
-	MONSTATS2MODEFLAG_A1 = (1 << MONSTATS2MODEFLAGINDEX_A1),
-	MONSTATS2MODEFLAG_A2 = (1 << MONSTATS2MODEFLAGINDEX_A2),
-	MONSTATS2MODEFLAG_BL = (1 << MONSTATS2MODEFLAGINDEX_BL),
-	MONSTATS2MODEFLAG_SC = (1 << MONSTATS2MODEFLAGINDEX_SC),
-	MONSTATS2MODEFLAG_S1 = (1 << MONSTATS2MODEFLAGINDEX_S1),
-	MONSTATS2MODEFLAG_S2 = (1 << MONSTATS2MODEFLAGINDEX_S2),
-	MONSTATS2MODEFLAG_S3 = (1 << MONSTATS2MODEFLAGINDEX_S3),
-	MONSTATS2MODEFLAG_S4 = (1 << MONSTATS2MODEFLAGINDEX_S4),
-	MONSTATS2MODEFLAG_DD = (1 << MONSTATS2MODEFLAGINDEX_DD),
-	MONSTATS2MODEFLAG_KB = (1 << MONSTATS2MODEFLAGINDEX_KB),
-	MONSTATS2MODEFLAG_SQ = (1 << MONSTATS2MODEFLAGINDEX_SQ),
-	MONSTATS2MODEFLAG_RN = (1 << MONSTATS2MODEFLAGINDEX_RN),
+	MONSTATS2MODEFLAG_DT = (1 << MONMODE_DEATH),
+	MONSTATS2MODEFLAG_NU = (1 << MONMODE_NEUTRAL),
+	MONSTATS2MODEFLAG_WL = (1 << MONMODE_WALK),
+	MONSTATS2MODEFLAG_GH = (1 << MONMODE_GETHIT),
+	MONSTATS2MODEFLAG_A1 = (1 << MONMODE_ATTACK1),
+	MONSTATS2MODEFLAG_A2 = (1 << MONMODE_ATTACK2),
+	MONSTATS2MODEFLAG_BL = (1 << MONMODE_BLOCK),
+	MONSTATS2MODEFLAG_SC = (1 << MONMODE_CAST),
+	MONSTATS2MODEFLAG_S1 = (1 << MONMODE_SKILL1),
+	MONSTATS2MODEFLAG_S2 = (1 << MONMODE_SKILL2),
+	MONSTATS2MODEFLAG_S3 = (1 << MONMODE_SKILL3),
+	MONSTATS2MODEFLAG_S4 = (1 << MONMODE_SKILL4),
+	MONSTATS2MODEFLAG_DD = (1 << MONMODE_DEAD),
+	MONSTATS2MODEFLAG_KB = (1 << MONMODE_KNOCKBACK),
+	MONSTATS2MODEFLAG_SQ = (1 << MONMODE_SEQUENCE),
+	MONSTATS2MODEFLAG_RN = (1 << MONMODE_RUN),
 };
 
 struct D2MonStatsTxt
@@ -354,21 +337,24 @@ struct D2MonStatsTxt
 	uint16_t wNameStr;						//0x06
 	uint16_t wDescStr;						//0x08
 	uint16_t unk0x0A;						//0x0A
-	uint32_t dwMonStatsFlags;				//0x0C
+	union
+	{
+		uint32_t dwMonStatsFlags;				//0x0C
+		uint8_t nMonStatsFlags[4];				//0x0C
+	};
 	uint32_t dwCode;						//0x10
 	uint16_t wMonSound;						//0x14
 	uint16_t wUMonSound;					//0x16
 	uint16_t wMonStatsEx;					//0x18
 	uint16_t wMonProp;						//0x1A
-	uint16_t wMonType;						//0x1C
+	int16_t wMonType;						//0x1C
 	uint16_t wAI;							//0x1E
 	uint16_t wSpawn;						//0x20
 	uint8_t nSpawnX;						//0x22
 	uint8_t nSpawnY;						//0x23
 	uint8_t nSpawnMode;						//0x24
 	uint8_t unk0x25;						//0x25
-	uint16_t wMinion1;						//0x26
-	uint16_t wMinion2;						//0x28
+	int16_t wMinion[2];						//0x26
 	int16_t nMonEquipTxtRecordId;			//0x2A
 	uint8_t nPartyMin;						//0x2C
 	uint8_t nPartyMax;						//0x2D
@@ -404,7 +390,7 @@ struct D2MonStatsTxt
 	uint8_t nToBlock[3];					//0xA3
 	uint8_t nCrit;							//0xA6
 	uint8_t unk0xA7;						//0xA7
-	uint16_t wSkillDamage;					//0xA8
+	int16_t wSkillDamage;					//0xA8
 	uint16_t nLevel[3];						//0xAA
 	uint16_t nMinHP[3];						//0xB0
 	uint16_t nMaxHP[3];						//0xB6
@@ -427,9 +413,9 @@ struct D2MonStatsTxt
 	uint16_t nElMaxD[3][3];					//0x120
 	uint16_t nElDur[3][3];					//0x132
 	uint16_t nResistances[6][3];			//0x144
-	uint8_t nColdEffect[3];					//0x168
+	int8_t nColdEffect[3];					//0x168
 	uint8_t unk0x16B;						//0x16B
-	uint32_t dwSendSkills;					//0x16C
+	uint8_t nSendSkills[4];					//0x16C
 	int16_t nSkill[8];						//0x170
 	uint8_t nSkillMode[8];					//0x180
 	uint16_t nSequence[8];					//0x188
@@ -444,7 +430,11 @@ struct D2MonStatsTxt
 struct D2MonStats2Txt
 {
 	uint32_t dwId;							//0x00
-	uint32_t dwFlags;						//0x04
+	union
+	{
+		uint32_t dwFlags;						//0x04
+		uint8_t nFlags[4];						//0x04
+	};
 	uint8_t nSizeX;							//0x08
 	uint8_t nSizeY;							//0x09
 	uint8_t nSpawnCol;						//0x0A
@@ -463,23 +453,12 @@ struct D2MonStats2Txt
 	uint32_t dwComponentFlags;				//0xE8
 	uint8_t nTotalPieces;					//0xEC
 	uint8_t pad0xED[3];						//0xED
-	uint32_t dwModeFlags;					//0xF0
-	uint8_t ndDT;							//0xF4
-	uint8_t ndNU;							//0xF5
-	uint8_t ndWL;							//0xF6
-	uint8_t ndGH;							//0xF7
-	uint8_t ndA1;							//0xF8
-	uint8_t ndA2;							//0xF9
-	uint8_t ndBL;							//0xFA
-	uint8_t ndSC;							//0xFB
-	uint8_t ndS1;							//0xFC
-	uint8_t ndS2;							//0xFD
-	uint8_t ndS3;							//0xFE
-	uint8_t ndS4;							//0xFF
-	uint8_t ndDD;							//0x100
-	uint8_t ndKB;							//0x101
-	uint8_t ndSQ;							//0x102
-	uint8_t ndRN;							//0x103
+	union
+	{
+		uint32_t dwModeFlags;					//0xF0 If flag is set, mode is enabled. See D2C_MonModes.
+		uint8_t nModeFlags[4];					//0xF0
+	};
+	uint8_t nModeDirections[NUMBER_OF_MONMODES]; //0xF4
 	uint8_t unusedFlags[4];					//0x104
 	uint8_t nInfernoLen;					//0x108
 	uint8_t nInfernoAnim;					//0x109
@@ -522,7 +501,7 @@ struct D2MonUModTxt
 	uint8_t nXfer;							//0x07
 	uint8_t nChampion;						//0x08
 	uint8_t nFPick;							//0x09
-	uint16_t wExclude[2];					//0x0A
+	int16_t wExclude[2];					//0x0A
 	uint16_t wCPick[3];						//0x0E
 	uint16_t wUPick[3];						//0x14
 	uint16_t pad0x1A;						//0x1A
@@ -675,25 +654,25 @@ struct D2MonStatsInitStrc
 //Inlined in some functions
 uint32_t __fastcall DATATBLS_StringToCode(char* szText);
 //D2Common.0x6FD64C40 (#10592)
-int __stdcall DATATBLS_GetMonsterChainInfo(int nMonsterId, int* pMaxChainId, int* pChainId);
+D2COMMON_DLL_DECL int __stdcall DATATBLS_GetMonsterChainInfo(int nMonsterId, int* pMaxChainId, int* pChainId);
 //D2Common.0x6FD64CD0
 void __fastcall DATATBLS_MonStatsSkillModeLinker(char* pSrc, void* pRecord, int nOffset, int nPosition, int nTxtRow, int nTxtColumn);
 //D2Common.0x6FD64DF0
 void __fastcall DATATBLS_LoadMonStatsTxt(void* pMemPool);
 //D2Common.0x6FD67BD0 (#11261)
-BOOL __stdcall DATATBLS_CalculateMonsterStatsByLevel(int nMonsterId, int nGameType, int nDifficulty, int nLevel, short nFlags, D2MonStatsInitStrc* pMonStatsInit);
+D2COMMON_DLL_DECL BOOL __stdcall DATATBLS_CalculateMonsterStatsByLevel(int nMonsterId, int nGameType, int nDifficulty, int nLevel, short nFlags, D2MonStatsInitStrc* pMonStatsInit);
 //D2Common.0x6FD689B0 (#10642)
-void __stdcall DATATBLS_SetVelocityInMonStatsTxtRecord(int nMonsterId, short nVelocity);
+D2COMMON_DLL_DECL void __stdcall DATATBLS_SetVelocityInMonStatsTxtRecord(int nMonsterId, short nVelocity);
 //D2Common.0x6FD68A00
 void __stdcall DATATBLS_ResetGlobalDefaultUnicodeString();
 //D2Common.0x6FD68A10 (#10651)
-wchar_t* __fastcall DATATBLS_RollRandomUniqueTitleString(D2UnitStrc* pUnit);
+D2COMMON_DLL_DECL wchar_t* __fastcall DATATBLS_RollRandomUniqueTitleString(D2UnitStrc* pUnit);
 //D2Common.0x6FD68A80 (#10652)
-wchar_t* __fastcall DATATBLS_RollRandomUniquePrefixString(D2UnitStrc* pUnit);
+D2COMMON_DLL_DECL wchar_t* __fastcall DATATBLS_RollRandomUniquePrefixString(D2UnitStrc* pUnit);
 //D2Common.0x6FD68AF0 (#10653)
-wchar_t* __fastcall DATATBLS_RollRandomUniqueSuffixString(D2UnitStrc* pUnit);
+D2COMMON_DLL_DECL wchar_t* __fastcall DATATBLS_RollRandomUniqueSuffixString(D2UnitStrc* pUnit);
 //D2Common.0x6FD68B60 (#10654)
-wchar_t* __fastcall DATATBLS_RollRandomUniqueAppellationString(D2UnitStrc* pUnit);
+D2COMMON_DLL_DECL wchar_t* __fastcall DATATBLS_RollRandomUniqueAppellationString(D2UnitStrc* pUnit);
 //D2Common.0x6FD68BD0
 void __fastcall DATATBLS_ReallocTCExInfo(D2TCExShortStrc* pTCExShort, int nNewRecordCount);
 //D2Common.0x6FD68C40
@@ -701,55 +680,55 @@ void __fastcall DATATBLS_UpdateTreasureClassProbabilities(D2TCExShortStrc* pTCEx
 //D2Common.0x6FD68D40
 int __fastcall DATATBLS_CalculatePercentage(signed int nValue1, signed int nValue2, signed int nDivisor);
 //D2Common.0x6FD68DC0 (#10658)
-D2TCExShortStrc* __stdcall DATATBLS_GetTreasureClassExRecordFromName(char* szText);
+D2COMMON_DLL_DECL D2TCExShortStrc* __stdcall DATATBLS_GetTreasureClassExRecordFromName(char* szText);
 //D2Common.0x6FD68DF0 (#10659)
-D2TCExShortStrc* __stdcall DATATBLS_GetTreasureClassExRecordFromIdAndLevel(uint16_t wTCId, int nLvl);
+D2COMMON_DLL_DECL D2TCExShortStrc* __stdcall DATATBLS_GetTreasureClassExRecordFromIdAndLevel(uint16_t wTCId, int nLvl);
 //D2Common.0x6FD68E50 (#10660)
-D2TCExShortStrc* __stdcall DATATBLS_GetTreasureClassExRecordFromActAndDifficulty(int nDifficulty, int nAct, int nIndex);
+D2COMMON_DLL_DECL D2TCExShortStrc* __stdcall DATATBLS_GetTreasureClassExRecordFromActAndDifficulty(int nDifficulty, int nAct, int nIndex);
 //D2Common.0x6FD68EC0
 void __fastcall DATATBLS_LoadTreasureClassExTxt(void* pMemPool);
 //D2Common.0x6FD69B70 (#10656)
-int __stdcall DATATBLS_ShouldNeverCallInExpansion();
+D2COMMON_DLL_DECL int __stdcall DATATBLS_ShouldNeverCallInExpansion();
 //D2Common.0x6FD69B90
 void __fastcall DATATBLS_LoadMonItemPercentTxt(void* pMemPool);
 //D2Common.0x6FD69C40
 void __fastcall DATATBLS_UnloadMonItemPercentTxt();
 //D2Common.0x6FD69C50 (#10662)
-D2MonItemPercentDataTbl* __fastcall DATATBLS_GetMonItemPercentDataTables();
+D2COMMON_DLL_DECL D2MonItemPercentDataTbl* __fastcall DATATBLS_GetMonItemPercentDataTables();
 //D2Common.0x6FD69C60 (#10663)
-D2MonItemPercentTxt* __stdcall DATATBLS_GetMonItemPercentTxtRecord(int nId);
+D2COMMON_DLL_DECL D2MonItemPercentTxt* __stdcall DATATBLS_GetMonItemPercentTxtRecord(int nId);
 //D2Common.0x6FD69CD0
 void __fastcall DATATBLS_LoadMonUModTxt(void* pMemPool);
 //D2Common.0x6FD69FA0
 void __fastcall DATATBLS_LoadSuperUniquesTxt(void* pMemPool);
 //D2Common.0x6FD6A440 (#10668)
-D2SuperUniquesTxt* __stdcall DATATBLS_GetSuperUniquesTxtRecord(int nSuperUniqueId);
+D2COMMON_DLL_DECL D2SuperUniquesTxt* __stdcall DATATBLS_GetSuperUniquesTxtRecord(int nSuperUniqueId);
 //D2Common.0x6FD6A470 (#11257)
-int __fastcall DATATBLS_GetSuperUniquesTxtRecordCount();
+D2COMMON_DLL_DECL int __fastcall DATATBLS_GetSuperUniquesTxtRecordCount();
 //D2Common.0x6FD6A480
 void __fastcall DATATBLS_LoadHirelingTxt(void* pMemPool);
 //D2Common.0x6FD6B1A0
 D2ItemTypesTxt* __fastcall DATATBLS_GetItemTypesTxtRecord(int nItemType);
 //D2Common.0x6FD6B1D0 (#10583)
-D2HirelingTxt* __stdcall DATATBLS_GetHirelingTxtRecordFromIdAndLevel(BOOL bExpansion, int nId, int nLevel);
+D2COMMON_DLL_DECL D2HirelingTxt* __stdcall DATATBLS_GetHirelingTxtRecordFromIdAndLevel(BOOL bExpansion, int nId, int nLevel);
 //D2Common.0x6FD6B270 (#10585)
-D2HirelingTxt* __stdcall DATATBLS_GetNextHirelingTxtRecordFromNameId(BOOL bExpansion, uint16_t nNameId, D2HirelingTxt* pOldRecord);
+D2COMMON_DLL_DECL D2HirelingTxt* __stdcall DATATBLS_GetNextHirelingTxtRecordFromNameId(BOOL bExpansion, uint16_t nNameId, D2HirelingTxt* pOldRecord);
 //D2Common.0x6FD6B310 (#10586)
-D2HirelingTxt* __stdcall DATATBLS_GetNextHirelingTxtRecordFromClassId(BOOL bExpansion, int nClass, D2HirelingTxt* pOldRecord);
+D2COMMON_DLL_DECL D2HirelingTxt* __stdcall DATATBLS_GetNextHirelingTxtRecordFromClassId(BOOL bExpansion, int nClass, D2HirelingTxt* pOldRecord);
 //D2Common.0x6FD6B3A0 (#10587)
-D2HirelingTxt* __stdcall DATATBLS_GetNextHirelingTxtRecordFromVendorIdAndDifficulty(BOOL bExpansion, int nVendorId, int nDifficulty, D2HirelingTxt* pOldRecord);
+D2COMMON_DLL_DECL D2HirelingTxt* __stdcall DATATBLS_GetNextHirelingTxtRecordFromVendorIdAndDifficulty(BOOL bExpansion, int nVendorId, int nDifficulty, D2HirelingTxt* pOldRecord);
 //D2Common.0x6FD6B440 (#10584)
-D2HirelingTxt* __stdcall DATATBLS_GetNextHirelingTxtRecordFromActAndDifficulty(BOOL bExpansion, int nAct, int nDifficulty, D2HirelingTxt* pOldRecord);
+D2COMMON_DLL_DECL D2HirelingTxt* __stdcall DATATBLS_GetNextHirelingTxtRecordFromActAndDifficulty(BOOL bExpansion, int nAct, int nDifficulty, D2HirelingTxt* pOldRecord);
 //D2Common.0x6FD6B4F0
 void __fastcall DATATBLS_LoadNpcTxt(void* pMemPool);
 //D2Common.0x6FD6B820 (#10588)
-D2NpcTxt* __stdcall DATATBLS_GetNpcTxtRecord(uint32_t dwNpcId);
+D2COMMON_DLL_DECL D2NpcTxt* __stdcall DATATBLS_GetNpcTxtRecord(uint32_t dwNpcId);
 //D2Common.0x6FD6B850
 void __fastcall DATATBLS_LoadMonSoundsTxt(void* pMemPool);
 //D2Common.0x6FD6BF50 (#11252)
-D2MonSoundsTxt* __stdcall DATATBLS_GetMonSoundsTxtRecordFromSoundId(int nSoundId);
+D2COMMON_DLL_DECL D2MonSoundsTxt* __stdcall DATATBLS_GetMonSoundsTxtRecordFromSoundId(int nSoundId);
 //D2Common.0x6FD6BF80 (#11250)
-D2MonSoundsTxt* __stdcall DATATBLS_GetMonSoundsTxtRecordFromMonsterId(int nMonsterId);
+D2COMMON_DLL_DECL D2MonSoundsTxt* __stdcall DATATBLS_GetMonSoundsTxtRecordFromMonsterId(int nMonsterId);
 //D2Common.0x6FD6BFE0
 void __fastcall DATATBLS_MonStats2CompositLinker(char* pSrc, void* pRecord, int nOffset, int nPosition, int nTxtRow, int nTxtColumn);
 //D2Common.0x6FD6C150
@@ -769,9 +748,9 @@ void __fastcall DATATBLS_MonPresetPlaceLinker(char* pSrc, void* pRecord, int nOf
 //D2Common.0x6FD6EE60
 void __fastcall DATATBLS_LoadMonPresetTxt(void* pMemPool);
 //D2Common.0x6FD6EF30 (#11256)
-D2MonPresetTxt* __stdcall DATATBLS_GetMonPresetTxtActSection(int nAct, int* pRecordCount);
+D2COMMON_DLL_DECL D2MonPresetTxt* __stdcall DATATBLS_GetMonPresetTxtActSection(int nAct, int* pRecordCount);
 //D2Common.0x6FD6EF70 (#11258)
-int __stdcall DATATBLS_MapSuperUniqueId(int nType, int nSuperUnique);
+D2COMMON_DLL_DECL int __stdcall DATATBLS_MapSuperUniqueId(int nType, int nSuperUnique);
 //D2Common.0x6FD6EFA0
 void __fastcall DATATBLS_LoadSoundsTxt(void* pMemPool);
 //D2Common.0x6FD6F020
@@ -784,5 +763,3 @@ void __fastcall DATATBLS_LoadSomeMonsterTxts(void* pMemPool);
 void __fastcall DATATBLS_CreateItemTypeTreasureClasses();
 //D2Common.0x6FD6FBB0
 void __fastcall DATATBLS_UnloadSomeMonsterTxts();
-//Inlined at various places
-D2MonStatsTxt* __fastcall DATATBLS_GetMonStatsTxtRecord(int nMonsterId);

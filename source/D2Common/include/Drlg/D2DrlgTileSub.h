@@ -29,21 +29,15 @@ struct D2UnkOutdoorStrc
 
 struct D2UnkOutdoorStrc2
 {
-	D2RoomExStrc* pRoomEx;					//0x00
-	D2DrlgOutdoorRoomStrc* pOutdoorRoom;	//0x04
-	int32_t field_8;						//0x08
-	int32_t field_C;						//0x0C
-	int32_t field_10;						//0x10
-	D2DrlgGridStrc* pWallGrid;				//0x14
-	int32_t field_18;						//0x18
-	int32_t field_1C;						//0x1C
-	int32_t field_20;						//0x20
-	D2DrlgGridStrc* pFloorGrid;				//0x24
-	int32_t field_28;						//0x28
-	int32_t field_2C;						//0x28
-	int32_t nSubWaypoint_Shrine;			//0x2C
-	int32_t nSubTheme;						//0x30
-	int32_t nSubThemePicked;				//0x34
+	D2RoomExStrc* pRoomEx;										//0x00
+	D2DrlgOutdoorRoomStrc* pOutdoorRooms[DRLG_MAX_WALL_LAYERS];	//0x04
+	D2DrlgGridStrc* pWallsGrids[DRLG_MAX_WALL_LAYERS];			//0x14
+	D2DrlgGridStrc* pFloorGrid;									//0x24
+	int32_t field_28;											//0x28
+	int32_t field_2C;											//0x28
+	int32_t nSubWaypoint_Shrine;								//0x2C
+	int32_t nSubTheme;											//0x30
+	int32_t nSubThemePicked;									//0x34
 };
 
 struct D2UnkOutdoorStrc3
@@ -58,10 +52,7 @@ struct D2UnkOutdoorStrc3
 
 struct D2DrlgSubstGroupStrc
 {
-	int32_t field_0;
-	int32_t field_4;
-	int32_t field_8;
-	int32_t field_C;
+	D2DrlgCoordStrc tBox;
 	int32_t field_10;
 	int32_t field_14;
 };
@@ -79,13 +70,13 @@ void __fastcall DRLGTILESUB_ReplaceSubPreset(int a1, int a2, D2UnkOutdoorStrc* a
 //D2Common.0x6FD8AA80
 void __fastcall sub_6FD8AA80(D2UnkOutdoorStrc2* a1);
 //D2Common.0x6FD8ACE0
-void __fastcall sub_6FD8ACE0(void* pMemPool, int edx0, int a3, D2UnkOutdoorStrc2* a4, D2DrlgSubstGroupStrc* pSubstGroup, D2LvlSubTxt* pLvlSubTxtRecord, int a7);
+void __fastcall sub_6FD8ACE0(void* pMemPool, int nX, int nY, D2UnkOutdoorStrc2* a4, D2DrlgSubstGroupStrc* pSubstGroup, D2LvlSubTxt* pLvlSubTxtRecord, int a7);
 //D2Common.0x6FD8B010
 BOOL __fastcall sub_6FD8B010(int a1, int a2, D2UnkOutdoorStrc2* a3, D2DrlgSubstGroupStrc* pSubstGroup, D2LvlSubTxt* pLvlSubTxtRecord);
 //D2Common.0x6FD8B130
 BOOL __fastcall sub_6FD8B130(int a1, int a2, D2UnkOutdoorStrc2* a3, D2DrlgSubstGroupStrc* pSubstGroup, D2LvlSubTxt* pLvlSubTxtRecord);
 //D2Common.0x6FD8B290
-void __fastcall sub_6FD8B290(D2UnkOutdoorStrc2* a1, D2LvlSubTxt* pLvlSubTxtRecord);
+void __fastcall DRLGTILESUB_DoSubstitutions(D2UnkOutdoorStrc2* pOutdoorLevel, D2LvlSubTxt* pLvlSubTxtRecord);
 //D2Common.0x6FD8B640
 void __fastcall DRLGTILESUB_InitializeDrlgFile(void* pMemPool, D2LvlSubTxt* pLvlSubTxtRecord);
 //D2Common.0x6FD8B770

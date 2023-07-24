@@ -10,22 +10,42 @@ jobs:
         buildtype: [Debug, Release]
     env:
       BUILD_TYPE: ${{ matrix.buildtype }}
+      CMAKE_PRESET: ${{ matrix.buildtype == 'Debug' && 'clang-tidy' || 'ninja' }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: recursive
 
+    # Find the clang-tidy bundled with MSVC
+    - name: Add clang-tidy to PATH
+      if: env.BUILD_TYPE == 'Debug'
+      uses: Lectem/vswhere@v1.0
+      with: {file: 'VC\Tools\Llvm\bin\clang-tidy.exe'}
+    
+    # We need to start cmake from vcvarsall env so that Ninja will pick MSVC
+    - uses: ilammy/msvc-dev-cmd@v1
+      with: {arch: x86}
+
     - name: CMake configure and build
       run: |
-        cmake -B build -A Win32
-        cmake --build build --config ${{env.BUILD_TYPE}}
+        cmake --preset ${{env.CMAKE_PRESET}}
+        cmake --build --preset ${{env.CMAKE_PRESET}} --config ${{env.BUILD_TYPE}}
+      env: # We need to enforce VC++ here as clang is picked otherwise due to clang-tidy being in the path
+        CXX: CL
+        CC: CL
+
+    - name: Test
+      # Execute tests defined by the CMake configuration.  
+      # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
+      run: ctest --preset ${{env.CMAKE_PRESET}} -C ${{env.BUILD_TYPE}}
 
     - name: Install
-      run: cmake --install build --config ${{env.BUILD_TYPE}} --prefix install
+      if: env.BUILD_TYPE == 'Release'
+      run: cmake --build --preset ${{env.CMAKE_PRESET}} --config ${{env.BUILD_TYPE}} --target install
 
     - name: Artifact
       if: env.BUILD_TYPE == 'Release'
-      uses: actions/upload-artifact@v2.2.1
+      uses: actions/upload-artifact@v3
       with:
-        path: install/*
+        path: '${{github.workspace}}\out\install\${{env.CMAKE_PRESET}}\'

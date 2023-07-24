@@ -9,6 +9,7 @@
 #include "D2Items.h"
 #include "D2Monsters.h"
 #include "Path/Path.h"
+#include "Path/PathMisc.h"
 #include "Path/Path_IDAStar.h"
 #include "D2QuestRecord.h"
 #include "D2Seed.h"
@@ -21,7 +22,7 @@
 #include <DataTbls/LevelsIds.h>
 #include <DataTbls/MonsterIds.h>
 #include <DataTbls/ObjectsIds.h>
-
+#include <D2Math.h>
 
 //D2Common.0x6FDBD520 (#10457)
 uint8_t __stdcall UNITS_GetDirection(D2UnitStrc* pUnit)
@@ -46,7 +47,7 @@ D2SkillStrc* __stdcall UNITS_GetStartSkill(D2UnitStrc* pUnit)
 }
 
 //D2Common.0x6FDBD5B0 (#10321)
-D2SkillStrc* __stdcall UNITS_GetGetLeftSkill(D2UnitStrc* pUnit)
+D2SkillStrc* __stdcall UNITS_GetLeftSkill(D2UnitStrc* pUnit)
 {
 	D2_ASSERT(pUnit);
 	return SKILLS_GetLeftSkillFromSkillList(pUnit->pSkills);
@@ -76,16 +77,14 @@ D2SkillStrc* __stdcall UNITS_GetUsedSkill(D2UnitStrc* pUnit)
 //D2Common.0x6FDBD6B0 (#11259)
 D2UnitStrc* __stdcall UNITS_AllocUnit(void* pMemPool, int nUnitType)
 {
-	D2UnitStrc* pUnit = (D2UnitStrc*)FOG_AllocServerMemory(pMemPool, sizeof(D2UnitStrc), __FILE__, __LINE__, 0);
-	memset(pUnit, 0x00, sizeof(D2UnitStrc));
+	D2UnitStrc* pUnit = D2_CALLOC_STRC_POOL(pMemPool, D2UnitStrc);
 
 	pUnit->pMemoryPool = pMemPool;
 	pUnit->dwUnitType = nUnitType;
 
 	if (nUnitType == UNIT_MONSTER)
 	{
-		pUnit->pMonsterData = (D2MonsterDataStrc*)FOG_AllocServerMemory(pMemPool, sizeof(D2MonsterDataStrc), __FILE__, __LINE__, 0);
-		memset(pUnit->pMonsterData, 0x00, sizeof(D2MonsterDataStrc));
+		pUnit->pMonsterData = D2_CALLOC_STRC_POOL(pMemPool, D2MonsterDataStrc);
 	}
 
 	return pUnit;
@@ -101,13 +100,13 @@ void __stdcall UNITS_FreeUnit(D2UnitStrc* pUnit)
 
 		if (pUnit->dwUnitType == UNIT_MONSTER)
 		{
-			FOG_FreeServerMemory(pUnit->pMemoryPool, pUnit->pMonsterData, __FILE__, __LINE__, 0);
+			D2_FREE_POOL(pUnit->pMemoryPool, pUnit->pMonsterData);
 		}
 
 		pUnit->dwUnitType = 6;
 		pUnit->dwUnitId = -1;
 
-		FOG_FreeServerMemory(pUnit->pMemoryPool, pUnit, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(pUnit->pMemoryPool, pUnit);
 	}
 }
 
@@ -121,7 +120,7 @@ int __stdcall UNITS_GetPrecisionX(D2UnitStrc* pUnit)
 	case UNIT_OBJECT:
 	case UNIT_ITEM:
 	case UNIT_TILE:
-		return pUnit->pStaticPath->nXPos << 16;
+		return PATH_ToFP16Corner(pUnit->pStaticPath->tGameCoords.nX);
 
 	case UNIT_PLAYER:
 	case UNIT_MONSTER:
@@ -144,7 +143,7 @@ int __stdcall UNITS_GetPrecisionY(D2UnitStrc* pUnit)
 	case UNIT_OBJECT:
 	case UNIT_ITEM:
 	case UNIT_TILE:
-		return pUnit->pStaticPath->nYPos << 16;
+		return PATH_ToFP16Corner(pUnit->pStaticPath->tGameCoords.nY);
 
 	case UNIT_PLAYER:
 	case UNIT_MONSTER:
@@ -166,7 +165,7 @@ void __stdcall UNITS_SetXForStaticUnit(D2UnitStrc* pUnit, int nX)
 	case UNIT_OBJECT:
 	case UNIT_ITEM:
 	case UNIT_TILE:
-		pUnit->pStaticPath->nXPos = nX;
+		pUnit->pStaticPath->tGameCoords.nX = nX;
 		break;
 
 	default:
@@ -184,7 +183,7 @@ void __stdcall UNITS_SetYForStaticUnit(D2UnitStrc* pUnit, int nY)
 	case UNIT_OBJECT:
 	case UNIT_ITEM:
 	case UNIT_TILE:
-		pUnit->pStaticPath->nYPos = nY;
+		pUnit->pStaticPath->tGameCoords.nY = nY;
 		break;
 
 	default:
@@ -203,7 +202,7 @@ int __stdcall UNITS_GetUnitSizeX(D2UnitStrc* pUnit)
 		switch (pUnit->dwUnitType)
 		{
 		case UNIT_PLAYER:
-			return 2;
+			return COLLISION_UNIT_SIZE_SMALL;
 
 		case UNIT_MONSTER:
 			pMonStats2TxtRecord = UNITS_GetMonStats2TxtRecordFromMonsterId(pUnit->dwClassId);
@@ -211,13 +210,13 @@ int __stdcall UNITS_GetUnitSizeX(D2UnitStrc* pUnit)
 			{
 				return pMonStats2TxtRecord->nSizeX;
 			}
-			return 0;
+			return COLLISION_UNIT_SIZE_NONE;
 
 		case UNIT_OBJECT:
 			return pUnit->pObjectData->pObjectTxt->dwSizeX;
 
 		case UNIT_ITEM:
-			return 1;
+			return COLLISION_UNIT_SIZE_POINT;
 
 		case UNIT_MISSILE:
 			pMissilesTxtRecord = DATATBLS_GetMissilesTxtRecord(pUnit->dwClassId);
@@ -225,14 +224,14 @@ int __stdcall UNITS_GetUnitSizeX(D2UnitStrc* pUnit)
 			{
 				return pMissilesTxtRecord->nSize;
 			}
-			return 0;
+			return COLLISION_UNIT_SIZE_NONE;
 
 		default:
-			return 0;
+			return COLLISION_UNIT_SIZE_NONE;
 		}
 	}
 	
-	return 0;
+	return COLLISION_UNIT_SIZE_NONE;
 }
 
 //D2Common.0x6FDBDA00 (#10337)
@@ -279,7 +278,7 @@ int __stdcall UNITS_GetUnitSizeY(D2UnitStrc* pUnit)
 }
 
 //D2Common.0x6FDBDB10 (#10333)
-int __stdcall UNITS_GetTargetX(D2UnitStrc* pUnit)
+int __stdcall UNITS_GetClientCoordX(D2UnitStrc* pUnit)
 {
 	D2_ASSERT(pUnit);
 
@@ -288,12 +287,12 @@ int __stdcall UNITS_GetTargetX(D2UnitStrc* pUnit)
 	case UNIT_OBJECT:
 	case UNIT_ITEM:
 	case UNIT_TILE:
-		return pUnit->pStaticPath->nTargetX;
+		return pUnit->pStaticPath->dwClientCoordX;
 
 	case UNIT_PLAYER:
 	case UNIT_MONSTER:
 	case UNIT_MISSILE:
-		return PATH_GetTargetX(pUnit->pDynamicPath);
+		return PATH_GetClientCoordX(pUnit->pDynamicPath);
 
 	default:
 		return 0;
@@ -301,7 +300,7 @@ int __stdcall UNITS_GetTargetX(D2UnitStrc* pUnit)
 }
 
 //D2Common.0x6FDBDB60 (#10334)
-int __stdcall UNITS_GetTargetY(D2UnitStrc* pUnit)
+int __stdcall UNITS_GetClientCoordY(D2UnitStrc* pUnit)
 {
 	D2_ASSERT(pUnit);
 
@@ -310,12 +309,12 @@ int __stdcall UNITS_GetTargetY(D2UnitStrc* pUnit)
 	case UNIT_OBJECT:
 	case UNIT_ITEM:
 	case UNIT_TILE:
-		return pUnit->pStaticPath->nTargetY;
+		return pUnit->pStaticPath->dwClientCoordY;
 
 	case UNIT_PLAYER:
 	case UNIT_MONSTER:
 	case UNIT_MISSILE:
-		return PATH_GetTargetY(pUnit->pDynamicPath);
+		return PATH_GetClientCoordY(pUnit->pDynamicPath);
 
 	default:
 		return 0;
@@ -334,7 +333,7 @@ int __stdcall UNITS_GetAbsoluteXDistance(D2UnitStrc* pUnit1, D2UnitStrc* pUnit2)
 	case UNIT_OBJECT:
 	case UNIT_ITEM:
 	case UNIT_TILE:
-		nX1 = pUnit1->pStaticPath->nXPos;
+		nX1 = pUnit1->pStaticPath->tGameCoords.nX;
 		break;
 
 	default:
@@ -354,7 +353,7 @@ int __stdcall UNITS_GetAbsoluteXDistance(D2UnitStrc* pUnit1, D2UnitStrc* pUnit2)
 	case UNIT_OBJECT:
 	case UNIT_ITEM:
 	case UNIT_TILE:
-		nX2 = pUnit2->pStaticPath->nXPos;
+		nX2 = pUnit2->pStaticPath->tGameCoords.nX;
 		break;
 
 	default:
@@ -390,7 +389,7 @@ int __stdcall UNITS_GetAbsoluteYDistance(D2UnitStrc* pUnit1, D2UnitStrc* pUnit2)
 	case UNIT_OBJECT:
 	case UNIT_ITEM:
 	case UNIT_TILE:
-		nY1 = pUnit1->pStaticPath->nYPos;
+		nY1 = pUnit1->pStaticPath->tGameCoords.nY;
 		break;
 
 	default:
@@ -410,7 +409,7 @@ int __stdcall UNITS_GetAbsoluteYDistance(D2UnitStrc* pUnit1, D2UnitStrc* pUnit2)
 	case UNIT_OBJECT:
 	case UNIT_ITEM:
 	case UNIT_TILE:
-		nY2 = pUnit2->pStaticPath->nYPos;
+		nY2 = pUnit2->pStaticPath->tGameCoords.nY;
 		break;
 
 	default:
@@ -439,7 +438,7 @@ void __stdcall UNITS_SetTargetX(D2UnitStrc* pUnit, int nTargetX)
 {
 	D2_ASSERT(pUnit);
 
-	PATH_SetTargetX(pUnit->pDynamicPath, nTargetX);
+	PATH_SetClientCoordX(pUnit->pDynamicPath, nTargetX);
 }
 
 //D2Common.0x6FDBDCD0 (#10341)
@@ -447,7 +446,7 @@ void __stdcall UNITS_SetTargetY(D2UnitStrc* pUnit, int nTargetY)
 {
 	D2_ASSERT(pUnit);
 
-	PATH_SetTargetY(pUnit->pDynamicPath, nTargetY);
+	PATH_SetClientCoordY(pUnit->pDynamicPath, nTargetY);
 }
 
 //D2Common.0x6FDBDD10 (#10332)
@@ -460,8 +459,8 @@ void __stdcall UNITS_GetCoords(D2UnitStrc* pUnit, D2CoordStrc* pCoord)
 	case UNIT_OBJECT:
 	case UNIT_ITEM:
 	case UNIT_TILE:
-		pCoord->nX = pUnit->pStaticPath->nXPos;
-		pCoord->nY = pUnit->pStaticPath->nYPos;
+		pCoord->nX = pUnit->pStaticPath->tGameCoords.nX;
+		pCoord->nY = pUnit->pStaticPath->tGameCoords.nY;
 		break;
 
 	default:
@@ -480,7 +479,7 @@ void __stdcall UNITS_GetCoords(D2UnitStrc* pUnit, D2CoordStrc* pCoord)
 }
 
 //D2Common.0x6FDBDDA0 (#10335)
-void __stdcall UNITS_GetTargetCoords(D2UnitStrc* pUnit, D2CoordStrc* pTargetCoords)
+void __stdcall UNITS_GetClientCoords(D2UnitStrc* pUnit, D2CoordStrc* pClientCoords)
 {
 	D2_ASSERT(pUnit);
 
@@ -489,13 +488,13 @@ void __stdcall UNITS_GetTargetCoords(D2UnitStrc* pUnit, D2CoordStrc* pTargetCoor
 	case UNIT_OBJECT:
 	case UNIT_ITEM:
 	case UNIT_TILE:
-		pTargetCoords->nX = pUnit->pStaticPath->nTargetX;
-		pTargetCoords->nY = pUnit->pStaticPath->nTargetY;
+		pClientCoords->nX = pUnit->pStaticPath->dwClientCoordX;
+		pClientCoords->nY = pUnit->pStaticPath->dwClientCoordY;
 		break;
 
 	default:
-		pTargetCoords->nX = PATH_GetTargetX(pUnit->pDynamicPath);
-		pTargetCoords->nY = PATH_GetTargetY(pUnit->pDynamicPath);
+		pClientCoords->nX = PATH_GetClientCoordX(pUnit->pDynamicPath);
+		pClientCoords->nY = PATH_GetClientCoordY(pUnit->pDynamicPath);
 		break;
 	}
 }
@@ -575,14 +574,14 @@ void __stdcall UNITS_InitializeStaticPath(D2UnitStrc* pUnit, D2RoomStrc* pRoom, 
 	D2_ASSERT(pUnit);
 
 	pUnit->pStaticPath->nDirection = 0;
-	pUnit->pStaticPath->nXPos = nX;
-	pUnit->pStaticPath->nYPos = nY;
+	pUnit->pStaticPath->tGameCoords.nX = nX;
+	pUnit->pStaticPath->tGameCoords.nY = nY;
 	pUnit->pStaticPath->pRoom = pRoom;
 
-	DUNGEON_WorldToScreenCoords(&nX, &nY);
+	DUNGEON_GameSubtileToClientCoords(&nX, &nY);
 
-	pUnit->pStaticPath->nTargetX = nX;
-	pUnit->pStaticPath->nTargetY = nY;
+	pUnit->pStaticPath->dwClientCoordX = nX;
+	pUnit->pStaticPath->dwClientCoordY = nY;
 }
 
 //D2Common.0x6FDBE210 (#10343)
@@ -595,13 +594,13 @@ void __stdcall UNITS_ResetRoom(D2UnitStrc* pUnit)
 	case UNIT_OBJECT:
 	case UNIT_ITEM:
 	case UNIT_TILE:
-		pUnit->pStaticPath->pRoom = NULL;
+		pUnit->pStaticPath->pRoom = nullptr;
 		break;
 
 	default:
 		if (pUnit->pDynamicPath)
 		{
-			PATH_SetRoom(pUnit->pDynamicPath, NULL);
+			PATH_SetRoom(pUnit->pDynamicPath, nullptr);
 		}
 		break;
 	}
@@ -618,17 +617,12 @@ D2RoomStrc* __stdcall UNITS_GetRoom(D2UnitStrc* pUnit)
 	case UNIT_ITEM:
 	case UNIT_TILE:
 		return pUnit->pStaticPath->pRoom;
-
 	default:
 		if (pUnit->pDynamicPath)
 		{
 			return PATH_GetRoom(pUnit->pDynamicPath);
 		}
-		else
-		{
-			return NULL;
-		}
-		break;
+		return nullptr;
 	}
 }
 
@@ -644,7 +638,7 @@ void __stdcall UNITS_SetTargetUnitForDynamicUnit(D2UnitStrc* pUnit, D2UnitStrc* 
 int __stdcall UNITS_GetTargetTypeFromDynamicUnit(D2UnitStrc* pUnit)
 {
 	int nUnitType = 0;
-	int nUnitId = 0;
+	D2UnitGUID nUnitId = 0;
 	D2_ASSERT(pUnit);
 	D2_ASSERT((pUnit->dwUnitType == UNIT_PLAYER) || (pUnit->dwUnitType == UNIT_MONSTER) || (pUnit->dwUnitType == UNIT_MISSILE));
 
@@ -653,10 +647,10 @@ int __stdcall UNITS_GetTargetTypeFromDynamicUnit(D2UnitStrc* pUnit)
 }
 
 //D2Common.0x6FDBE3A0 (#10346)
-int __stdcall UNITS_GetTargetGUIDFromDynamicUnit(D2UnitStrc* pUnit)
+D2UnitGUID __stdcall UNITS_GetTargetGUIDFromDynamicUnit(D2UnitStrc* pUnit)
 {
 	int nUnitType = 0;
-	int nUnitId = 0;
+	D2UnitGUID nUnitId = 0;
 	D2_ASSERT(pUnit);
 	D2_ASSERT((pUnit->dwUnitType == UNIT_PLAYER) || (pUnit->dwUnitType == UNIT_MONSTER) || (pUnit->dwUnitType == UNIT_MISSILE));
 
@@ -676,6 +670,7 @@ void __stdcall UNITS_SetTargetUnitForPlayerOrMonster(D2UnitStrc* pUnit, D2UnitSt
 //D2Common.0x6FDBE470 (#10354)
 void __stdcall UNITS_GetRunAndWalkSpeedForPlayer(int nUnused, int nCharId, int* pWalkSpeed, int* pRunSpeed)
 {
+	D2_MAYBE_UNUSED(nUnused);
 	if (nCharId >= 0 && nCharId < sgptDataTables->nCharStatsTxtRecordCount)
 	{
 		*pWalkSpeed = sgptDataTables->pCharStatsTxt[nCharId].nWalkSpeed;
@@ -690,39 +685,31 @@ void __stdcall UNITS_SetAnimData(D2UnitStrc* pUnit, int nUnitType, int nClassId,
 	pUnit->pAnimData = DATATBLS_GetAnimDataRecord(pUnit, nClassId, nMode, nUnitType, pUnit->pInventory);
 }
 
+//Helper function
+void __stdcall UNITS_CharacterStartRunningOrKnockback(D2UnitStrc* pUnit, int nClassId)
+{
+	D2StatListStrc* pStatList = STATLIST_AllocStatList(pUnit->pMemoryPool, STATLIST_TEMPONLY, 0, pUnit->dwUnitType, pUnit->dwUnitId);
+	if (D2CharStatsTxt* pCharStatsTxtRecord = UNITS_GetCharStatsTxtRecord(nClassId))
+	{
+		if (pCharStatsTxtRecord->nWalkSpeed != 0)
+		{
+			STATLIST_SetStat(pStatList, STAT_VELOCITYPERCENT, 100 * pCharStatsTxtRecord->nRunSpeed / pCharStatsTxtRecord->nWalkSpeed - 100, 0);
+			D2COMMON_10475_PostStatToStatList(pUnit, pStatList, TRUE);
+		}
+	}
+}
 
-
-//D2Common.0x6FDBE510 (#10349) --------------------------------------------------------
+//D2Common.0x6FDBE510 (#10349)
 void __stdcall UNITS_SetAnimStartFrame(D2UnitStrc* pUnit)
 {
-	D2CharStatsTxt* pCharStatsTxtRecord = NULL;
-	D2MissilesTxt* pMissilesTxtRecord = NULL;
-	D2ObjectsTxt* pObjectsTxtRecord = NULL;
-	D2StatListStrc* pStatList = NULL;
-	uint8_t v19[4]; // ecx@36
-	__int16 v20; // bx@36
-	int v21; // ebp@38
-	int v23; // edi@38
-	int v24; // eax@39
-	int v28; // ebp@43
-	uint8_t v34[4]; // eax@61
-
-	unsigned int nFrame = 0;
-	unsigned int nMode = 0;
-	int nDirection = 0;
-	int nUnitType = 0;
-	int nClassId = 0;
-	int nNewMode = 0;
-	int nEvent = 0;
-
 	D2_ASSERT(pUnit);
 
 	pUnit->nActionFrame = 0;
-	pUnit->dwGFXcurrentFrame = UNITS_GetFrameBonus(pUnit) << 8;
+	pUnit->dwSeqCurrentFramePrecise = UNITS_GetFrameBonus(pUnit) << 8;
 
-	nUnitType = pUnit->dwUnitType;
-	nClassId = pUnit->dwClassId;
-	nNewMode = pUnit->dwAnimMode;
+	int nUnitType = pUnit->dwUnitType;
+	int nClassId = pUnit->dwClassId;
+	int nNewMode = pUnit->dwAnimMode;
 
 	D2COMMON_11013_ConvertMode(pUnit, &nUnitType, &nClassId, &nNewMode, __FILE__, __LINE__);
 
@@ -732,42 +719,18 @@ void __stdcall UNITS_SetAnimStartFrame(D2UnitStrc* pUnit)
 	{
 		if (nNewMode == PLRMODE_RUN || nNewMode == PLRMODE_KNOCKBACK)
 		{
-			pStatList = STATLIST_AllocStatList(pUnit->pMemoryPool, 4, 0, pUnit->dwUnitType, pUnit->dwUnitId);
-			if (nClassId >= 0 && nClassId < sgptDataTables->nCharStatsTxtRecordCount)
-			{
-				pCharStatsTxtRecord = &sgptDataTables->pCharStatsTxt[nClassId];
-				if (pCharStatsTxtRecord && pCharStatsTxtRecord->nWalkSpeed)
-				{
-					STATLIST_SetStat(pStatList, STAT_VELOCITYPERCENT, 100 * (pCharStatsTxtRecord->nRunSpeed / pCharStatsTxtRecord->nWalkSpeed - 1), 0);
-					D2COMMON_10475_PostStatToStatList(pUnit, pStatList, TRUE);
-				}
-			}
+			UNITS_CharacterStartRunningOrKnockback(pUnit, nClassId);
 		}
-		else if (nNewMode == PLRMODE_SEQUENCE)
+		if (nNewMode == PLRMODE_SEQUENCE)
 		{
-			pUnit->pAnimSeq = (D2AnimSeqStrc*)DATATBLS_GetMonSeqTxtRecordFromUnit(pUnit);
-			if (pUnit->pAnimSeq)
-			{
-				pUnit->dwSeqFrameCount = D2Common_10683(pUnit);
-				pUnit->dwSeqFrame = 0;
-				pUnit->dwAnimSpeed = 256;
-				pUnit->dwFrameCount = D2Common_10684(pUnit) << 8;
-				D2Common_10685((D2MonSeqTxt*)pUnit->pAnimSeq, pUnit->dwSeqFrame, 0, &nMode, &nFrame, &nDirection, &nEvent);
-
-				pUnit->dwSeqMode = nMode;
-				pUnit->nActionFrame = nEvent;
-				pUnit->dwGFXcurrentFrame = nFrame << 8;
-
-				UNITS_ToggleUnitFlag(pUnit, UNITFLAG_SQGFXCHANGE, TRUE);
-			}
-
+			UNITS_InitializeSequence(pUnit);
 			D2COMMON_10376_UpdateAnimRateAndVelocity(pUnit, __FILE__, __LINE__);
 		}
 		else
 		{
-			pUnit->pAnimSeq = NULL;
+			pUnit->pAnimSeq = nullptr;
 			D2COMMON_10376_UpdateAnimRateAndVelocity(pUnit, __FILE__, __LINE__);
-			pUnit->dwFrameCount = pUnit->pAnimData->dwFrames << 8;
+			pUnit->dwFrameCountPrecise = pUnit->pAnimData->dwFrames << 8;
 		}
 		break;
 	}
@@ -775,42 +738,18 @@ void __stdcall UNITS_SetAnimStartFrame(D2UnitStrc* pUnit)
 	{
 		if (pUnit->dwUnitType == UNIT_PLAYER && STATES_IsUnitShapeShifted(pUnit) && (nNewMode == MONMODE_KNOCKBACK || nNewMode == MONMODE_RUN))
 		{
-			pStatList = STATLIST_AllocStatList(pUnit->pMemoryPool, 4, 0, pUnit->dwUnitType, pUnit->dwUnitId);
-			if (pUnit->dwClassId >= 0 && pUnit->dwClassId < sgptDataTables->nCharStatsTxtRecordCount)
-			{
-				pCharStatsTxtRecord = &sgptDataTables->pCharStatsTxt[pUnit->dwClassId];
-				if (pCharStatsTxtRecord && pCharStatsTxtRecord->nWalkSpeed)
-				{
-					STATLIST_SetStat(pStatList, STAT_VELOCITYPERCENT, 100 * (pCharStatsTxtRecord->nRunSpeed / pCharStatsTxtRecord->nWalkSpeed - 1), 0);
-					D2COMMON_10475_PostStatToStatList(pUnit, pStatList, 1);
-				}
-			}
+			UNITS_CharacterStartRunningOrKnockback(pUnit, pUnit->dwClassId);
 		}
 		if (nNewMode == MONMODE_SEQUENCE)
 		{
-			pUnit->pAnimSeq = (D2AnimSeqStrc*)DATATBLS_GetMonSeqTxtRecordFromUnit(pUnit);
-			if (pUnit->pAnimSeq)
-			{
-				pUnit->dwSeqFrameCount = D2Common_10683(pUnit);
-				pUnit->dwSeqFrame = 0;
-				pUnit->dwAnimSpeed = 256;
-				pUnit->dwFrameCount = D2Common_10684(pUnit) << 8;
-				D2Common_10685((D2MonSeqTxt*)pUnit->pAnimSeq, pUnit->dwSeqFrame, 0, &nMode, &nFrame, &nDirection, &nEvent);
-
-				pUnit->dwSeqMode = nMode;
-				pUnit->nActionFrame = nEvent;
-				pUnit->dwGFXcurrentFrame = nFrame << 8;
-
-				UNITS_ToggleUnitFlag(pUnit, UNITFLAG_SQGFXCHANGE, TRUE);
-			}
-
+			UNITS_InitializeSequence(pUnit);
 			D2COMMON_10376_UpdateAnimRateAndVelocity(pUnit, __FILE__, __LINE__);
 		}
 		else
 		{
 			D2COMMON_10376_UpdateAnimRateAndVelocity(pUnit, __FILE__, __LINE__);
-			pUnit->pAnimSeq = NULL;
-			pUnit->dwFrameCount = pUnit->pAnimData->dwFrames << 8;
+			pUnit->pAnimSeq = nullptr;
+			pUnit->dwFrameCountPrecise = pUnit->pAnimData->dwFrames << 8;
 		}
 		break;
 	}
@@ -819,69 +758,34 @@ void __stdcall UNITS_SetAnimStartFrame(D2UnitStrc* pUnit)
 #define NUM_OBJECTMODES 8
 		D2_ASSERT(nNewMode < NUM_OBJECTMODES);
 
-		pObjectsTxtRecord = DATATBLS_GetObjectsTxtRecord(pUnit->dwClassId);
-		pUnit->dwFrameCount = pObjectsTxtRecord->dwFrameCnt[nNewMode];
-		
-		//TODO: Check calculations
-		*(uint32_t *)v19 = 0;
-		*(uint16_t *)&v19[1] = pObjectsTxtRecord->nStart[nNewMode];
-		pUnit->dwGFXcurrentFrame = *(uint32_t *)v19;
-		nEvent = pObjectsTxtRecord->wFrameDelta[nNewMode];
+		D2ObjectsTxt* pObjectsTxtRecord = DATATBLS_GetObjectsTxtRecord(pUnit->dwClassId);
+		pUnit->dwFrameCountPrecise = pObjectsTxtRecord->dwFrameCnt[nNewMode];
+		pUnit->dwSeqCurrentFramePrecise = uint16_t(pObjectsTxtRecord->nStart[nNewMode]) << 8;
+		int16_t wFrameDelta = pObjectsTxtRecord->wFrameDelta[nNewMode];
 
 		if (pObjectsTxtRecord->nSync)
 		{
-			pUnit->wAnimSpeed = v20;
+			pUnit->wAnimSpeed = wFrameDelta;
 		}
 		else
 		{
-			v21 = v20;
-			v23 = v20 >> 3;
-			//if (v23 > 0)
-			//{
-			//	if ((v23 - 1) & v23)
-			//	{
-			//		v20 = nEvent;
-			//		v24 = (unsigned int)SEED_RollRandomNumber(&pUnit->pSeed) % v23;
-			//	}
-			//	else
-			//	{
-			//		v24 = (v23 - 1) & (unsigned __int64)SEED_RollRandomNumber(&pUnit->pSeed);
-			//	}
-			//}
-			//else
-			//{
-			//	v24 = 0;
-			//}
-
-			v24 = SEED_RollLimitedRandomNumber(&pUnit->pSeed, v23);
-
-			v28 = v24 + v21 - (signed __int16)(v20 >> 4);
-			if (v28 <= 0)
+			const int nFrameDeltaDividedBy8 = wFrameDelta / 8;
+			int uRandom = 0;
+			if (nFrameDeltaDividedBy8 > 0)
 			{
-				pUnit->wAnimSpeed = 0;
+				uRandom = SEED_RollLimitedRandomNumber(&pUnit->pSeed, nFrameDeltaDividedBy8);
 			}
-			else
-			{
-				if (v28 >= 32767)
-				{
-					v28 = 32767;
-				}
-				pUnit->wAnimSpeed = v28;
-			}
+			const int newAnimSpeed = uRandom + wFrameDelta - (wFrameDelta / 16);
+			pUnit->wAnimSpeed = static_cast<int16_t>(D2Clamp(newAnimSpeed, 0, 0x7FFF));
 		}
 		break;
 	}
 	case UNIT_MISSILE:
 	{
-		pMissilesTxtRecord = DATATBLS_GetMissilesTxtRecord(pUnit->dwClassId);
-		if (pMissilesTxtRecord)
+		if (D2MissilesTxt* pMissilesTxtRecord = DATATBLS_GetMissilesTxtRecord(pUnit->dwClassId))
 		{
-			pUnit->wAnimSpeed = (pMissilesTxtRecord->wAnimRate << 8) / 1024;
-
-			//TODO: Check calculations
-			*(uint32_t*)v34 = 0;
-			*(uint16_t*)&v34[1] = pMissilesTxtRecord->nAnimLen;
-			pUnit->dwFrameCount = *(uint32_t*)v34;
+			pUnit->wAnimSpeed = ((int16_t)pMissilesTxtRecord->wAnimRate << 8) / 1024;
+			pUnit->dwFrameCountPrecise = pMissilesTxtRecord->nAnimLen << 8;
 		}
 		break;
 	}
@@ -890,13 +794,13 @@ void __stdcall UNITS_SetAnimStartFrame(D2UnitStrc* pUnit)
 		if (nNewMode == IMODE_ONGROUND)
 		{
 			pUnit->wAnimSpeed = 0;
-			pUnit->dwFrameCount = 4352;
-			pUnit->dwGFXcurrentFrame = 4096;
+			pUnit->dwFrameCountPrecise = 4352;
+			pUnit->dwSeqCurrentFramePrecise = 4096;
 		}
 		else if (nNewMode == IMODE_DROPPING)
 		{
 			pUnit->wAnimSpeed = 256;
-			pUnit->dwFrameCount = 4352;
+			pUnit->dwFrameCountPrecise = 4352;
 		}
 		break;
 	}
@@ -904,16 +808,6 @@ void __stdcall UNITS_SetAnimStartFrame(D2UnitStrc* pUnit)
 		break;
 	}
 }
-
-
-////TODO:Remove
-//D2FUNC(D2COMMON, 10349, void, __stdcall, (D2UnitStrc*), 0x7E510)
-//void __stdcall UNITS_SetAnimStartFrame(D2UnitStrc* pUnit)
-//{
-//	return D2COMMON_10349(pUnit);
-//}
-///////////////
-
 
 //D2Common.0x6FDBEA60 (#10348)
 BOOL __stdcall UNITS_ChangeAnimMode(D2UnitStrc* pUnit, int nMode)
@@ -925,12 +819,12 @@ BOOL __stdcall UNITS_ChangeAnimMode(D2UnitStrc* pUnit, int nMode)
 			UNITROOM_RefreshUnit(pUnit);
 			pUnit->dwAnimMode = nMode;
 			pUnit->dwFlags |= UNITFLAG_DOUPDATE;
-			D2Common_10515(pUnit);
+			STATLIST_DeactivateTemporaryStates(pUnit);
 			UNITS_SetAnimStartFrame(pUnit);
 			return TRUE;
 		}
-
-		if (pUnit->dwUnitType != UNIT_MONSTER || pUnit->dwAnimMode != MONMODE_NEUTRAL)
+		// Force refresh unless the unit is a resting (neutral) monster
+		if (!(pUnit->dwUnitType == UNIT_MONSTER && pUnit->dwAnimMode == MONMODE_NEUTRAL))
 		{
 			UNITROOM_RefreshUnit(pUnit);
 			pUnit->dwFlags |= UNITFLAG_DOUPDATE;
@@ -942,23 +836,23 @@ BOOL __stdcall UNITS_ChangeAnimMode(D2UnitStrc* pUnit, int nMode)
 
 //D2Common.0x6FDBEAD0 (#10355)
 //TODO: Find a name
-int __stdcall D2Common_10355(D2UnitStrc* pUnit)
+int __stdcall UNITS_IsCurrentRoomInvalid(D2UnitStrc* pUnit)
 {
 	D2_ASSERT(pUnit);
 
 	if (pUnit->dwUnitType == UNIT_OBJECT || pUnit->dwUnitType == UNIT_ITEM)
 	{
-		return pUnit->pStaticPath->unk0x1D[0];
+		return pUnit->pStaticPath->bRoomNeedsUpdate;
 	}
 	else
 	{
-		return D2Common_10172(pUnit->pDynamicPath);
+		return PATH_IsCurrentRoomInvalid(pUnit->pDynamicPath);
 	}
 }
 
 //D2Common.0x6FDBEB20 (#10356)
 //TODO: Find a name
-void __stdcall D2Common_10356(D2UnitStrc* pUnit, int a2)
+void __stdcall UNITS_SetCurrentRoomInvalid(D2UnitStrc* pUnit, int a2)
 {
 	D2_ASSERT(pUnit);
 
@@ -967,13 +861,13 @@ void __stdcall D2Common_10356(D2UnitStrc* pUnit, int a2)
 	case UNIT_OBJECT:
 	case UNIT_ITEM:
 	case UNIT_TILE:
-		pUnit->pStaticPath->unk0x1D[0] = a2 != 0;
+		pUnit->pStaticPath->bRoomNeedsUpdate = a2 != 0;
 		return;
 
 	case UNIT_PLAYER:
 	case UNIT_MONSTER:
 	case UNIT_MISSILE:
-		D2Common_10173(pUnit->pDynamicPath, a2);
+		PATH_SetCurrentRoomInvalid(pUnit->pDynamicPath, a2);
 		return;
 
 	default:
@@ -1067,13 +961,12 @@ int __stdcall UNITS_GetInventoryRecordId(D2UnitStrc* pUnit, int nInvPage, BOOL b
 }
 
 //D2Common.0x6FDBECD0 (#10383)
-D2GfxLightStrc* __stdcall UNITS_GetLightMap(D2UnitStrc* pUnit)
+D2GfxLightStrc* __stdcall UNITS_ResetLightMap(D2UnitStrc* pUnit)
 {
-	D2GfxLightStrc* pLight = NULL;
 	D2_ASSERT(pUnit);
 
-	pLight = pUnit->pLight;
-	pUnit->pLight = NULL;
+	D2GfxLightStrc* pLight = pUnit->pLight;
+	pUnit->pLight = nullptr;
 
 	return pLight;
 }
@@ -1083,13 +976,13 @@ int __stdcall UNITS_GetAnimOrSeqMode(D2UnitStrc* pUnit)
 {
 	if (pUnit)
 	{
-		if (pUnit->dwUnitType != UNIT_PLAYER && pUnit->dwUnitType != UNIT_MONSTER || !pUnit->pAnimSeq)
+		if (UNITS_GetAnimSeq(pUnit))
 		{
-			return pUnit->dwAnimMode;
+			return pUnit->dwSeqMode;
 		}
 		else
 		{
-			return pUnit->dwSeqMode;
+			return pUnit->dwAnimMode;
 		}
 	}
 
@@ -1101,40 +994,35 @@ void __stdcall UNITS_SetAnimOrSeqMode(D2UnitStrc* pUnit, int nAnimMode)
 {
 	D2_ASSERT(pUnit);
 
-	if (pUnit->dwUnitType != UNIT_PLAYER && pUnit->dwUnitType != UNIT_MONSTER || !pUnit->pAnimSeq)
+	if (UNITS_GetAnimSeq(pUnit))
 	{
-		pUnit->dwAnimMode = nAnimMode;
+		pUnit->dwSeqMode = nAnimMode;
 	}
 	else
 	{
-		pUnit->dwSeqMode = nAnimMode;
+		pUnit->dwAnimMode = nAnimMode;
 	}
 }
 
 //D2Common.0x6FDBED90 (#10371)
-//TODO: Change type of pUnit->pAnimSeq
 void __stdcall UNITS_InitializeSequence(D2UnitStrc* pUnit)
 {
-	unsigned int nFrame = 0;
-	unsigned int nMode = 0;
-	int nDirection = 0;
-	int nEvent = 0;
-
 	if (pUnit)
 	{
-		pUnit->pAnimSeq = (D2AnimSeqStrc*)DATATBLS_GetMonSeqTxtRecordFromUnit(pUnit);
-		if (pUnit->pAnimSeq)
+		if (pUnit->pAnimSeq = DATATBLS_GetMonSeqTxtRecordFromUnit(pUnit))
 		{
-			pUnit->dwSeqFrameCount = D2Common_10683(pUnit);
+			pUnit->dwSeqFrameCount = DATATBLS_GetSeqFramePointsCount(pUnit);
 			pUnit->dwSeqFrame = 0;
-			pUnit->dwAnimSpeed = 256;
-			pUnit->dwFrameCount = D2Common_10684(pUnit) << 8;
+			pUnit->dwSeqSpeed = 256;
+			pUnit->dwFrameCountPrecise = DATATBLS_GetSeqFrameCount(pUnit) << 8;
 
-			D2Common_10685((D2MonSeqTxt*)pUnit->pAnimSeq, pUnit->dwSeqFrame, 0, &nMode, &nFrame, &nDirection, &nEvent);
+			unsigned nMode = 0, nFrame = 0;
+			int nDirection = 0, nEvent = 0;
+			DATATBLS_ComputeSequenceAnimation(pUnit->pAnimSeq, pUnit->dwSeqFrame, 0, &nMode, &nFrame, &nDirection, &nEvent);
 
 			pUnit->dwSeqMode = nMode;
 			pUnit->nActionFrame = nEvent;
-			pUnit->dwGFXcurrentFrame = nFrame << 8;
+			pUnit->dwSeqCurrentFramePrecise = nFrame << 8;
 			pUnit->dwFlags |= UNITFLAG_SQGFXCHANGE;
 		}
 	}
@@ -1151,35 +1039,29 @@ void __stdcall UNITS_SetAnimationFrame(D2UnitStrc* pUnit, int nFrame)
 //D2Common.0x6FDBEE60 (#10373)
 void __stdcall UNITS_StopSequence(D2UnitStrc* pUnit)
 {
-	unsigned int nOldFrame = 0;
-	unsigned int nOldMode = 0;
-	unsigned int nNewMode = 0;
-	unsigned int nCounter = 0;
-	unsigned int nFrame = 0;
-	int nDirection = 0;
-	int nEvent = 0;
-
 	pUnit->nActionFrame = 0;
 
 	if (pUnit->pAnimSeq)
 	{
-		nOldFrame = pUnit->dwSeqFrame;
+		const unsigned nOldFrame = pUnit->dwSeqFrame;
 
 		pUnit->dwFlags &= ~UNITFLAG_SQGFXCHANGE;
-		pUnit->dwSeqFrame += pUnit->dwAnimSpeed;
+		pUnit->dwSeqFrame += pUnit->dwSeqSpeed;
 
 		if (pUnit->dwSeqFrame >= pUnit->dwSeqFrameCount)
 		{
 			pUnit->dwSeqFrame -= pUnit->dwSeqFrameCount;
 		}
 
-		pUnit->dwFrameCount -= pUnit->dwAnimSpeed;
+		pUnit->dwFrameCountPrecise -= pUnit->dwSeqSpeed;
 
-		nOldMode = pUnit->dwSeqMode;
-		D2Common_10685((D2MonSeqTxt*)pUnit->pAnimSeq, pUnit->dwSeqFrame, nOldFrame, &nNewMode, &nFrame, &nDirection, &nEvent);
+		unsigned nOldMode = pUnit->dwSeqMode;
+		unsigned nNewMode, nFrame;
+		int nDirection, nEvent;
+		DATATBLS_ComputeSequenceAnimation(pUnit->pAnimSeq, pUnit->dwSeqFrame, nOldFrame, &nNewMode, &nFrame, &nDirection, &nEvent);
 
 		pUnit->dwSeqMode = nNewMode;
-		pUnit->dwGFXcurrentFrame = nFrame << 8;
+		pUnit->dwSeqCurrentFramePrecise = nFrame << 8;
 		pUnit->nActionFrame = nEvent;
 
 		if (nNewMode != nOldMode)
@@ -1189,35 +1071,27 @@ void __stdcall UNITS_StopSequence(D2UnitStrc* pUnit)
 	}
 	else
 	{
-		nFrame = pUnit->dwGFXcurrentFrame >> 8;
-		if (pUnit->wAnimSpeed >= 256)
-		{
-			++nFrame;
-		}
+		uint32_t nFrame = pUnit->dwSeqCurrentFramePrecise >> 8 + int(pUnit->wAnimSpeed >= 256);
 
-		pUnit->dwGFXcurrentFrame += pUnit->wAnimSpeed;
+		pUnit->dwSeqCurrentFramePrecise += pUnit->wAnimSpeed;
 		
-		while (pUnit->dwGFXcurrentFrame >= pUnit->dwFrameCount)
+		while (pUnit->dwSeqCurrentFramePrecise >= pUnit->dwFrameCountPrecise)
 		{
-			nCounter = nFrame;
-			while (nCounter < (pUnit->dwFrameCount >> 8))
+			const uint32_t nFrameCount = (pUnit->dwFrameCountPrecise >> 8);
+			for(int i = nFrame; i < nFrameCount; i++)
 			{
-				UNITS_SetAnimActionFrame(pUnit, nCounter);
-
-				++nCounter;
+				UNITS_SetAnimActionFrame(pUnit, i);
 			}
-
+			// Animation looped
 			nFrame = 0;
-			pUnit->dwGFXcurrentFrame -= pUnit->dwFrameCount;
-			pUnit->dwGFXcurrentFrame += (UNITS_GetFrameBonus(pUnit) << 8);
+			pUnit->dwSeqCurrentFramePrecise -= pUnit->dwFrameCountPrecise;
+			pUnit->dwSeqCurrentFramePrecise += (UNITS_GetFrameBonus(pUnit) << 8);
 		}
-		
-		nCounter = nFrame;
-		while (nCounter <= (pUnit->dwGFXcurrentFrame >> 8))
-		{
-			UNITS_SetAnimActionFrame(pUnit, nCounter);
 
-			++nCounter;
+		const uint32_t nLastFrameReached = (pUnit->dwSeqCurrentFramePrecise >> 8);
+		for (; nFrame <= nLastFrameReached; nFrame++)
+		{
+			UNITS_SetAnimActionFrame(pUnit, nFrame);
 		}
 	}
 }
@@ -1225,23 +1099,22 @@ void __stdcall UNITS_StopSequence(D2UnitStrc* pUnit)
 //D2Common.0x6FDBEFF0 (#10374)
 void __stdcall UNITS_UpdateFrame(D2UnitStrc* pUnit)
 {
-	pUnit->dwGFXcurrentFrame = pUnit->wAnimSpeed + pUnit->dwGFXcurrentFrame;
+	pUnit->dwSeqCurrentFramePrecise += pUnit->wAnimSpeed;
 
-	if ((int)pUnit->dwGFXcurrentFrame >= (int)pUnit->dwFrameCount)
+	if (pUnit->dwSeqCurrentFramePrecise >= pUnit->dwFrameCountPrecise)
 	{
-		pUnit->dwGFXcurrentFrame = pUnit->wAnimSpeed + pUnit->dwGFXcurrentFrame - pUnit->dwFrameCount;
+		pUnit->dwSeqCurrentFramePrecise -= pUnit->dwFrameCountPrecise;
 	}
 }
 
 //D2Common.0x6FDBF020 (#10375)
-//TODO: Check name
 void __stdcall D2COMMON_10375_UNITS_SetFrameNonRate(D2UnitStrc* pUnit, int nRate, int nFailRate)
 {
-	pUnit->dwGFXcurrentFrame += pUnit->wAnimSpeed;
+	pUnit->dwSeqCurrentFramePrecise += pUnit->wAnimSpeed;
 
-	if ((int)pUnit->dwGFXcurrentFrame >= nFailRate << 8)
+	if (pUnit->dwSeqCurrentFramePrecise >= (nFailRate << 8))
 	{
-		pUnit->dwGFXcurrentFrame += pUnit->wAnimSpeed + (nRate << 8) - (nFailRate << 8);
+		pUnit->dwSeqCurrentFramePrecise -= ((nFailRate << 8) - (nRate << 8));
 	}
 }
 
@@ -1286,14 +1159,14 @@ __forceinline void __fastcall UNITS_UpdateAttackAnimRateAndVelocity(D2UnitStrc* 
 
 	UNITS_MergeDualWieldWeaponStatLists(pUnit, 1);
 
-	nFasterAttackRate = STATLIST_GetUnitStatSigned(pUnit, STAT_ITEM_FASTERATTACKRATE, 0);
+	nFasterAttackRate = STATLIST_UnitGetItemStatOrSkillStatValue(pUnit, STAT_ITEM_FASTERATTACKRATE, 0);
 
 	if (nFasterAttackRate)
 	{
 		nFasterAttackRate = 120 * nFasterAttackRate / (nFasterAttackRate + 120);
 	}
 
-	nAttackRate = STATLIST_GetUnitStatUnsigned(pUnit, STAT_ATTACKRATE, 0);
+	nAttackRate = STATLIST_UnitGetStatValue(pUnit, STAT_ATTACKRATE, 0);
 	nRate = nFasterAttackRate + nAttackRate;
 
 	if (UNITS_CanDualWield(pUnit))
@@ -1312,8 +1185,8 @@ __forceinline void __fastcall UNITS_UpdateAttackAnimRateAndVelocity(D2UnitStrc* 
 
 		if (ITEMS_CheckItemTypeId(pRightWeapon, ITEMTYPE_WEAPON) && ITEMS_CheckItemTypeId(pLeftWeapon, ITEMTYPE_WEAPON))
 		{
-			nRightAttackRate = STATLIST_GetUnitStatUnsigned(pRightWeapon, STAT_ATTACKRATE, 0);
-			nLeftAttackRate = STATLIST_GetUnitStatUnsigned(pLeftWeapon, STAT_ATTACKRATE, 0);
+			nRightAttackRate = STATLIST_UnitGetStatValue(pRightWeapon, STAT_ATTACKRATE, 0);
+			nLeftAttackRate = STATLIST_UnitGetStatValue(pLeftWeapon, STAT_ATTACKRATE, 0);
 
 			nRate += (nRightAttackRate + nLeftAttackRate) / 2 - nRightAttackRate;
 		}
@@ -1359,7 +1232,7 @@ __forceinline void __fastcall UNITS_UpdateAttackAnimRateAndVelocity(D2UnitStrc* 
 		nAnimSpeed = 32767;
 	}
 
-	pUnit->dwAnimSpeed = nAnimSpeed;
+	pUnit->dwSeqSpeed = nAnimSpeed;
 	pUnit->wAnimSpeed = nAnimSpeed;
 }
 
@@ -1369,7 +1242,7 @@ __forceinline void __fastcall UNITS_UpdateBlockAnimRateAndVelocity(D2UnitStrc* p
 	int nBlockRateBonus = 0;
 	int nAnimSpeed = 0;
 
-	nFasterBlockRate = STATLIST_GetUnitStatSigned(pUnit, STAT_ITEM_FASTERBLOCKRATE, 0);
+	nFasterBlockRate = STATLIST_UnitGetItemStatOrSkillStatValue(pUnit, STAT_ITEM_FASTERBLOCKRATE, 0);
 	if (nFasterBlockRate)
 	{
 		nFasterBlockRate = 120 * nFasterBlockRate / (nFasterBlockRate + 120);
@@ -1403,7 +1276,7 @@ __forceinline void __fastcall UNITS_UpdateCastAnimRateAndVelocity(D2UnitStrc* pU
 	int nAnimSpeed = 0;
 	int nRate = 0;
 
-	nFasterCastRate = STATLIST_GetUnitStatSigned(pUnit, STAT_ITEM_FASTERCASTRATE, 0);
+	nFasterCastRate = STATLIST_UnitGetItemStatOrSkillStatValue(pUnit, STAT_ITEM_FASTERCASTRATE, 0);
 	if (nFasterCastRate)
 	{
 		nFasterCastRate = (120 * nFasterCastRate) / (nFasterCastRate + 120);
@@ -1426,7 +1299,7 @@ __forceinline void __fastcall UNITS_UpdateCastAnimRateAndVelocity(D2UnitStrc* pU
 	}
 
 	pUnit->wAnimSpeed = nAnimSpeed;
-	pUnit->dwAnimSpeed = nAnimSpeed;
+	pUnit->dwSeqSpeed = nAnimSpeed;
 }
 
 __forceinline void __fastcall UNITS_UpdateGetHitAnimRateAndVelocity(D2UnitStrc* pUnit)
@@ -1434,7 +1307,7 @@ __forceinline void __fastcall UNITS_UpdateGetHitAnimRateAndVelocity(D2UnitStrc* 
 	int nFasterGetHitRate = 0;
 	int nAnimSpeed = 0;
 
-	nFasterGetHitRate = STATLIST_GetUnitStatSigned(pUnit, STAT_ITEM_FASTERGETHITRATE, 0);
+	nFasterGetHitRate = STATLIST_UnitGetItemStatOrSkillStatValue(pUnit, STAT_ITEM_FASTERGETHITRATE, 0);
 	if (nFasterGetHitRate)
 	{
 		nFasterGetHitRate = 120 * nFasterGetHitRate / (nFasterGetHitRate + 120);
@@ -1525,7 +1398,7 @@ __forceinline void __fastcall UNITS_UpdateOtherAnimRateAndVelocity(D2UnitStrc* p
 	}
 	else
 	{
-		nOtherAnimRate = STATLIST_GetUnitStatUnsigned(pUnit, STAT_OTHER_ANIMRATE, 0);
+		nOtherAnimRate = STATLIST_UnitGetStatValue(pUnit, STAT_OTHER_ANIMRATE, 0);
 		if (nOtherAnimRate >= 15)
 		{
 			if (nOtherAnimRate > 175)
@@ -1554,7 +1427,7 @@ __forceinline void __fastcall UNITS_UpdateOtherAnimRateAndVelocity(D2UnitStrc* p
 }
 
 //TODO: ...
-__forceinline void __fastcall UNITS_UpdateRunWalkAnimRateAndVelocity(D2UnitStrc* pUnit, int nAnimMode, int nUnitType, int nClassId, char* szFile, int nLine)
+__forceinline void __fastcall UNITS_UpdateRunWalkAnimRateAndVelocity(D2UnitStrc* pUnit, int nAnimMode, int nUnitType, int nClassId, const char* szFile, int nLine)
 {
 	D2CharStatsTxt* pCharStatsTxtRecord = NULL;
 	D2MonStatsTxt* pMonStatsTxtRecord = NULL;
@@ -1569,13 +1442,13 @@ __forceinline void __fastcall UNITS_UpdateRunWalkAnimRateAndVelocity(D2UnitStrc*
 
 	if (pUnit->pDynamicPath)
 	{
-		nFasterMoveVelocity = STATLIST_GetUnitStatSigned(pUnit, STAT_ITEM_FASTERMOVEVELOCITY, 0);
+		nFasterMoveVelocity = STATLIST_UnitGetItemStatOrSkillStatValue(pUnit, STAT_ITEM_FASTERMOVEVELOCITY, 0);
 		if (nFasterMoveVelocity)
 		{
 			nFasterMoveVelocity = 150 * nFasterMoveVelocity / (nFasterMoveVelocity + 150);
 		}
 
-		nVelocityPercent = nFasterMoveVelocity + STATLIST_GetUnitStatUnsigned(pUnit, STAT_VELOCITYPERCENT, 0);
+		nVelocityPercent = nFasterMoveVelocity + STATLIST_UnitGetStatValue(pUnit, STAT_VELOCITYPERCENT, 0);
 		if (nVelocityPercent < 25)
 		{
 			nVelocityPercent = 25;
@@ -1612,7 +1485,7 @@ __forceinline void __fastcall UNITS_UpdateRunWalkAnimRateAndVelocity(D2UnitStrc*
 
 		if (nAnimSpeed < 0 || nAnimSpeed > 32767)
 		{
-			FOG_WriteToLogFile("UnitUpdateAnimRateAndVel(): bad velocity:%d  (TYPE:%d  CLASS:%d)  FILE:%s  LINE:%d", nAnimSpeed, nUnitType, nClassId, szFile, nLine);
+			FOG_Trace("UnitUpdateAnimRateAndVel(): bad velocity:%d  (TYPE:%d  CLASS:%d)  FILE:%s  LINE:%d", nAnimSpeed, nUnitType, nClassId, szFile, nLine);
 		}
 
 		if (nAnimSpeed <= 0)
@@ -1642,13 +1515,13 @@ __forceinline void __fastcall UNITS_UpdateRunWalkAnimRateAndVelocity(D2UnitStrc*
 	}
 	else
 	{
-		FOG_WriteToLogFile("UnitUpdateAnimRateAndVel(): NULL path (TYPE:%d  CLASS:%d)  FILE:%s  LINE:%d", nUnitType, nClassId, szFile, nLine);
+		FOG_Trace("UnitUpdateAnimRateAndVel(): NULL path (TYPE:%d  CLASS:%d)  FILE:%s  LINE:%d", nUnitType, nClassId, szFile, nLine);
 	}
 }
 
 //D2Common.0x6FDBF050
 //TODO: Check everything related to this function
-void __stdcall D2COMMON_10376_UpdateAnimRateAndVelocity(D2UnitStrc* pUnit, char* szFile, int nLine)
+void __stdcall D2COMMON_10376_UpdateAnimRateAndVelocity(D2UnitStrc* pUnit, const char* szFile, int nLine)
 {
 	D2SkillStrc* v10 = NULL;
 	int nUnitType = 0;
@@ -1666,14 +1539,14 @@ void __stdcall D2COMMON_10376_UpdateAnimRateAndVelocity(D2UnitStrc* pUnit, char*
 
 	if (!pUnit)
 	{
-		FOG_WriteToLogFile("UnitUpdateAnimRateAndVel(): NULL unit  FILE:%s  LINE:%d", szFile, nLine);
+		FOG_Trace("UnitUpdateAnimRateAndVel(): NULL unit  FILE:%s  LINE:%d", szFile, nLine);
 		return;
 	}
 
 	nUnitType = pUnit->dwUnitType;
 	if (nUnitType >= 5)
 	{
-		FOG_WriteToLogFile("UnitUpdateAnimRateAndVel(): invalid unit (TYPE:%d)  FILE:%s  LINE:%d", nUnitType, szFile, nLine);
+		FOG_Trace("UnitUpdateAnimRateAndVel(): invalid unit (TYPE:%d)  FILE:%s  LINE:%d", nUnitType, szFile, nLine);
 		return;
 	}
 
@@ -1851,40 +1724,16 @@ LABEL_75:
 			return UNITS_UpdateOtherAnimRateAndVelocity(pUnit, nAnimMode, nUnitType, nClassId);
 
 		default:
-			FOG_Assertion("(eTOU == UNIT_PLAYER) || (eTOU == UNIT_MONSTER)", __FILE__, __LINE__);
+			FOG_DisplayAssert("(eTOU == UNIT_PLAYER) || (eTOU == UNIT_MONSTER)", __FILE__, __LINE__);
 			exit(-1);
 		}
 	}
 }
 
-
-////TODO:Remove
-//D2FUNC(D2COMMON, 10376, void, __stdcall, (D2UnitStrc*, char*, int), 0x7F050)
-//void __stdcall D2COMMON_10376_UpdateAnimRateAndVelocity(D2UnitStrc* pUnit, char* szFile, int nLine)
-//{
-//	return D2COMMON_10376(pUnit, szFile, nLine);
-//}
-///////////////
-
-
 //D2Common.0x6FDBF8D0 (#10377)
 void __stdcall UNITS_SetAnimationSpeed(D2UnitStrc* pUnit, int nSpeed)
 {
-	if (nSpeed > 0)
-	{
-		if (nSpeed >= 32767)
-		{
-			pUnit->wAnimSpeed = 32767;
-		}
-		else
-		{
-			pUnit->wAnimSpeed = nSpeed;
-		}
-	}
-	else
-	{
-		pUnit->wAnimSpeed = 0;
-	}
+	pUnit->wAnimSpeed = D2Clamp(nSpeed, 0, 32767);
 }
 
 //D2Common.0x6FDBF910 (#10378)
@@ -1894,11 +1743,11 @@ int __stdcall UNITS_IsAtEndOfFrameCycle(D2UnitStrc* pUnit)
 	
 	if (pUnit->pAnimSeq)
 	{
-		return (int)pUnit->dwFrameCount <= 0;
+		return (int)pUnit->dwFrameCountPrecise <= 0;
 	}
 	else
 	{
-		return (int)(pUnit->dwGFXcurrentFrame + pUnit->wAnimSpeed) >= (int)pUnit->dwFrameCount;
+		return (int)(pUnit->dwSeqCurrentFramePrecise + pUnit->wAnimSpeed) >= (int)pUnit->dwFrameCountPrecise;
 	}
 }
 
@@ -1909,13 +1758,13 @@ void __stdcall UNITS_GetShiftedFrameMetrics(D2UnitStrc* pUnit, int* pFrameNo, in
 
 	if (pUnit->dwUnitType == UNIT_OBJECT)
 	{
-		*pFrameNo = pUnit->dwGFXcurrentFrame >> 8;
+		*pFrameNo = pUnit->dwSeqCurrentFramePrecise >> 8;
 		*pFrameCount = pUnit->pObjectData->pObjectTxt->dwFrameCnt[pUnit->dwAnimMode];
 	}
 	else
 	{
-		*pFrameNo = pUnit->dwGFXcurrentFrame >> 8;
-		*pFrameCount = pUnit->dwFrameCount >> 8;
+		*pFrameNo = pUnit->dwSeqCurrentFramePrecise >> 8;
+		*pFrameCount = pUnit->dwFrameCountPrecise >> 8;
 	}
 }
 
@@ -1926,13 +1775,13 @@ void __stdcall UNITS_GetFrameMetrics(D2UnitStrc* pUnit, int* pFrame, int* pFrame
 	{
 		if (pUnit->dwUnitType == UNIT_OBJECT)
 		{
-			*pFrame = pUnit->dwGFXcurrentFrame;
+			*pFrame = pUnit->dwSeqCurrentFramePrecise;
 			*pFrameCount = pUnit->pObjectData->pObjectTxt->dwFrameCnt[pUnit->dwAnimMode];
 		}
 		else
 		{
-			*pFrame = pUnit->dwGFXcurrentFrame;
-			*pFrameCount = pUnit->dwFrameCount;
+			*pFrame = pUnit->dwSeqCurrentFramePrecise;
+			*pFrameCount = pUnit->dwFrameCountPrecise;
 		}
 	}
 	else
@@ -1972,11 +1821,6 @@ void __stdcall UNITS_SetAnimActionFrame(D2UnitStrc* pUnit, int nFrame)
 //D2Common.0x6FDBFA90 (#10382)
 int __stdcall UNITS_GetEventFrameInfo(D2UnitStrc* pUnit, int nFrame)
 {
-	BOOL bSequence = FALSE;
-	unsigned int nMode = 0;
-	unsigned int nTemp = 0;
-	int nDirection = 0;
-	int nEvent = 0;
 	D2_ASSERT(pUnit);
 
 	if (nFrame >= 144)
@@ -1984,16 +1828,16 @@ int __stdcall UNITS_GetEventFrameInfo(D2UnitStrc* pUnit, int nFrame)
 		return 0;
 	}
 
-	if (pUnit->dwUnitType != UNIT_PLAYER)
+	BOOL bSequence = FALSE;
+	switch (pUnit->dwUnitType)
 	{
-		if (pUnit->dwUnitType != UNIT_MONSTER)
-		{
-			return pUnit->pAnimData->pFrameFlags[nFrame];
-		}
-	}
-	else if (pUnit->dwAnimMode == PLRMODE_SEQUENCE)
-	{
-		bSequence = TRUE;
+	case UNIT_PLAYER:
+		bSequence = (pUnit->dwAnimMode == PLRMODE_SEQUENCE);
+		break;
+	case UNIT_MONSTER:
+		break;
+	default:
+		return pUnit->pAnimData->pFrameFlags[nFrame];
 	}
 
 	if (pUnit->dwAnimMode != MONMODE_SEQUENCE && !bSequence)
@@ -2001,7 +1845,11 @@ int __stdcall UNITS_GetEventFrameInfo(D2UnitStrc* pUnit, int nFrame)
 		return pUnit->pAnimData->pFrameFlags[nFrame];
 	}
 
-	D2Common_10685(DATATBLS_GetMonSeqTxtRecordFromUnit(pUnit), nFrame << 8, nFrame << 8, &nMode, &nTemp, &nDirection, &nEvent);
+	unsigned int nMode = 0;
+	unsigned int nTemp = 0;
+	int nDirection = 0;
+	int nEvent = 0;
+	DATATBLS_ComputeSequenceAnimation(DATATBLS_GetMonSeqTxtRecordFromUnit(pUnit), nFrame << 8, nFrame << 8, &nMode, &nTemp, &nDirection, &nEvent);
 	return nEvent;
 }
 
@@ -2020,28 +1868,16 @@ BOOL __stdcall UNITS_HasCollision(D2UnitStrc* pUnit)
 D2SkillStrc* __stdcall UNITS_GetSkillFromSkillId(D2UnitStrc* pUnit, int nSkillId)
 {
 	D2SkillsTxt* pSkillsTxtRecord = DATATBLS_GetSkillsTxtRecord(nSkillId);
-	D2SkillStrc* pSkill = NULL;
 
 	D2_ASSERT(pSkillsTxtRecord);
 	D2_ASSERT(pUnit);
 
-	pSkill = SKILLS_GetFirstSkillFromSkillList(pUnit->pSkills);
-	if (pSkill)
+	D2SkillStrc* pSkill = SKILLS_GetFirstSkillFromSkillList(pUnit->pSkills);
+	while (pSkill && pSkill->pSkillsTxt != pSkillsTxtRecord)
 	{
-		while (pSkill->pSkillsTxt != pSkillsTxtRecord)
-		{
-			pSkill = pSkill->pNextSkill;
-
-			if (!pSkill)
-			{
-				return NULL;
-			}
-		}
-
-		return pSkill;
+		pSkill = pSkill->pNextSkill;
 	}
-
-	return NULL;
+	return pSkill;
 }
 
 //D2Common.0x6FDBFC10 (#10392)
@@ -2083,7 +1919,7 @@ D2ObjectsTxt* __stdcall UNITS_GetObjectTxtRecordFromObject(D2UnitStrc* pUnit)
 
 	if (pUnit->dwUnitType != UNIT_OBJECT)
 	{
-		FOG_10024_PacketAssertion(0, __FILE__, __LINE__);
+		FOG_DisplayHalt(0, __FILE__, __LINE__);
 		exit(-1);
 	}
 
@@ -2098,7 +1934,7 @@ D2ShrinesTxt* __stdcall UNITS_GetShrineTxtRecordFromObject(D2UnitStrc* pUnit)
 
 	if (pUnit->dwUnitType != UNIT_OBJECT)
 	{
-		FOG_10024_PacketAssertion(0, __FILE__, __LINE__);
+		FOG_DisplayHalt(0, __FILE__, __LINE__);
 		exit(-1);
 	}
 
@@ -2112,7 +1948,7 @@ void __stdcall UNITS_SetShrineTxtRecordInObjectData(D2UnitStrc* pUnit, D2Shrines
 
 	if (pUnit->dwUnitType != UNIT_OBJECT)
 	{
-		FOG_10024_PacketAssertion(0, __FILE__, __LINE__);
+		FOG_DisplayHalt(0, __FILE__, __LINE__);
 		exit(-1);
 	}
 
@@ -2143,7 +1979,7 @@ int __stdcall UNITS_GetNewDirection(D2UnitStrc* pUnit)
 
 	if (nX != pCoords.nX || nY != pCoords.nY)
 	{		
-		return D2Common_10215(pCoords.nX, pCoords.nY, nX, nY);
+		return PATH_ComputeDirection(pCoords.nX, pCoords.nY, nX, nY);
 	}
 	else
 	{
@@ -2152,7 +1988,7 @@ int __stdcall UNITS_GetNewDirection(D2UnitStrc* pUnit)
 }
 
 //D2Common.0x6FDBFF20 (#10416)
-void __stdcall UNITS_StoreOwnerTypeAndGUID(D2UnitStrc* pUnit, int nOwnerType, int nOwnerId)
+void __stdcall UNITS_StoreOwnerTypeAndGUID(D2UnitStrc* pUnit, int nOwnerType, D2UnitGUID nOwnerId)
 {
 	UNITS_StoreOwnerInfo(pUnit, nOwnerType, nOwnerId);
 }
@@ -2250,7 +2086,7 @@ int __stdcall UNITS_GetDirectionToCoords(D2UnitStrc* pUnit, int nNewX, int nNewY
 
 	UNITS_GetCoords(pUnit, &pCoords);
 
-	return D2Common_10215(pCoords.nX, pCoords.nY, nNewX, nNewY);
+	return PATH_ComputeDirection(pCoords.nX, pCoords.nY, nNewX, nNewY);
 }
 
 //D2Common.0x6FDC0160 (#10437)
@@ -2297,14 +2133,10 @@ int __stdcall UNITS_GetBeltType(D2UnitStrc* pUnit)
 //D2Common.0x6FDC0260 (#10368)
 int __stdcall UNITS_GetCurrentLifePercentage(D2UnitStrc* pUnit)
 {
-	int nMaxHp = 0;
-	int nHp = 0;
-
-	nHp = STATLIST_GetUnitStatUnsigned(pUnit, STAT_HITPOINTS, 0) >> 8;
-	nMaxHp = STATLIST_GetMaxLifeFromUnit(pUnit) >> 8;
-	if (nMaxHp)
+	const int nHp = STAT_HitPointsFixedPointToInt(STATLIST_UnitGetStatValue(pUnit, STAT_HITPOINTS, 0));
+	if (const int nMaxHp = STAT_HitPointsFixedPointToInt(STATLIST_GetMaxLifeFromUnit(pUnit)))
 	{
-		return 100 * nHp / nMaxHp;
+		return (100 * nHp) / nMaxHp;
 	}
 
 	return 0;
@@ -2313,17 +2145,13 @@ int __stdcall UNITS_GetCurrentLifePercentage(D2UnitStrc* pUnit)
 //D2Common.0x6FDC02A0 (#10359)
 BOOL __stdcall UNITS_IsSoftMonster(D2UnitStrc* pUnit)
 {
-	D2MonStats2Txt* pMonStats2TxtRecord = NULL;
-
 	if (pUnit && pUnit->dwUnitType == UNIT_MONSTER)
 	{
-		pMonStats2TxtRecord = UNITS_GetMonStats2TxtRecordFromMonsterId(pUnit->dwClassId);
-		if (pMonStats2TxtRecord && pMonStats2TxtRecord->dwFlags & gdwBitMasks[MONSTATS2FLAGINDEX_SOFT])
+		if (D2MonStats2Txt* pMonStats2TxtRecord = UNITS_GetMonStats2TxtRecordFromMonsterId(pUnit->dwClassId))
 		{
-			return TRUE;
+			return (pMonStats2TxtRecord->dwFlags & MONSTATS2FLAG_SOFT) != 0;
 		}
 	}
-
 	return FALSE;
 }
 
@@ -2333,8 +2161,7 @@ void __stdcall UNITS_AllocPlayerData(D2UnitStrc* pUnit)
 	D2_ASSERT(pUnit);
 	D2_ASSERT(!pUnit->pPlayerData);
 
-	pUnit->pPlayerData = (D2PlayerDataStrc*)FOG_AllocServerMemory(pUnit->pMemoryPool, sizeof(D2PlayerDataStrc), __FILE__, __LINE__, 0);
-	memset(pUnit->pPlayerData, 0x00, sizeof(D2PlayerDataStrc));
+	pUnit->pPlayerData = D2_CALLOC_STRC_POOL(pUnit->pMemoryPool, D2PlayerDataStrc);
 	pUnit->pPlayerData->szName[0] = 0;
 
 	for (int i = 0; i < ARRAY_SIZE(pUnit->pPlayerData->pQuestData); ++i)
@@ -2344,7 +2171,7 @@ void __stdcall UNITS_AllocPlayerData(D2UnitStrc* pUnit)
 	}
 
 	pUnit->pPlayerData->nPortalFlags = DUNGEON_GetPortalFlagFromLevelId(LEVEL_ROGUEENCAMPMENT);
-	pUnit->pPlayerData->dwTradeTick = 0;
+	pUnit->pPlayerData->bBusy = 0;
 
 	//D2COMMON_11296_Return(pUnit);
 }
@@ -2364,7 +2191,7 @@ void __stdcall UNITS_FreePlayerData(void* pMemPool, D2UnitStrc* pPlayer)
 
 	//D2COMMON_10916_Return();
 
-	FOG_FreeServerMemory(pMemPool, pPlayer->pPlayerData, __FILE__, __LINE__, 0);
+	D2_FREE_POOL(pMemPool, pPlayer->pPlayerData);
 	pPlayer->pPlayerData = NULL;
 }
 
@@ -2375,6 +2202,7 @@ void __stdcall UNITS_SetNameInPlayerData(D2UnitStrc* pUnit, char* szName)
 	D2_ASSERT(pUnit->pPlayerData);
 	D2_ASSERT(pUnit->dwUnitType == UNIT_PLAYER);
 
+	// Note: Game actually uses Storm.dll SStrCopy
 	strcpy_s(pUnit->pPlayerData->szName, szName);
 }
 
@@ -2492,8 +2320,8 @@ int __stdcall UNITS_GetDefense(D2UnitStrc* pUnit)
 	int nSkillId = 0;
 	int nDefense = 0;
 
-	nDefense = STATLIST_GetUnitStatUnsigned(pUnit, STAT_DEXTERITY, 0) / 4 + STATLIST_GetUnitStatUnsigned(pUnit, STAT_ARMORCLASS, 0);
-	nArmorPercent = STATLIST_GetUnitStatSigned(pUnit, STAT_ITEM_ARMOR_PERCENT, 0) + STATLIST_GetUnitStatSigned(pUnit, STAT_SKILL_ARMOR_PERCENT, 0);
+	nDefense = STATLIST_UnitGetStatValue(pUnit, STAT_DEXTERITY, 0) / 4 + STATLIST_UnitGetStatValue(pUnit, STAT_ARMORCLASS, 0);
+	nArmorPercent = STATLIST_UnitGetItemStatOrSkillStatValue(pUnit, STAT_ITEM_ARMOR_PERCENT, 0) + STATLIST_UnitGetItemStatOrSkillStatValue(pUnit, STAT_SKILL_ARMOR_PERCENT, 0);
 
 	if (STATES_CheckState(pUnit, STATE_HOLYSHIELD))
 	{
@@ -2526,7 +2354,7 @@ int __stdcall UNITS_GetDefense(D2UnitStrc* pUnit)
 	}
 
 	nTotalDefense = nDefenseBonus + nDefense;
-	nArmorOverridePercent = STATLIST_GetUnitStatUnsigned(pUnit, STAT_ARMOR_OVERRIDE_PERCENT, 0);
+	nArmorOverridePercent = STATLIST_UnitGetStatValue(pUnit, STAT_ARMOR_OVERRIDE_PERCENT, 0);
 
 	if (!nArmorOverridePercent)
 	{
@@ -2546,8 +2374,8 @@ int __stdcall UNITS_GetAttackRate(D2UnitStrc* pAttacker)
 
 	D2_ASSERT(pAttacker && pAttacker->dwUnitType == UNIT_PLAYER);
 
-	nToHit = STATLIST_GetUnitStatUnsigned(pAttacker, STAT_TOHIT, 0);
-	nDexterity = STATLIST_GetUnitStatUnsigned(pAttacker, STAT_DEXTERITY, 0);
+	nToHit = STATLIST_UnitGetStatValue(pAttacker, STAT_TOHIT, 0);
+	nDexterity = STATLIST_UnitGetStatValue(pAttacker, STAT_DEXTERITY, 0);
 	nAttackRate = nToHit + 5 * (nDexterity - 7);
 
 	if (pAttacker->dwUnitType == UNIT_PLAYER && pAttacker->dwClassId >= 0 && pAttacker->dwClassId < sgptDataTables->nCharStatsTxtRecordCount)
@@ -2592,16 +2420,16 @@ int __stdcall UNITS_GetBlockRate(D2UnitStrc* pUnit, BOOL bExpansion)
 		{
 			pCharStatsTxtRecord = &sgptDataTables->pCharStatsTxt[pUnit->dwClassId];
 
-			nBlockChance = pCharStatsTxtRecord->nBlockFactor + STATLIST_GetUnitStatUnsigned(pUnit, STAT_TOBLOCK, 0);
+			nBlockChance = pCharStatsTxtRecord->nBlockFactor + STATLIST_UnitGetStatValue(pUnit, STAT_TOBLOCK, 0);
 			if (bExpansion)
 			{
-				nLevel = STATLIST_GetUnitStatUnsigned(pUnit, STAT_LEVEL, 0);
+				nLevel = STATLIST_UnitGetStatValue(pUnit, STAT_LEVEL, 0);
 				if (nLevel <= 1)
 				{
 					nLevel = 1;
 				}
 
-				nBlockChance = nBlockChance * (STATLIST_GetUnitStatUnsigned(pUnit, STAT_DEXTERITY, 0) - 15) / (2 * nLevel);
+				nBlockChance = nBlockChance * (STATLIST_UnitGetStatValue(pUnit, STAT_DEXTERITY, 0) - 15) / (2 * nLevel);
 			}
 
 			if (nBlockChance > 75)
@@ -2628,7 +2456,7 @@ int __stdcall UNITS_GetBlockRate(D2UnitStrc* pUnit, BOOL bExpansion)
 			case MONSTER_DIABLO:
 			case MONSTER_DOOMKNIGHT1:
 			case MONSTER_DIABLOCLONE:
-				nBlockChance = STATLIST_GetUnitStatUnsigned(pUnit, STAT_TOBLOCK, 0);
+				nBlockChance = STATLIST_UnitGetStatValue(pUnit, STAT_TOBLOCK, 0);
 				if (nBlockChance > 75)
 				{
 					nBlockChance = 75;
@@ -2656,7 +2484,7 @@ int __stdcall UNITS_GetBlockRate(D2UnitStrc* pUnit, BOOL bExpansion)
 					pItemsTxtRecord = DATATBLS_GetItemRecordFromItemCode(v8, &nItemId);
 					if (pItemsTxtRecord && pItemsTxtRecord->wType[0] == ITEMTYPE_SHIELD)
 					{
-						nBlockChance = STATLIST_GetUnitStatUnsigned(pUnit, STAT_TOBLOCK, 0);
+						nBlockChance = STATLIST_UnitGetStatValue(pUnit, STAT_TOBLOCK, 0);
 						if (nBlockChance > 75)
 						{
 							nBlockChance = 75;
@@ -2668,7 +2496,7 @@ int __stdcall UNITS_GetBlockRate(D2UnitStrc* pUnit, BOOL bExpansion)
 			}
 		}
 
-		nBlockChance = STATLIST_GetUnitStatUnsigned(pUnit, STAT_TOBLOCK, 0);
+		nBlockChance = STATLIST_UnitGetStatValue(pUnit, STAT_TOBLOCK, 0);
 		if (nBlockChance > 75)
 		{
 			nBlockChance = 75;
@@ -2806,79 +2634,72 @@ D2UnitStrc* __stdcall UNITS_GetEquippedWeaponFromMonster(D2UnitStrc* pMonster)
 //D2Common.0x6FDC0FC0 (#10436)
 int __stdcall UNITS_GetFrameBonus(D2UnitStrc* pUnit)
 {
-	static const int dword_6FDD3078[] =
+	static const int gaClassesWeaponFrameBonus_6FDD3078[NUM_WEAPON_CLASSES][NUMBER_OF_PLAYERCLASSES] =
 	{
-		1, 1, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0,
-		2, 2, 0, 0, 0, 0, 0,
-		2, 2, 0, 0, 0, 0, 0,
-		2, 2, 0, 0, 0, 0, 0,
-		2, 2, 0, 0, 0, 0, 0,
-		2, 2, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0
+		//AMA,SOR,NEC,PAL,BAR,DRU,ASS
+		{   1,  1,  0,  0,  0,  0,  0}, // WEAPONCLASS_NONE
+		{   0,  0,  0,  0,  0,  0,  0}, // WEAPONCLASS_BOW
+		{   2,  2,  0,  0,  0,  0,  0}, // WEAPONCLASS_1HS
+		{   2,  2,  0,  0,  0,  0,  0}, // WEAPONCLASS_1HT
+		{   2,  2,  0,  0,  0,  0,  0}, // WEAPONCLASS_STF
+		{   2,  2,  0,  0,  0,  0,  0}, // WEAPONCLASS_2HS
+		{   2,  2,  0,  0,  0,  0,  0}, // WEAPONCLASS_2HT
+		{   0,  0,  0,  0,  0,  0,  0}, // WEAPONCLASS_XBW
+		{   0,  0,  0,  0,  0,  0,  0}, // WEAPONCLASS_1JS
+		{   0,  0,  0,  0,  0,  0,  0}, // WEAPONCLASS_1JT
+		{   0,  0,  0,  0,  0,  0,  0}, // WEAPONCLASS_1SS
+		{   0,  0,  0,  0,  0,  0,  0}, // WEAPONCLASS_1ST
+		{   0,  0,  0,  0,  0,  0,  0}, // WEAPONCLASS_HT1
+		{   0,  0,  0,  0,  0,  0,  0}  // WEAPONCLASS_HT2
 	};
-
-	D2UnitStrc* pItem = NULL;
-	int nClassId = 0;
-	int nType = 0;
+	
+	int nClassId = -1;
+	int nType = UNIT_TYPES_COUNT;
 	int nMode = 0;
-
 	if (pUnit)
 	{
 		nClassId = pUnit->dwClassId;
 		nType = pUnit->dwUnitType;
 		nMode = pUnit->dwAnimMode;
-	}
-	else
-	{
-		nClassId = -1;
-		nType = 6;
-		nMode = 0;
 	}		
 
 	D2COMMON_11013_ConvertMode(pUnit, &nType, &nClassId, &nMode, __FILE__, __LINE__);
 
-	if (nType == UNIT_PLAYER)
+	if (nType != UNIT_PLAYER)
 	{
-		switch (nMode)
-		{
-		case PLRMODE_ATTACK1:
-		case PLRMODE_ATTACK2:
-			pItem = D2Common_10434(pUnit, 1);
-			if (pItem)
-			{
-				return dword_6FDD3078[nClassId + 7 * ITEMS_GetWeaponClassId(pItem)];
-			}
-
-			return dword_6FDD3078[nClassId];
-
-		case PLRMODE_SPECIAL3:
-		case PLRMODE_SPECIAL4:
-			if (!UNITS_CanDualWield(pUnit))
-			{
-				return 0;
-			}
-
-			pItem = D2Common_10434(pUnit, 1);
-			if (pItem)
-			{
-				return dword_6FDD3078[nClassId + 7 * ITEMS_GetWeaponClassId(pItem)];
-			}
-
-			return dword_6FDD3078[nClassId];
-
-		default:
-			return 0;
-		}
+		return 0;
 	}
 
-	return 0;
+
+	int nWeaponClass = WEAPONCLASS_HTH;
+	switch (nMode)
+	{
+	case PLRMODE_ATTACK1:
+	case PLRMODE_ATTACK2:
+		if (D2UnitStrc* pItem = D2Common_10434(pUnit, 1))
+		{
+			nWeaponClass = ITEMS_GetWeaponClassId(pItem);
+		}
+		break;
+	case PLRMODE_SPECIAL3:
+	case PLRMODE_SPECIAL4:
+		if (!UNITS_CanDualWield(pUnit))
+		{
+			return 0;
+		}
+
+		if (D2UnitStrc* pItem = D2Common_10434(pUnit, 1))
+		{
+			nWeaponClass = ITEMS_GetWeaponClassId(pItem);
+		}
+		break;
+	default:
+		return 0;
+	}
+
+	D2_ASSERT(0 <= nClassId && nClassId < NUMBER_OF_PLAYERCLASSES);
+	D2_ASSERT(0 <= nWeaponClass && nWeaponClass < NUM_WEAPON_CLASSES);
+	return gaClassesWeaponFrameBonus_6FDD3078[nWeaponClass][nClassId];
 }
 
 //D2Common.0x6FDC1120 (#10360)
@@ -3009,7 +2830,7 @@ BOOL __fastcall UNITS_TestCollision(int nX1, int nY1, int nSize1, int nX2, int n
 	pCoords2.nX = nX2;
 	pCoords2.nY = nY2;
 
-	return D2Common_11263(pRoom, &pCoords1, &pCoords2, nCollisionType);
+	return COLLISION_RayTrace(pRoom, &pCoords1, &pCoords2, nCollisionType);
 }
 
 //D2Common.0x6FDC14C0 (#10362)
@@ -3077,24 +2898,24 @@ BOOL __stdcall UNITS_TestCollisionBetweenInteractingUnits(D2UnitStrc* pUnit1, D2
 
 	if (UNITS_GetCollisionType(pUnit1) & nCollisionType)
 	{
-		v4 = D2Common_10223(pUnit1, 0);
+		v4 = PATH_RemoveCollisionFootprintForUnit(pUnit1, 0);
 	}
 
 	if (UNITS_GetCollisionType(pUnit2) & nCollisionType)
 	{
-		v26 = D2Common_10223(pUnit2, 0);
+		v26 = PATH_RemoveCollisionFootprintForUnit(pUnit2, 0);
 	}
 
 	bResult = UNITS_TestCollision(pCoords1.nX, pCoords1.nY, UNITS_GetUnitSizeX(pUnit1), pCoords2.nX, pCoords2.nY, UNITS_GetUnitSizeX(pUnit2), pRoom, nCollisionType);
 
 	if (v4)
 	{
-		D2Common_10222(pUnit1);
+		PATH_AddCollisionFootprintForUnit(pUnit1);
 	}
 
 	if (v26)
 	{
-		D2Common_10222(pUnit2);
+		PATH_AddCollisionFootprintForUnit(pUnit2);
 	}
 
 	return bResult;
@@ -3140,63 +2961,38 @@ BOOL __stdcall UNITS_IsInMeleeRange(D2UnitStrc* pUnit1, D2UnitStrc* pUnit2, int 
 //D2Common.0x6FDC1B40 (#10318)
 BOOL __stdcall UNITS_IsInMovingMode(D2UnitStrc* pUnit)
 {
-	D2MonStatsTxt* pMonStatsTxtRecord = NULL;
-	int nMonsterBaseId = 0;
-	int nAnimMode = 0;
-
-	if (pUnit)
+	if (pUnit == nullptr)
 	{
-		if (pUnit->dwUnitType == UNIT_PLAYER)
-		{
-			if (pUnit->pAnimSeq)
-			{
-				nAnimMode = pUnit->dwSeqMode;
-			}
-			else
-			{
-				nAnimMode = pUnit->dwAnimMode;
-			}
-
-			if (nAnimMode >= PLRMODE_WALK)
-			{
-				if (nAnimMode <= PLRMODE_RUN)
-				{
-					return TRUE;
-				}
-
-				if (nAnimMode == PLRMODE_TWALK)
-				{
-					return TRUE;
-				}
-			}
-		}
-		else if (pUnit->dwUnitType == UNIT_MONSTER)
-		{
-			switch (pUnit->dwAnimMode)
-			{
-			case MONMODE_SKILL1:
-			case MONMODE_SKILL2:
-				nMonsterBaseId = MONSTERS_GetBaseIdFromMonsterId(pUnit->dwClassId);
-
-				if (nMonsterBaseId == MONSTER_VULTURE1)
-				{
-					return TRUE;
-				}
-
-				return FALSE;
-
-			case MONMODE_WALK:
-			case MONMODE_RUN:
-				return TRUE;
-
-			default:
-				return FALSE;
-			}
-		}
-		D2_ASSERT(pUnit->dwUnitType != UNIT_MISSILE);
+		return false;
 	}
-
-	return FALSE;
+	switch (pUnit->dwUnitType)
+	{
+	case UNIT_PLAYER:
+		switch (const int nPlayerMode = pUnit->pAnimSeq ? pUnit->dwSeqMode : pUnit->dwAnimMode)
+		{
+		case PLRMODE_WALK:
+		case PLRMODE_RUN:
+		case PLRMODE_TWALK:
+			return TRUE;
+		default:
+			return FALSE;
+		}
+	case UNIT_MONSTER:
+		switch (pUnit->dwAnimMode)
+		{
+		case MONMODE_WALK:
+		case MONMODE_RUN:
+			return TRUE;
+		case MONMODE_SKILL1:
+		case MONMODE_SKILL2:
+			return MONSTERS_GetBaseIdFromMonsterId(pUnit->dwClassId) == MONSTER_VULTURE1;
+		default:
+			return FALSE;
+		}
+	default:
+		D2_ASSERT(pUnit->dwUnitType != UNIT_MISSILE);
+		return FALSE;
+	}
 }
 
 //D2Common.0x6FDC1C30 (#10319)
@@ -3208,46 +3004,40 @@ BOOL __stdcall UNITS_IsInMovingModeEx(D2UnitStrc* pUnit)
 //D2Common.0x6FDC1C50 (#10365)
 int __fastcall UNITS_GetHitClass(D2UnitStrc* pUnit)
 {
-	D2MonStats2Txt* pMonStats2TxtRecord = NULL;
-	D2UnitStrc* pItem = NULL;
-
 	if (pUnit)
 	{
 		if (pUnit->dwUnitType == UNIT_PLAYER)
 		{
-			pItem = D2Common_10434(pUnit, 0);
-			if (pItem)
+			if (D2UnitStrc* pItem = D2Common_10434(pUnit, FALSE))
 			{
 				return ITEMS_GetHitClassFromItem(pItem);
 			}
-
-			return 1;
+			else
+			{
+				return HITCLASS_HandToHand;
+			}
 		}
 		else if (pUnit->dwUnitType == UNIT_MONSTER)
 		{
-			pMonStats2TxtRecord = UNITS_GetMonStats2TxtRecordFromMonsterId(pUnit->dwClassId);
-			if (pMonStats2TxtRecord)
+			if (D2MonStats2Txt* pMonStats2TxtRecord = UNITS_GetMonStats2TxtRecordFromMonsterId(pUnit->dwClassId))
 			{
 				return pMonStats2TxtRecord->nHitClass;
 			}
 		}
 	}
 
-	return 0;
+	return HITCLASS_None;
 }
 
 //D2Common.0x6FDC1CE0 (#10366)
 int __fastcall UNITS_GetWeaponClass(D2UnitStrc* pUnit)
 {
-	D2UnitStrc* pItem = NULL;
-
-	pItem = D2Common_10434(pUnit, 1);
-	if (pItem)
+	if (D2UnitStrc* pItem = D2Common_10434(pUnit, TRUE))
 	{
 		return ITEMS_GetWeaponClassId(pItem);
 	}
 
-	return 0;
+	return WEAPONCLASS_HTH;
 }
 
 //D2Common.0x6FDC1D00 (#10438)
@@ -3262,8 +3052,8 @@ unsigned int __stdcall UNITS_GetHealingCost(D2UnitStrc* pUnit)
 
 	nMaxLife = STATLIST_GetMaxLifeFromUnit(pUnit);
 	nMaxMana = STATLIST_GetMaxManaFromUnit(pUnit);
-	nLife = STATLIST_GetUnitStatUnsigned(pUnit, STAT_HITPOINTS, 0);
-	nMana = STATLIST_GetUnitStatUnsigned(pUnit, STAT_MANA, 0);
+	nLife = STATLIST_UnitGetStatValue(pUnit, STAT_HITPOINTS, 0);
+	nMana = STATLIST_UnitGetStatValue(pUnit, STAT_MANA, 0);
 
 	if (nMaxLife > nLife)
 	{
@@ -3277,7 +3067,7 @@ unsigned int __stdcall UNITS_GetHealingCost(D2UnitStrc* pUnit)
 
 	if (nShiftedLifeDifference || nShiftedManaDifference)
 	{
-		return (unsigned int)((nShiftedLifeDifference + nShiftedManaDifference) * STATLIST_GetUnitStatUnsigned(pUnit, STAT_LEVEL, 0)) >> 2;
+		return (unsigned int)((nShiftedLifeDifference + nShiftedManaDifference) * STATLIST_UnitGetStatValue(pUnit, STAT_LEVEL, 0)) >> 2;
 	}
 
 	return 0;
@@ -3286,7 +3076,7 @@ unsigned int __stdcall UNITS_GetHealingCost(D2UnitStrc* pUnit)
 //D2Common.0x6FDC1D90 (#10439)
 unsigned int __stdcall UNITS_GetInventoryGoldLimit(D2UnitStrc* pUnit)
 {
-	return 10000 * STATLIST_GetUnitStatUnsigned(pUnit, STAT_LEVEL, 0);
+	return 10000 * STATLIST_UnitGetStatValue(pUnit, STAT_LEVEL, 0);
 }
 
 //D2Common.0x6FDC1DB0 (#10440)
@@ -3530,8 +3320,8 @@ void __stdcall UNITS_GetSwitchRightSkillDataResetRightSkill(D2UnitStrc* pUnit, i
 
 		pUnit->pPlayerData->nRightSkillId = 0;
 		pUnit->pPlayerData->nRightSkillFlags = -1;
-		pUnit->pPlayerData->nWeaponGUID = -1;
-		pUnit->pPlayerData->unk0x94[0] = 0;
+		pUnit->pPlayerData->nWeaponGUID = D2UnitInvalidGUID;
+		pUnit->pPlayerData->unk0x94 = 0;
 	}
 	else
 	{
@@ -3552,8 +3342,8 @@ void __stdcall UNITS_GetSwitchLeftSkillDataResetLeftSkill(D2UnitStrc* pUnit, int
 
 		pUnit->pPlayerData->nLeftSkillId = 0;
 		pUnit->pPlayerData->nLeftSkillFlags = -1;
-		pUnit->pPlayerData->nWeaponGUID = -1;
-		pUnit->pPlayerData->unk0x94[0] = 0;
+		pUnit->pPlayerData->nWeaponGUID = D2UnitInvalidGUID;
+		pUnit->pPlayerData->unk0x94 = 0;
 	}
 	else
 	{
@@ -3641,7 +3431,7 @@ void __stdcall UNITS_SetWeaponGUID(D2UnitStrc* pUnit, D2UnitStrc* pWeapon)
 }
 
 //D2Common.0x6FDC25B0 (#10456)
-int __stdcall UNITS_GetWeaponGUID(D2UnitStrc* pUnit)
+D2UnitGUID __stdcall UNITS_GetWeaponGUID(D2UnitStrc* pUnit)
 {
 	D2_ASSERT(pUnit);
 	D2_ASSERT(pUnit->dwUnitType == UNIT_PLAYER);
@@ -3656,7 +3446,7 @@ unsigned int __stdcall UNITS_GetStashGoldLimit(D2UnitStrc* pUnit)
 	int nMultiplier = 0;
 	int nLevel = 0;
 
-	nLevel = STATLIST_GetUnitStatUnsigned(pUnit, STAT_LEVEL, 0);
+	nLevel = STATLIST_UnitGetStatValue(pUnit, STAT_LEVEL, 0);
 	if (nLevel <= 30)
 	{
 		nMultiplier = nLevel / 10 + 1;
@@ -3672,19 +3462,14 @@ unsigned int __stdcall UNITS_GetStashGoldLimit(D2UnitStrc* pUnit)
 //D2Common.0x6FDC2680 (#10317)
 BOOL __fastcall UNITS_CanSwitchAI(int nMonsterId)
 {
-	D2MonStats2Txt* pMonStats2TxtRecord = NULL;
-	D2MonStatsTxt* pMonStatsTxtRecord = NULL;
-
-	pMonStatsTxtRecord = DATATBLS_GetMonStatsTxtRecord(nMonsterId);
-	if (pMonStatsTxtRecord)
+	if (D2MonStatsTxt* pMonStatsTxtRecord = DATATBLS_GetMonStatsTxtRecord(nMonsterId))
 	{
-		pMonStats2TxtRecord = UNITS_GetMonStats2TxtRecord(pMonStatsTxtRecord->wMonStatsEx);
-		if (pMonStats2TxtRecord && pMonStats2TxtRecord->dwModeFlags & gdwBitMasks[MONSTATS2MODEFLAGINDEX_WL])
+		if (D2MonStats2Txt* pMonStats2TxtRecord = UNITS_GetMonStats2TxtRecord(pMonStatsTxtRecord->wMonStatsEx))
 		{
-			if (!(pMonStatsTxtRecord->dwMonStatsFlags & gdwBitMasks[MONSTATSFLAGINDEX_BOSS]))
-			{
-				return (pMonStatsTxtRecord->dwMonStatsFlags & gdwBitMasks[MONSTATSFLAGINDEX_SWITCHAI]) != 0;
-			}
+			// Can switch only if walking, not a boss and has the SwitchAI flag.
+			return 0 != (pMonStats2TxtRecord->dwModeFlags    & MONSTATS2MODEFLAG_WL)
+				&& 0 == (pMonStatsTxtRecord->dwMonStatsFlags & MONSTATSFLAG_BOSS)
+				&& 0 != (pMonStatsTxtRecord->dwMonStatsFlags & MONSTATSFLAG_SWITCHAI);
 		}
 	}
 
@@ -3712,8 +3497,7 @@ void __stdcall UNITS_AllocStaticPath(D2UnitStrc* pUnit)
 {
 	if (!pUnit->pStaticPath)
 	{
-		pUnit->pStaticPath = (D2StaticPathStrc*)FOG_AllocServerMemory(pUnit->pMemoryPool, sizeof(D2StaticPathStrc), __FILE__, __LINE__, 0);
-		memset(pUnit->pStaticPath, 0x00, sizeof(D2StaticPathStrc));
+		pUnit->pStaticPath = D2_CALLOC_STRC_POOL(pUnit->pMemoryPool, D2StaticPathStrc);
 	}
 }
 
@@ -3722,7 +3506,7 @@ void __stdcall UNITS_FreeStaticPath(D2UnitStrc* pUnit)
 {
 	if (pUnit->pStaticPath)
 	{
-		FOG_FreeServerMemory(pUnit->pMemoryPool, pUnit->pStaticPath, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(pUnit->pMemoryPool, pUnit->pStaticPath);
 		pUnit->pStaticPath = NULL;
 	}
 }
@@ -4023,7 +3807,7 @@ int __stdcall UNITS_GetDistanceToOtherUnit(D2UnitStrc* pUnit1, D2UnitStrc* pUnit
 }
 
 //D2Common.0x6FDC2F50 (#10398)
-int __stdcall UNITS_GetDistanceToCoordinates(D2UnitStrc* pUnit, int nX, int nY)
+unsigned int __stdcall UNITS_GetDistanceToCoordinates(D2UnitStrc* pUnit, int nX, int nY)
 {
 	D2CoordStrc pCoords = {};
 	int nDistanceX = 0;
@@ -4089,7 +3873,7 @@ BOOL __stdcall UNITS_IsInRange(D2UnitStrc* pUnit, D2CoordStrc* pCoord, int nDist
 
 //Used in D2Common.#10406 and D2Common.#10407
 //TODO: Find a name
-D2UnitStrc* __stdcall D2Common_10407_Impl(D2RoomStrc* pRoom, int nX, int nY, int(__fastcall* pCallback)(D2UnitStrc*, D2UnitStrc*), D2UnitStrc* a5, int a6, D2UnitStrc* a7)
+D2UnitStrc* __stdcall D2Common_10407_Impl(D2RoomStrc* pRoom, int nX, int nY, int(__fastcall* pCallback)(D2UnitStrc*, void*), void* a5, int a6, D2UnitStrc* a7)
 {
 	D2DrlgCoordsStrc pDrlgCoords = {};
 	D2RoomStrc** ppRoomList = NULL;
@@ -4258,26 +4042,26 @@ D2UnitStrc* __stdcall D2Common_10407_Impl(D2RoomStrc* pRoom, int nX, int nY, int
 
 //D2Common.0x6FDC3090 (#10406)
 //TODO: Find a name
-D2UnitStrc* __stdcall D2Common_10406(D2UnitStrc* pUnit, int (__fastcall* pCallback)(D2UnitStrc*, D2UnitStrc*), D2UnitStrc* a3)
+D2UnitStrc* __stdcall D2Common_10406(D2UnitStrc* pUnit, int (__fastcall* pCallback)(D2UnitStrc*, void*), void* a3)
 {
 	return D2Common_10407_Impl(UNITS_GetRoom(pUnit), UNITS_GetXPosition(pUnit), UNITS_GetYPosition(pUnit), pCallback, a3, UNITS_GetUnitSizeX(pUnit), pUnit);
 }
 
 //D2Common.0x6FDC33C0 (#10407)
 //TODO: Find a name
-D2UnitStrc* __stdcall D2Common_10407(D2RoomStrc* pRoom, int nX, int nY, int (__fastcall* pCallback)(D2UnitStrc*, D2UnitStrc*), D2UnitStrc* a5, int a6)
+D2UnitStrc* __stdcall D2Common_10407(D2RoomStrc* pRoom, int nX, int nY, int (__fastcall* pCallback)(D2UnitStrc*, void*), void* a5, int a6)
 {
 	return D2Common_10407_Impl(pRoom, nX, nY, pCallback, a5, a6, NULL);
 }
 
 //D2Common.0x6FDC3680 (#10419)
-void __fastcall UNITS_SetInteractData(D2UnitStrc* pUnit, int nSkillId, int nUnitType, int nUnitGUID)
+void __fastcall UNITS_SetInteractData(D2UnitStrc* pUnit, int nSkillId, int nUnitType, D2UnitGUID nUnitGUID)
 {
 	if (pUnit && pUnit->dwUnitType == UNIT_PLAYER && pUnit->pPlayerData)
 	{
-		pUnit->pPlayerData->unk0xA0[44] = 1;
-		pUnit->pPlayerData->unk0xA0[45] = nSkillId;
-		pUnit->pPlayerData->unk0xA0[46] = nUnitType;
-		pUnit->pPlayerData->unk0xA0[47] = nUnitGUID;
+		pUnit->pPlayerData->unk0xA8[42] = 1;
+		pUnit->pPlayerData->unk0xA8[43] = nSkillId;
+		pUnit->pPlayerData->unk0xA8[44] = nUnitType;
+		pUnit->pPlayerData->unk0xA8[45] = nUnitGUID;
 	}
 }

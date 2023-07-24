@@ -63,7 +63,7 @@ struct D2MissilesTxt
 	uint16_t wCltHitSubMissile[4];			//0x2C
 	uint16_t wProgSound;					//0x34
 	uint16_t wProgOverlay;					//0x36
-	uint32_t dwParam[5];					//0x38
+	int32_t dwParam[5];					//0x38
 	uint32_t dwHitPar[3];					//0x4C
 	uint32_t dwCltParam[5];					//0x58
 	uint32_t dwCltHitPar[3];				//0x6C
@@ -159,7 +159,7 @@ void __fastcall DATATBLS_LoadMissilesTxt(void* pMemPool);
 //D2Common.0x6FD64B80
 void __fastcall DATATBLS_UnloadMissilesTxt();
 //D2Common.0x6FD64BE0 (#10590)
-int __stdcall DATATBLS_GetMissileVelocityFromMissilesTxt(int nMissileId, int nLevel);
+D2COMMON_DLL_DECL int __stdcall DATATBLS_GetMissileVelocityFromMissilesTxt(int nMissileId, int nLevel);
 //Inlined at various places
 D2MissilesTxt* __fastcall DATATBLS_GetMissilesTxtRecord(int nMissileId);
 

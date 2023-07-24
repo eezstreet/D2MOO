@@ -110,7 +110,7 @@ struct D2CubeMainTxt
 //D2Common.0x6FD523E0
 void __fastcall DATATBLS_CubeMainInputLinker(char* pSrc, void* pRecord, int nOffset, int nPosition, int nTxtRow, int nTxtColumn);
 //D2Common.0x6FD52410
-BOOL __fastcall DATATBLS_CubeMainInputParser(D2CubeInputItem* pCubeInput, char* szInput, int a3, int a4);
+BOOL __fastcall DATATBLS_CubeMainInputParser(D2CubeInputItem* pCubeInput, char* szInput, int nTxtRow, int nItemId);
 //D2Common.0x6FD528D0
 void __fastcall DATATBLS_CubeMainOutputLinker(char* pSrc, void* pRecord, int nOffset, int nPosition, int nTxtRow, int nTxtColumn);
 //D2Common.0x6FD52910
@@ -122,7 +122,7 @@ void __fastcall DATATBLS_LoadCubeMainTxt(void* pMemPool);
 //D2Common.0x6FD54250
 void __fastcall DATATBLS_UnloadCubeMainTxt();
 //D2Common.0x6FD54260 (#11232)
-D2CubeMainTxt* __stdcall DATATBLS_GetCubemainTxtRecord(int nIndex);
+D2COMMON_DLL_DECL D2CubeMainTxt* __stdcall DATATBLS_GetCubemainTxtRecord(int nIndex);
 //D2Common.0x6FD542C0 (#11233)
-int __fastcall DATATBLS_GetCubemainTxtRecordCount();
+D2COMMON_DLL_DECL int __fastcall DATATBLS_GetCubemainTxtRecordCount();
 

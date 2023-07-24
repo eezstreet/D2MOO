@@ -1,9 +1,12 @@
 #include "D2DataTbls.h"
 
+#include <Archive.h>
+#include <File.h>
 
 //D2Common.0x6FD498D0
 int __fastcall DATATBLS_MapSkillsTxtKeywordToNumber(char* szKey)
 {
+	// Note: Game actually uses Storm.dll SStrCmpI
 	if (!_strnicmp(szKey, "min", 32))
 	{
 		return 0;
@@ -99,6 +102,7 @@ int __fastcall sub_6FD49990(char* szText, int* a2, int a3, int nKeywordNumber)
 				}
 			}
 
+			// Note: Game actually uses Storm.dll SStrCmpI
 			if (_strnicmp(szText, "base", 32))
 			{
 				if (_strnicmp(szText, "mod", 32))
@@ -222,7 +226,7 @@ void __fastcall DATATBLS_SkillCalcLinker(char* pSrc, void* pRecord, int nOffset,
 							break;
 						}
 
-						pCode = (char*)FOG_ReallocServerMemory(NULL, pCode, nNewSize, __FILE__, __LINE__, 0);
+						pCode = (char*)D2_REALLOC_POOL(NULL, pCode, nNewSize);
 						nSize = sgptDataTables->nSkillsCodeSize;
 						nSizeEx = sgptDataTables->nSkillsCodeSizeEx;
 						sgptDataTables->pSkillsCode = pCode;
@@ -288,7 +292,7 @@ void __fastcall DATATBLS_SkillDescCalcLinker(char* pSrc, void* pRecord, int nOff
 							break;
 						}
 
-						pCode = (char*)FOG_ReallocServerMemory(NULL, pCode, nNewSize, __FILE__, __LINE__, 0);
+						pCode = (char*)D2_REALLOC_POOL(NULL, pCode, nNewSize);
 						nSize = sgptDataTables->nSkillDescCodeSize;
 						nSizeEx = sgptDataTables->nSkillDescCodeSizeEx;
 						sgptDataTables->pSkillDescCode = pCode;
@@ -328,7 +332,6 @@ void __fastcall DATATBLS_LoadSkills_SkillDescTxt(void* pMemPool)
 	void* pTmpSkillDescTxt = NULL;
 	void* pTmpMonStatsTxt = NULL;
 	int nHighestClassSkillCount = 0;
-	int nSize = 0;
 	uint8_t nPetType = 0;
 	uint8_t nClass = 0;
 	char szFileName[260] = {};
@@ -717,17 +720,19 @@ void __fastcall DATATBLS_LoadSkills_SkillDescTxt(void* pMemPool)
 		FOG_10215(pRangeLinker, ' col');
 
 		pMonStatsLinker = (D2TxtLinkStrc*)FOG_AllocLinker(__FILE__, __LINE__);
-		pTmpMonStatsTxt = DATATBLS_CompileTxt(pMemPool, "monstats", pTmpMonStatsTbl, &nSize, 2);
+
+		int nTmpRecordCount;
+		pTmpMonStatsTxt = DATATBLS_CompileTxt(pMemPool, "monstats", pTmpMonStatsTbl, &nTmpRecordCount, 2);
 
 		pSkillDescLinker = (D2TxtLinkStrc*)FOG_AllocLinker(__FILE__, __LINE__);
-		pTmpSkillDescTxt = DATATBLS_CompileTxt(pMemPool, "skilldesc", pTmpSkillDescTbl, &nSize, 2);
+		pTmpSkillDescTxt = DATATBLS_CompileTxt(pMemPool, "skilldesc", pTmpSkillDescTbl, &nTmpRecordCount, 2);
 	}
 
 	sgptDataTables->pSkillsLinker = (D2TxtLinkStrc*)FOG_AllocLinker(__FILE__, __LINE__);
 	sgptDataTables->pSkillsTxt = (D2SkillsTxt*)DATATBLS_CompileTxt(pMemPool, "skills", pSkillTbl, &sgptDataTables->nSkillsTxtRecordCount, sizeof(D2SkillsTxt));
 	if (sgptDataTables->nSkillsTxtRecordCount >= 32767)
 	{
-		FOG_10025("Skills table exceeded maximum number of entries.", __FILE__, __LINE__);
+		FOG_DisplayWarning("Skills table exceeded maximum number of entries.", __FILE__, __LINE__);
 	}
 
 	sgptDataTables->nPassiveSkills = 0;
@@ -736,7 +741,7 @@ void __fastcall DATATBLS_LoadSkills_SkillDescTxt(void* pMemPool)
 	sgptDataTables->pSkillDescTxt = (D2SkillDescTxt*)DATATBLS_CompileTxt(pMemPool, "skilldesc", pSkillDescTbl, &sgptDataTables->nSkillDescTxtRecordCount, sizeof(D2SkillDescTxt));
 	if (sgptDataTables->nSkillDescTxtRecordCount >= 32767)
 	{
-		FOG_10025("SkillDesc table exceeded maximum number of entries.", __FILE__, __LINE__);
+		FOG_DisplayWarning("SkillDesc table exceeded maximum number of entries.", __FILE__, __LINE__);
 	}
 
 	if (sgptDataTables->bCompileTxt)
@@ -748,12 +753,12 @@ void __fastcall DATATBLS_LoadSkills_SkillDescTxt(void* pMemPool)
 		{
 			if (DATATBLS_LoadFromBin)
 			{
-				FOG_FreeServerMemory(NULL, (char*)pTmpMonStatsTxt - 4, __FILE__, __LINE__, 0);
+				D2_FREE_POOL(nullptr, (char*)pTmpMonStatsTxt - 4);
 
 			}
 			else
 			{
-				FOG_FreeServerMemory(NULL, pTmpMonStatsTxt, __FILE__, __LINE__, 0);
+				D2_FREE_POOL(nullptr, pTmpMonStatsTxt);
 			}
 		}
 
@@ -763,11 +768,11 @@ void __fastcall DATATBLS_LoadSkills_SkillDescTxt(void* pMemPool)
 		{
 			if (DATATBLS_LoadFromBin)
 			{
-				FOG_FreeServerMemory(NULL, (char*)pTmpSkillDescTxt - 4, __FILE__, __LINE__, 0);
+				D2_FREE_POOL(nullptr, (char*)pTmpSkillDescTxt - 4);
 			}
 			else
 			{
-				FOG_FreeServerMemory(NULL, pTmpSkillDescTxt, __FILE__, __LINE__, 0);
+				D2_FREE_POOL(nullptr, pTmpSkillDescTxt);
 			}
 		}
 
@@ -777,17 +782,18 @@ void __fastcall DATATBLS_LoadSkills_SkillDescTxt(void* pMemPool)
 			fopen_s(&pSkillsCodeBin, szFileName, "wb");
 			if (pSkillsCodeBin)
 			{
-				DATATBLS_LockAndWriteToFile(sgptDataTables->pSkillsCode, sgptDataTables->nSkillsCodeSize, 1u, pSkillsCodeBin);
+				FileLockAndWrite(sgptDataTables->pSkillsCode, sgptDataTables->nSkillsCodeSize, 1u, pSkillsCodeBin);
 				fclose(pSkillsCodeBin);
 			}
-			FOG_FreeServerMemory(NULL, sgptDataTables->pSkillsCode, __FILE__, __LINE__, 0);
+			D2_FREE_POOL(nullptr, sgptDataTables->pSkillsCode);
 		}
 	}
 
 	wsprintfA(szFileName, "%s\\%s%s", "DATA\\GLOBAL\\EXCEL", "skillscode", ".bin");
-	sgptDataTables->pSkillsCode = (char*)DATATBLS_GetBinaryData(pMemPool, szFileName, &nSize, __FILE__, __LINE__);
-	sgptDataTables->nSkillsCodeSizeEx = nSize;
-	sgptDataTables->nSkillsCodeSize = nSize;
+	size_t dwSize;
+	sgptDataTables->pSkillsCode = (char*)ARCHIVE_READ_FILE_TO_ALLOC_BUFFER(pMemPool, szFileName, &dwSize);
+	sgptDataTables->nSkillsCodeSizeEx = dwSize;
+	sgptDataTables->nSkillsCodeSize = dwSize;
 
 	if (sgptDataTables->bCompileTxt && sgptDataTables->pSkillDescCode)
 	{
@@ -795,19 +801,18 @@ void __fastcall DATATBLS_LoadSkills_SkillDescTxt(void* pMemPool)
 		fopen_s(&pSkillDescCodeBin, szFileName, "wb");
 		if (pSkillDescCodeBin)
 		{
-			DATATBLS_LockAndWriteToFile(sgptDataTables->pSkillDescCode, sgptDataTables->nSkillDescCodeSize, 1, pSkillDescCodeBin);
+			FileLockAndWrite(sgptDataTables->pSkillDescCode, sgptDataTables->nSkillDescCodeSize, 1, pSkillDescCodeBin);
 			fclose(pSkillDescCodeBin);
 		}
-		FOG_FreeServerMemory(NULL, sgptDataTables->pSkillDescCode, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(nullptr, sgptDataTables->pSkillDescCode);
 	}
 
 	wsprintfA(szFileName, "%s\\%s%s", "DATA\\GLOBAL\\EXCEL", "skilldesccode", ".bin");
-	sgptDataTables->pSkillDescCode = (char*)DATATBLS_GetBinaryData(pMemPool, szFileName, &nSize, __FILE__, __LINE__);
-	sgptDataTables->nSkillDescCodeSizeEx = nSize;
-	sgptDataTables->nSkillDescCodeSize = nSize;
+	sgptDataTables->pSkillDescCode = (char*)ARCHIVE_READ_FILE_TO_ALLOC_BUFFER(pMemPool, szFileName, &dwSize);
+	sgptDataTables->nSkillDescCodeSizeEx = dwSize;
+	sgptDataTables->nSkillDescCodeSize = dwSize;
 
-	sgptDataTables->nClassSkillCount = (int*)FOG_AllocServerMemory(NULL, 7 * sizeof(int), __FILE__, __LINE__, 0);
-	memset(sgptDataTables->nClassSkillCount, 0x00, 7 * sizeof(int));
+	sgptDataTables->nClassSkillCount = (int*)D2_CALLOC_POOL(NULL, 7 * sizeof(int));
 
 	for (int i = 0; i < sgptDataTables->nSkillsTxtRecordCount; ++i)
 	{
@@ -835,12 +840,11 @@ void __fastcall DATATBLS_LoadSkills_SkillDescTxt(void* pMemPool)
 		}
 	}
 
-	sgptDataTables->nClassSkillList = (short*)FOG_AllocServerMemory(NULL, 7 * sizeof(short) * nHighestClassSkillCount, __FILE__, __LINE__, 0);
-	memset(sgptDataTables->nClassSkillList, 0x00, 7 * sizeof(short) * nHighestClassSkillCount);
+	sgptDataTables->nClassSkillList = (short*)D2_CALLOC_POOL(NULL, 7 * sizeof(short) * nHighestClassSkillCount);
+	
 	memset(sgptDataTables->nClassSkillCount, 0x00, 7 * sizeof(int));
 
-	sgptDataTables->pPassiveSkills = (uint16_t*)FOG_AllocServerMemory(NULL, sizeof(uint16_t) * sgptDataTables->nPassiveSkills, __FILE__, __LINE__, 0);
-	memset(sgptDataTables->pPassiveSkills, 0x00, sizeof(uint16_t) * sgptDataTables->nPassiveSkills);
+	sgptDataTables->pPassiveSkills = (uint16_t*)D2_CALLOC_POOL(NULL, sizeof(uint16_t) * sgptDataTables->nPassiveSkills);
 
 	sgptDataTables->nPassiveSkills = 0;
 	for (int i = 0; i < sgptDataTables->nSkillsTxtRecordCount; ++i)
@@ -876,27 +880,27 @@ void __fastcall DATATBLS_UnloadSkills_SkillDescTxt()
 {
 	if (sgptDataTables->nClassSkillCount)
 	{
-		FOG_FreeServerMemory(NULL, sgptDataTables->nClassSkillCount, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(nullptr, sgptDataTables->nClassSkillCount);
 		sgptDataTables->nClassSkillCount = 0;
 	}
 
 	if (sgptDataTables->nClassSkillList)
 	{
-		FOG_FreeServerMemory(NULL, sgptDataTables->nClassSkillList, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(nullptr, sgptDataTables->nClassSkillList);
 		sgptDataTables->nClassSkillList = 0;
 	}
 	sgptDataTables->nHighestClassSkillCount = 0;
 
 	if (sgptDataTables->pPassiveSkills)
 	{
-		FOG_FreeServerMemory(NULL, sgptDataTables->pPassiveSkills, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(nullptr, sgptDataTables->pPassiveSkills);
 		sgptDataTables->pPassiveSkills = NULL;
 	}
 	sgptDataTables->nPassiveSkills = 0;
 
 	if (sgptDataTables->pSkillsCode)
 	{
-		FOG_FreeServerMemory(NULL, sgptDataTables->pSkillsCode, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(nullptr, sgptDataTables->pSkillsCode);
 		sgptDataTables->pSkillsCode = NULL;
 	}
 	sgptDataTables->nSkillsCodeSize = 0;
@@ -904,7 +908,7 @@ void __fastcall DATATBLS_UnloadSkills_SkillDescTxt()
 
 	if (sgptDataTables->pSkillDescCode)
 	{
-		FOG_FreeServerMemory(NULL, sgptDataTables->pSkillDescCode, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(nullptr, sgptDataTables->pSkillDescCode);
 		sgptDataTables->pSkillDescCode = NULL;
 	}
 	sgptDataTables->nSkillDescCodeSize = 0;

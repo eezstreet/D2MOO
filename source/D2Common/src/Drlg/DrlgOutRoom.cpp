@@ -17,7 +17,7 @@ void __fastcall DRLGOUTROOM_FreeDrlgOutdoorRoom(D2RoomExStrc* pRoomEx)
 	{
 		DRLGOUTROOM_FreeDrlgOutdoorRoomData(pRoomEx);
 
-		D2_FREE_SERVER(pRoomEx->pLevel->pDrlg->pMempool, pRoomEx->pOutdoor);
+		D2_FREE_POOL(pRoomEx->pLevel->pDrlg->pMempool, pRoomEx->pOutdoor);
 		pRoomEx->pOutdoor = NULL;
 	}
 }
@@ -27,10 +27,10 @@ void __fastcall DRLGOUTROOM_FreeDrlgOutdoorRoomData(D2RoomExStrc* pRoomEx)
 {
 	if (pRoomEx->pOutdoor)
 	{
-		DRLGGRID_FreeGrid(pRoomEx->pLevel->pDrlg->pMempool, &pRoomEx->pOutdoor->pOrientationGrid);
+		DRLGGRID_FreeGrid(pRoomEx->pLevel->pDrlg->pMempool, &pRoomEx->pOutdoor->pTileTypeGrid);
 		DRLGGRID_FreeGrid(pRoomEx->pLevel->pDrlg->pMempool, &pRoomEx->pOutdoor->pWallGrid);
 		DRLGGRID_FreeGrid(pRoomEx->pLevel->pDrlg->pMempool, &pRoomEx->pOutdoor->pFloorGrid);
-		DRLGGRID_FreeGrid(pRoomEx->pLevel->pDrlg->pMempool, &pRoomEx->pOutdoor->pCellGrid);
+		DRLGGRID_FreeGrid(pRoomEx->pLevel->pDrlg->pMempool, &pRoomEx->pOutdoor->pDirtPathGrid);
 		DRLGVER_FreeVertices(pRoomEx->pLevel->pDrlg->pMempool, &pRoomEx->pOutdoor->pVertex);
 	}
 }
@@ -38,19 +38,19 @@ void __fastcall DRLGOUTROOM_FreeDrlgOutdoorRoomData(D2RoomExStrc* pRoomEx)
 //D2Common.0x6FD83DE0
 void __fastcall DRLGOUTROOM_AllocDrlgOutdoorRoom(D2RoomExStrc* pRoomEx)
 {
-	pRoomEx->pOutdoor = D2_CALLOC_STRC_SERVER(pRoomEx->pLevel->pDrlg->pMempool, D2DrlgOutdoorRoomStrc);
+	pRoomEx->pOutdoor = D2_CALLOC_STRC_POOL(pRoomEx->pLevel->pDrlg->pMempool, D2DrlgOutdoorRoomStrc);
 }
 
 //D2Common.6FD83E20
 void __fastcall DRLGOUTROOM_InitializeDrlgOutdoorRoom(D2RoomExStrc* pRoomEx)
 {
 	DRLGROOMTILE_AllocTileGrid(pRoomEx);
-	DRLGROOMTILE_CountWallWarpTiles(pRoomEx, &pRoomEx->pOutdoor->pWallGrid, &pRoomEx->pOutdoor->pOrientationGrid, 0, 0);
+	DRLGROOMTILE_CountWallWarpTiles(pRoomEx, &pRoomEx->pOutdoor->pWallGrid, &pRoomEx->pOutdoor->pTileTypeGrid, 0, 0);
 	DRLGROOMTILE_CountAllTileTypes(pRoomEx, &pRoomEx->pOutdoor->pWallGrid, 0, 0, 0);
 	DRLGROOMTILE_CountAllTileTypes(pRoomEx, &pRoomEx->pOutdoor->pFloorGrid, 0, 0, 0);
 	DRLGROOMTILE_AllocTileData(pRoomEx);
-	DRLGROOMTILE_LoadInitRoomTiles(pRoomEx, &pRoomEx->pOutdoor->pWallGrid, &pRoomEx->pOutdoor->pOrientationGrid, 0, FALSE, FALSE);
-	DRLGROOMTILE_LoadInitRoomTiles(pRoomEx, &pRoomEx->pOutdoor->pFloorGrid, NULL, 0, FALSE, FALSE);
+	DRLGROOMTILE_LoadInitRoomTiles(pRoomEx, &pRoomEx->pOutdoor->pWallGrid, &pRoomEx->pOutdoor->pTileTypeGrid, 0, FALSE, FALSE);
+	DRLGROOMTILE_LoadInitRoomTiles(pRoomEx, &pRoomEx->pOutdoor->pFloorGrid, nullptr, FALSE, FALSE, FALSE);
 
 	pRoomEx->pTileGrid->pTiles.nWalls = pRoomEx->pTileGrid->nWalls;
 	pRoomEx->pTileGrid->pTiles.nFloors = pRoomEx->pTileGrid->nFloors;

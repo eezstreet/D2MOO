@@ -1,6 +1,9 @@
 #pragma once
 
 #include "CommonDefinitions.h"
+#include <Drlg/D2DrlgDrlgVer.h>
+
+struct D2DrlgLevelStrc;
 
 #pragma pack(1)
 
@@ -20,7 +23,7 @@ BOOL __fastcall sub_6FD85300(D2DrlgVertexStrc* pDrlgVertex);
 //D2Common.0x6FD85350
 BOOL __fastcall sub_6FD85350(D2DrlgVertexStrc* pDrlgVertex);
 //D2Common.0x6FD85390
-BOOL __fastcall DRLGOUTWILD_SpawnCliffCaves(D2DrlgLevelStrc* pLevel, int a2, int a3);
+BOOL __fastcall DRLGOUTWILD_SpawnCliffCaves(D2DrlgLevelStrc* pLevel, int nX, int nY);
 //D2Common.0x6FD853F0
 void __fastcall DRLGOUTWILD_SpawnTownTransitionsAndCaves(D2DrlgLevelStrc* pLevel);
 //D2Common.0x6FD85520

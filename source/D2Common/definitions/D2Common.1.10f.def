@@ -3,7 +3,7 @@ EXPORTS
 	DRLG_GetLevelTypeFromLevelId										@10000
 	DRLG_GetActNoFromLevelId											@10001
 	DRLG_GetLOSDrawFromLevelId											@10002
-	D2Common_10003														@10003
+	DRLGACTIVATE_Update													@10003
 	DRLG_GetSaveMonstersFromLevelId										@10004
 	DRLG_GetLevel														@10005
 	DRLG_InitLevel														@10006
@@ -15,7 +15,7 @@ EXPORTS
 	DRLG_FreeDrlg														@10012
 	DRLG_AllocLevel														@10013
 	DRLG_AllocDrlg														@10014
-	D2Common_10015														@10015
+	DRLGACTIVATE_GetRoomsAllocationStats								@10015
 	D2COMMON_10016_Return0												@10016
 	DRLGROOMTILE_GetNumberOfShadowsFromRoom								@10017
 	D2COMMON_10018_Return0												@10018
@@ -48,9 +48,9 @@ EXPORTS
 	DUNGEON_FindActSpawnLocationEx										@10045
 	DUNGEON_FindActSpawnLocation										@10046
 	DUNGEON_GetHoradricStaffTombLevelId									@10047
-	D2Common_10048														@10048
+	DUNGEON_CheckRoomsOverlapping_BROKEN								@10048
 	DUNGEON_CallRoomCallback											@10049
-	DUNGEON_GetAdjacentRoomByCoordinates								@10050
+	DUNGEON_GetAdjacentRoomByTileCoordinates							@10050
 	DUNGEON_FindRoomByTileCoordinates									@10051
 	D2Common_10052														@10052
 	DUNGEON_GetSubtileRect												@10053
@@ -62,23 +62,23 @@ EXPORTS
 	DUNGEON_GetLevelIdFromPopulatedRoom									@10059
 	DUNGEON_HasWaypoint													@10060
 	DUNGEON_GetPickedLevelPrestFilePathFromRoom							@10061
-	D2Common_10062														@10062
-	D2COMMON_10063_AddRoomData											@10063
-	D2COMMON_10064_RemoveRoomData										@10064
-	D2COMMON_10065_GetRoomFromActAndCoord								@10065
+	DUNGEON_ChangeClientRoom    										@10062
+	DUNGEON_SetClientIsInSight  										@10063
+	DUNGEON_UnsetClientIsInSight										@10064
+	DUNGEON_StreamRoomAtCoords  										@10065
 	DUNGEON_AllocDrlgDelete												@10066
 	DUNGEON_FreeDrlgDelete												@10067
 	DUNGEON_GetDrlgDeleteFromRoom										@10068
-	D2Common_10069														@10069
-	D2Common_10070														@10070
-	DUNGEON_TestRoomCanUnTile											@10071
-	D2Common_10072														@10072
+	DUNGEON_GetARoomInClientSight          								@10069
+	DUNGEON_GetARoomInSightButWithoutClient								@10070
+	DUNGEON_TestRoomCanUnTile              								@10071
+	DUNGEON_GetRoomStatusFlags             								@10072
 	D2Common_10073														@10073
 	D2Common_10074														@10074
 	D2Common_10075														@10075
 	DUNGEON_RemoveRoomFromAct											@10076
 	D2Common_10077														@10077
-	D2Common_10078														@10078
+	DUNGEON_UpdateAndFreeInactiveRooms									@10078
 	DUNGEON_AddClientToRoom												@10079
 	DUNGEON_RemoveClientFromRoom										@10080
 	D2Common_10081_GetTileCountFromRoom									@10081
@@ -107,22 +107,22 @@ EXPORTS
 	DUNGEON_AnimateTiles												@10104
 	DUNGEON_InitRoomTileAnimation										@10105
 	DUNGEON_SaveKilledUnitGUID											@10106
-	D2Common_10107														@10107
-	DUNGEON_ScreenToWorldCoords											@10108
-	D2Common_10109														@10109
-	DUNGEON_ExpandTileCoords											@10110
-	DUNGEON_WorldToScreenCoords											@10111
-	DUNGEON_FlattenCoords_IsoToCartesian								@10112
-	DUNGEON_ExpandCoords												@10113
-	D2Common_10114														@10114
-	D2Common_10115														@10115
-	D2Common_10116														@10116
-	D2Common_10117														@10117
+	DUNGEON_ClientToGameTileCoords										@10107
+	DUNGEON_ClientToGameSubtileCoords									@10108
+	DUNGEON_ClientToGameCoords											@10109
+	DUNGEON_GameTileToClientCoords										@10110
+	DUNGEON_GameSubtileToClientCoords									@10111
+	DUNGEON_GameToClientCoords											@10112
+	DUNGEON_GameTileToSubtileCoords										@10113
+	DUNGEON_ClientTileDrawPositionToGameCoords							@10114
+	DUNGEON_GameToClientTileDrawPositionCoords							@10115
+	DUNGEON_ClientSubileDrawPositionToGameCoords						@10116
+	DUNGEON_GameToClientSubtileDrawPositionCoords						@10117
 	COLLISION_CheckMask													@10118
 	COLLISION_CheckMaskWithSize											@10119
 	COLLISION_CheckMaskWithSizeXY										@10120
-	COLLISION_CheckMaskWithPattern1										@10121
-	COLLISION_CheckMaskWithPattern2										@10122
+	COLLISION_CheckMaskWithPattern										@10121
+	COLLISION_CheckAnyCollisionWithPattern								@10122
 	COLLISION_ResetMask													@10123
 	COLLISION_ResetMaskWithSize											@10124
 	COLLISION_ResetMaskWithSizeXY										@10125
@@ -131,9 +131,9 @@ EXPORTS
 	COLLISION_SetMaskWithSize											@10128
 	COLLISION_SetMaskWithSizeXY											@10129
 	COLLISION_SetMaskWithPattern										@10130
-	D2Common_10131														@10131
-	D2Common_10132														@10132
-	D2Common_10133														@10133
+	COLLISION_TryMoveUnitCollisionMask									@10131
+	COLLISION_TryTeleportUnitCollisionMask								@10132
+	COLLISION_SetUnitCollisionMask										@10133
 	COLLISION_GetFreeCoordinates										@10134
 	COLLISION_GetFreeCoordinatesWithMaxDistance							@10135
 	D2Common_10136														@10136
@@ -141,20 +141,20 @@ EXPORTS
 	COLLISION_GetFreeCoordinatesWithField								@10138
 	D2COMMON_10139_Return												@10139
 	D2COMMON_10140_Return												@10140
-	D2Common_10141														@10141
+	PATH_GetClientCoordsVelocity										@10141
 	D2Common_10142														@10142
-	D2Common_10143														@10143
-	D2Common_10144														@10144
-	D2Common_10145														@10145
+	PATH_SetUnitDeadCollision											@10143
+	PATH_SetUnitAliveCollision											@10144
+	PATH_SetUnusedFlag_0x00004											@10145
 	PATH_SetVelocity													@10146
 	PATH_GetVelocity													@10147
-	D2Common_10148														@10148
-	D2Common_10149														@10149
-	D2Common_10150														@10150
-	D2Common_10151														@10151
+	PATH_SetMaxVelocity													@10148
+	PATH_GetMaxVelocity													@10149
+	PATH_SetAcceleration												@10150
+	PATH_GetAcceleration												@10151
 	PATH_AllocDynamicPath												@10152
 	D2Common_10153														@10153
-	D2Common_10154														@10154
+	PATH_GetNumberOfPathPoints								@10154
 	D2Common_10155														@10155
 	PATH_FreeDynamicPath												@10156
 	PATH_GetPathPoints													@10157
@@ -164,17 +164,17 @@ EXPORTS
 	PATH_SetDirection													@10161
 	PATH_GetXPosition													@10162
 	PATH_GetYPosition													@10163
-	PATH_GetTargetX														@10164
-	PATH_GetTargetY														@10165
+	PATH_GetClientCoordX												@10164
+	PATH_GetClientCoordY												@10165
 	PATH_GetRoom														@10166
 	PATH_SetRoom														@10167
 	PATH_GetNextRoom													@10168
 	PATH_ClearNextRoom													@10169
 	D2COMMON_10170_PathSetTargetPos										@10170
 	PATH_GetTargetTypeAndGUID											@10171
-	D2Common_10172														@10172
-	D2Common_10173														@10173
-	D2Common_10174														@10174
+	PATH_IsCurrentRoomInvalid											@10172
+	PATH_SetCurrentRoomInvalid											@10173
+	PATH_GetUnusedFlag_0x00004											@10174
 	D2COMMON_10175_PathGetFirstPointX									@10175
 	D2COMMON_10176_PathGetFirstPointY									@10176
 	D2COMMON_10177_PATH_GetLastPointX									@10177
@@ -215,15 +215,15 @@ EXPORTS
 	D2COMMON_10212_PATH_SetMoveFlags									@10212
 	D2Common_10213														@10213
 	D2Common_10214														@10214
-	D2Common_10215														@10215
+	PATH_ComputeDirection												@10215
 	D2Common_10216														@10216
 	PATH_SetDistance													@10217
 	PATH_GetDistance													@10218
 	PATH_AddToDistance													@10219
-	D2Common_10220														@10220
-	D2Common_10221														@10221
-	D2Common_10222														@10222
-	D2Common_10223														@10223
+	PATH_ComputeSquaredDistance											@10220
+	PATH_AddCollisionFootprintForOptionalUnit							@10221
+	PATH_AddCollisionFootprintForUnit									@10222
+	PATH_RemoveCollisionFootprintForUnit								@10223
 	D2Common_10224														@10224
 	D2Common_10225														@10225
 	D2Common_10226														@10226
@@ -235,7 +235,7 @@ EXPORTS
 	D2Common_10232														@10232
 	D2Common_10233														@10233
 	D2Common_10234														@10234
-	D2Common_10235_PATH_Last											@10235
+	D2Common_10235_PATH_UpdateRiderPath									@10235
 	D2Common_10236														@10236
 	D2Common_10237														@10237
 	D2COMMON_10238_Return												@10238
@@ -321,7 +321,7 @@ EXPORTS
 	UNITS_IsInMovingMode												@10318
 	UNITS_IsInMovingModeEx												@10319
 	UNITS_GetStartSkill													@10320
-	UNITS_GetGetLeftSkill												@10321
+	UNITS_GetLeftSkill													@10321
 	UNITS_GetRightSkill													@10322
 	UNITS_GetUsedSkill													@10323
 	UNITS_SetUsedSkill													@10324
@@ -333,9 +333,9 @@ EXPORTS
 	UNITS_GetPrecisionY													@10330
 	UNITS_SetYForStaticUnit												@10331
 	UNITS_GetCoords														@10332
-	UNITS_GetTargetX													@10333
-	UNITS_GetTargetY													@10334
-	UNITS_GetTargetCoords												@10335
+	UNITS_GetClientCoordX												@10333
+	UNITS_GetClientCoordY												@10334
+	UNITS_GetClientCoords												@10335
 	UNITS_GetUnitSizeX													@10336
 	UNITS_GetUnitSizeY													@10337
 	UNITS_GetCollisionType												@10338
@@ -355,8 +355,8 @@ EXPORTS
 	UNITS_FreeCollisionPath												@10352
 	UNITS_GetNameOffsetFromObject										@10353
 	UNITS_GetRunAndWalkSpeedForPlayer									@10354
-	D2Common_10355														@10355
-	D2Common_10356														@10356
+	UNITS_IsCurrentRoomInvalid											@10355
+	UNITS_SetCurrentRoomInvalid											@10356
 	UNITS_RefreshInventory												@10357
 	UNITS_GetSkillFromSkillId											@10358
 	UNITS_IsSoftMonster													@10359
@@ -383,7 +383,7 @@ EXPORTS
 	UNITS_GetFrameMetrics												@10380
 	UNITS_SetAnimActionFrame											@10381
 	UNITS_GetEventFrameInfo												@10382
-	UNITS_GetLightMap													@10383
+	UNITS_ResetLightMap													@10383
 	UNITROOM_AddUnitToRoom												@10384
 	UNITROOM_RefreshUnit												@10385
 	UNITROOM_RemoveUnitFromRoom											@10386
@@ -515,12 +515,12 @@ EXPORTS
 	D2Common_10512														@10512
 	D2Common_10513														@10513
 	STATLIST_ClampStaminaManaHP											@10514
-	D2Common_10515														@10515
+	STATLIST_DeactivateTemporaryStates									@10515
 	STATLIST_UpdateStatListsExpiration									@10516
 	STATLIST_SetUnitStat												@10517
 	STATLIST_AddUnitStat												@10518
-	STATLIST_GetUnitStatUnsigned										@10519
-	STATLIST_GetUnitStatSigned											@10520
+	STATLIST_UnitGetStatValue											@10519
+	STATLIST_UnitGetItemStatOrSkillStatValue							@10520
 	STATLIST_GetUnitBaseStat											@10521
 	STATLIST_GetUnitStatBonus											@10522
 	STATLIST_MergeStatLists												@10523
@@ -532,7 +532,7 @@ EXPORTS
 	STATLIST_GetExpireFrame												@10529
 	D2COMMON_10530_D2CheckStatlistFlagDMGRed							@10530
 	D2Common_10531_SetStatInStatListLayer0								@10531
-	STATLIST_GetStatUnsigned_Layer0										@10532
+	STATLIST_GetTotalStatValue_Layer0									@10532
 	STATLIST_RemoveAllStatsFromOverlay									@10533
 	D2Common_10534														@10534
 	STATLIST_GetOwner													@10535
@@ -640,8 +640,8 @@ EXPORTS
 	DATATBLS_GetInventoryComponentGrid									@10637
 	DATATBLS_GetBeltsTxtRecord											@10638
 	DATATBLS_GetInvRectFromBeltsTxt										@10639
-	D2Common_10640														@10640
-	D2Common_10641														@10641
+	DATATBLS_UnitAnimInfoDebugSet										@10640
+	DATATBLS_GetAnimDataInfo											@10641
 	DATATBLS_SetVelocityInMonStatsTxtRecord								@10642
 	DATATBLS_GetPlrMode_TypeDataTables									@10643
 	DATATBLS_GetMonModeDataTables										@10644
@@ -683,9 +683,9 @@ EXPORTS
 	DATATBLS_Get1OfNFromOverlayTxt										@10680
 	DATATBLS_GetDirFromOverlayTxt										@10681
 	DATATBLS_GetMonSeqTxtRecordFromUnit									@10682
-	D2Common_10683														@10683
-	D2Common_10684														@10684
-	D2Common_10685														@10685
+	DATATBLS_GetSeqFramePointsCount										@10683
+	DATATBLS_GetSeqFrameCount											@10684
+	DATATBLS_ComputeSequenceAnimation									@10685
 	DATATBLS_GetSequenceEvent											@10686
 	ITEMS_AllocItemData													@10687
 	ITEMS_FreeItemData													@10688
@@ -843,7 +843,7 @@ EXPORTS
 	ITEMS_IsCharmUsable													@10840
 	ITEMS_GetBonusLifeBasedOnClass										@10841
 	ITEMS_GetBonusManaBasedOnClass										@10842
-	D2COMMON_10843_GetByTimeAdjustment									@10843
+	ITEMMODS_GetByTimeAdjustment										@10843
 	D2Common_10844_ITEMMODS_First										@10844
 	D2Common_10845														@10845
 	D2Common_10846														@10846
@@ -1014,7 +1014,7 @@ EXPORTS
 	SKILLS_GetQuantity													@11011
 	SKILLS_SetQuantity													@11012
 	D2COMMON_11013_ConvertMode											@11013
-	D2Common_11014														@11014
+	D2Common_11014_ConvertShapeShiftedMode                              @11014
 	D2Common_11015														@11015
 	D2Common_11016														@11016
 	D2COMMON_11017_CheckUnitIfConsumeable								@11017
@@ -1037,7 +1037,7 @@ EXPORTS
 	D2Common_11034														@11034
 	D2Common_11035														@11035
 	D2COMMON_11036_GetMonCurseResistanceSubtraction						@11036
-	D2Common_11037														@11037
+	SKILLS_CheckIfCanLeapTo												@11037
 ;------------------------UNUSED------------------------						@11038
 	D2COMMON_11039_CheckWeaponIsMissileBased							@11039
 	SKILLS_IsEnhanceable												@11040
@@ -1057,7 +1057,7 @@ EXPORTS
 	D2Common_11054														@11054
 	D2Common_11055														@11055
 ;------------------------UNUSED------------------------						@11056
-	MONSTESR_IsSandLeaper												@11057
+	MONSTERS_IsSandLeaper												@11057
 	MONSTERS_IsDemon													@11058
 	MONSTERS_IsUndead													@11059
 	MONSTERS_IsBoss														@11060
@@ -1263,14 +1263,14 @@ EXPORTS
 	UNITS_FreeUnit														@11260
 	DATATBLS_CalculateMonsterStatsByLevel								@11261
 	DATATBLS_GetMonSeqTableRecord										@11262
-	D2Common_11263														@11263
+	COLLISION_RayTrace													@11263
 	STATLIST_SetSkillId													@11264
 	STATLIST_GetSkillId													@11265
 	STATLIST_SetSkillLevel												@11266
 	STATLIST_GetSkillLevel												@11267
 	STATLIST_GetFullStatsDataFromUnit									@11268
 	D2COMMON_11269_CopyStats											@11269
-	D2Common_11270														@11270
+	STATLIST_CopyStats													@11270
 	SKILLS_GetSpecialParamValue											@11271
 	STATES_CheckStateMaskRemHitOnUnit									@11272
 	D2Common_11273														@11273
@@ -1281,8 +1281,8 @@ EXPORTS
 	INVENTORY_GetItemsXPosition											@11278
 	UNITROOM_AddUnitToRoomEx											@11279
 	MONSTERS_GetSpawnMode_XY											@11280
-	D2Common_11281_Unused												@11281
-	D2Common_11282_Unused												@11282
+	D2Common_11281_CollisionPatternFromSize								@11281
+	PATH_GetCollisionPatternFromMonStats2Txt							@11282
 	SKILLS_CalculateKickDamage											@11283
 	MISSILE_EvaluateMissileFormula										@11284
 	MISSILE_GetMinDamage												@11285
@@ -1291,7 +1291,7 @@ EXPORTS
 	MISSILE_GetMaxElemDamage											@11288
 	MISSILE_GetElemTypeFromMissileId									@11289
 	MISSILE_GetSpecialParamValue										@11290
-	D2Common_11291														@11291
+	PATH_SetNumberOfPathPoints								@11291
 	D2COMMON_11292_ItemAssignProperty									@11292
 	ITEMMODS_GetItemCharges												@11293
 	STATLIST_SetBaseStat												@11294

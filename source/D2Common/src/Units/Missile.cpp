@@ -30,9 +30,9 @@ void __stdcall MISSILE_AllocMissileData(D2UnitStrc* pMissile)
 {
 	if (pMissile && pMissile->dwUnitType == UNIT_MISSILE && !pMissile->pMissileData)
 	{
-		pMissile->pMissileData = (D2MissileDataStrc*)FOG_AllocServerMemory(pMissile->pMemoryPool, sizeof(D2MissileDataStrc), __FILE__, __LINE__, 0);
+		pMissile->pMissileData = D2_ALLOC_STRC_POOL(pMissile->pMemoryPool, D2MissileDataStrc);
 		memset(pMissile->pMissileData, 0x00, sizeof(D2MissileDataStrc));
-		pMissile->pMissileData->dwOwnerGUID = -1;
+		pMissile->pMissileData->dwOwnerGUID = D2UnitInvalidGUID;
 	}
 }
 
@@ -41,7 +41,7 @@ void __stdcall MISSILE_FreeMissileData(D2UnitStrc* pMissile)
 {
 	if (pMissile && pMissile->dwUnitType == UNIT_MISSILE && pMissile->pMissileData)
 	{
-		FOG_FreeServerMemory(pMissile->pMemoryPool, pMissile->pMissileData, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(pMissile->pMemoryPool, pMissile->pMissileData);
 		pMissile->pMissileData = NULL;
 	}
 }
@@ -220,7 +220,7 @@ void __stdcall MISSILE_SetOwner(D2UnitStrc* pMissile, D2UnitStrc* pOwner)
 				}
 				else
 				{
-					pMissile->pMissileData->dwOwnerGUID = -1;
+					pMissile->pMissileData->dwOwnerGUID = D2UnitInvalidGUID;
 				}
 			}
 		}
@@ -442,13 +442,13 @@ void __stdcall MISSILE_SetHomeType(D2UnitStrc* pMissile, D2UnitStrc* pTarget)
 		else
 		{
 			pMissile->pMissileData->nHomeType = 0;
-			pMissile->pMissileData->dwHomeGUID = -1;
+			pMissile->pMissileData->dwHomeGUID = D2UnitInvalidGUID;
 		}
 	}
 }
 
 //D2Common.0x6FDBA550 (#11145)
-void __stdcall MISSILE_GetHomeType(D2UnitStrc* pMissile, int* nHomeType, int* nHomeGUID)
+void __stdcall MISSILE_GetHomeType(D2UnitStrc* pMissile, int* nHomeType, D2UnitGUID* nHomeGUID)
 {
 	if (pMissile && pMissile->dwUnitType == UNIT_MISSILE && pMissile->pMissileData)
 	{
@@ -458,7 +458,7 @@ void __stdcall MISSILE_GetHomeType(D2UnitStrc* pMissile, int* nHomeType, int* nH
 	else
 	{
 		*nHomeType = 0;
-		*nHomeGUID = -1;
+		*nHomeGUID = D2UnitInvalidGUID;
 	}
 }
 
@@ -613,31 +613,31 @@ void __stdcall MISSILE_CalculateDamageData(D2MissileDamageDataStrc* pMissileDama
 			nStrBonus = ITEMS_GetStrengthBonus(pItem);
 			if (nStrBonus)
 			{
-				nBonus += nStrBonus * STATLIST_GetUnitStatUnsigned(pOwner, STAT_STRENGTH, 0) / 100;
+				nBonus += nStrBonus * STATLIST_UnitGetStatValue(pOwner, STAT_STRENGTH, 0) / 100;
 			}
 
 			nDexBonus = ITEMS_GetDexBonus(pItem);
 			if (nDexBonus)
 			{
-				nBonus += nDexBonus * STATLIST_GetUnitStatUnsigned(pOwner, STAT_DEXTERITY, 0) / 100;
+				nBonus += nDexBonus * STATLIST_UnitGetStatValue(pOwner, STAT_DEXTERITY, 0) / 100;
 			}
 
 			if (ITEMS_CheckIfThrowable(pItem))
 			{
-				nBaseMinDamage = STATLIST_GetUnitStatUnsigned(pOwner, STAT_ITEM_THROW_MINDAMAGE, 0) << 8;
-				nBaseMaxDamage = STATLIST_GetUnitStatUnsigned(pOwner, STAT_ITEM_THROW_MAXDAMAGE, 0) << 8;
+				nBaseMinDamage = STATLIST_UnitGetStatValue(pOwner, STAT_ITEM_THROW_MINDAMAGE, 0) << 8;
+				nBaseMaxDamage = STATLIST_UnitGetStatValue(pOwner, STAT_ITEM_THROW_MAXDAMAGE, 0) << 8;
 			}
 			else
 			{
 				if (pOwner->pInventory && INVENTORY_GetWieldType(pOwner, pOwner->pInventory) == 2)
 				{
-					nBaseMinDamage = STATLIST_GetUnitStatUnsigned(pOwner, STAT_SECONDARY_MINDAMAGE, 0) << 8;
-					nBaseMaxDamage = STATLIST_GetUnitStatUnsigned(pOwner, STAT_SECONDARY_MAXDAMAGE, 0) << 8;
+					nBaseMinDamage = STATLIST_UnitGetStatValue(pOwner, STAT_SECONDARY_MINDAMAGE, 0) << 8;
+					nBaseMaxDamage = STATLIST_UnitGetStatValue(pOwner, STAT_SECONDARY_MAXDAMAGE, 0) << 8;
 				}
 				else
 				{
-					nBaseMinDamage = STATLIST_GetUnitStatUnsigned(pOwner, STAT_MINDAMAGE, 0) << 8;
-					nBaseMaxDamage = STATLIST_GetUnitStatUnsigned(pOwner, STAT_MAXDAMAGE, 0) << 8;
+					nBaseMinDamage = STATLIST_UnitGetStatValue(pOwner, STAT_MINDAMAGE, 0) << 8;
+					nBaseMaxDamage = STATLIST_UnitGetStatValue(pOwner, STAT_MAXDAMAGE, 0) << 8;
 				}
 			}
 
@@ -650,35 +650,35 @@ void __stdcall MISSILE_CalculateDamageData(D2MissileDamageDataStrc* pMissileDama
 		{
 			if (pOwner->dwUnitType == UNIT_MONSTER && MONSTERS_GetHirelingTypeId(pOwner) != 0)
 			{
-				nDamagePercent = STATLIST_GetUnitStatUnsigned(pOwner, STAT_DEXTERITY, 0);
+				nDamagePercent = STATLIST_UnitGetStatValue(pOwner, STAT_DEXTERITY, 0);
 			}
 
-			nBaseMinDamage = STATLIST_GetUnitStatUnsigned(pOwner, STAT_MINDAMAGE, 0) << 8;
-			nBaseMaxDamage = STATLIST_GetUnitStatUnsigned(pOwner, STAT_MAXDAMAGE, 0) << 8;
+			nBaseMinDamage = STATLIST_UnitGetStatValue(pOwner, STAT_MINDAMAGE, 0) << 8;
+			nBaseMaxDamage = STATLIST_UnitGetStatValue(pOwner, STAT_MAXDAMAGE, 0) << 8;
 		}
 
 		nMinDamage = nSkillSrcDamage * nBaseMinDamage / 128;
 		nMaxDamage = nSkillSrcDamage * nBaseMaxDamage / 128;
 
-		nDamagePercent += nBonus + STATLIST_GetUnitStatUnsigned(pOwner, STAT_DAMAGEPERCENT, 0);
-		nMinDamagePercent = STATLIST_GetUnitStatUnsigned(pOwner, STAT_ITEM_MINDAMAGE_PERCENT, 0);
-		nMaxDamagePercent = STATLIST_GetUnitStatUnsigned(pOwner, STAT_ITEM_MAXDAMAGE_PERCENT, 0);
+		nDamagePercent += nBonus + STATLIST_UnitGetStatValue(pOwner, STAT_DAMAGEPERCENT, 0);
+		nMinDamagePercent = STATLIST_UnitGetStatValue(pOwner, STAT_ITEM_MINDAMAGE_PERCENT, 0);
+		nMaxDamagePercent = STATLIST_UnitGetStatValue(pOwner, STAT_ITEM_MAXDAMAGE_PERCENT, 0);
 
-		pMissileDamageData->nDemonDamagePercent += STATLIST_GetUnitStatUnsigned(pOwner, STAT_ITEM_DEMONDAMAGE_PERCENT, 0);
-		pMissileDamageData->nUndeadDamagePercent += STATLIST_GetUnitStatUnsigned(pOwner, STAT_ITEM_UNDEADDAMAGE_PERCENT, 0);
-		pMissileDamageData->nDamageTargetAC += STATLIST_GetUnitStatUnsigned(pOwner, STAT_ITEM_DAMAGETARGETAC, 0);
+		pMissileDamageData->nDemonDamagePercent += STATLIST_UnitGetStatValue(pOwner, STAT_ITEM_DEMONDAMAGE_PERCENT, 0);
+		pMissileDamageData->nUndeadDamagePercent += STATLIST_UnitGetStatValue(pOwner, STAT_ITEM_UNDEADDAMAGE_PERCENT, 0);
+		pMissileDamageData->nDamageTargetAC += STATLIST_UnitGetStatValue(pOwner, STAT_ITEM_DAMAGETARGETAC, 0);
 
-		if (STATLIST_GetUnitStatUnsigned(pOwner, STAT_SKILL_BYPASS_UNDEAD, 0))
+		if (STATLIST_UnitGetStatValue(pOwner, STAT_SKILL_BYPASS_UNDEAD, 0))
 		{
 			pMissileDamageData->nFlags |= 0x100;
 		}
 
-		if (STATLIST_GetUnitStatUnsigned(pOwner, STAT_SKILL_BYPASS_DEMONS, 0))
+		if (STATLIST_UnitGetStatValue(pOwner, STAT_SKILL_BYPASS_DEMONS, 0))
 		{
 			pMissileDamageData->nFlags |= 0x200;
 		}
 
-		if (STATLIST_GetUnitStatUnsigned(pOwner, STAT_SKILL_BYPASS_BEASTS, 0))
+		if (STATLIST_UnitGetStatValue(pOwner, STAT_SKILL_BYPASS_BEASTS, 0))
 		{
 			pMissileDamageData->nFlags |= 0x400;
 		}
@@ -690,25 +690,25 @@ void __stdcall MISSILE_CalculateDamageData(D2MissileDamageDataStrc* pMissileDama
 			pMissileDamageData->nFlags |= 2;
 		}
 
-		nMinDamage = nMissileSrcDamage * STATLIST_GetUnitStatUnsigned(pOrigin, STAT_MINDAMAGE, 0) / 128;
-		nMaxDamage = nMissileSrcDamage * STATLIST_GetUnitStatUnsigned(pOrigin, STAT_MAXDAMAGE, 0) / 128;
+		nMinDamage = nMissileSrcDamage * STATLIST_UnitGetStatValue(pOrigin, STAT_MINDAMAGE, 0) / 128;
+		nMaxDamage = nMissileSrcDamage * STATLIST_UnitGetStatValue(pOrigin, STAT_MAXDAMAGE, 0) / 128;
 
-		nDamagePercent = STATLIST_GetUnitStatUnsigned(pOrigin, STAT_DAMAGEPERCENT, 0);
-		nMinDamagePercent = STATLIST_GetUnitStatUnsigned(pOrigin, STAT_ITEM_MINDAMAGE_PERCENT, 0);
-		nMaxDamagePercent = STATLIST_GetUnitStatUnsigned(pOrigin, STAT_ITEM_MAXDAMAGE_PERCENT, 0);
+		nDamagePercent = STATLIST_UnitGetStatValue(pOrigin, STAT_DAMAGEPERCENT, 0);
+		nMinDamagePercent = STATLIST_UnitGetStatValue(pOrigin, STAT_ITEM_MINDAMAGE_PERCENT, 0);
+		nMaxDamagePercent = STATLIST_UnitGetStatValue(pOrigin, STAT_ITEM_MAXDAMAGE_PERCENT, 0);
 
-		pMissileDamageData->nDemonDamagePercent += STATLIST_GetUnitStatUnsigned(pOrigin, STAT_ITEM_DEMONDAMAGE_PERCENT, 0);
-		pMissileDamageData->nUndeadDamagePercent += STATLIST_GetUnitStatUnsigned(pOrigin, STAT_ITEM_UNDEADDAMAGE_PERCENT, 0);
-		pMissileDamageData->nDamageTargetAC += STATLIST_GetUnitStatUnsigned(pOrigin, STAT_ITEM_DAMAGETARGETAC, 0);
+		pMissileDamageData->nDemonDamagePercent += STATLIST_UnitGetStatValue(pOrigin, STAT_ITEM_DEMONDAMAGE_PERCENT, 0);
+		pMissileDamageData->nUndeadDamagePercent += STATLIST_UnitGetStatValue(pOrigin, STAT_ITEM_UNDEADDAMAGE_PERCENT, 0);
+		pMissileDamageData->nDamageTargetAC += STATLIST_UnitGetStatValue(pOrigin, STAT_ITEM_DAMAGETARGETAC, 0);
 	}
 
 	if (nMinDamagePercent <= nMaxDamagePercent)
 	{
-		pMissileDamageData->nDamagePercent = nMaxDamagePercent + STATLIST_GetUnitStatUnsigned(pMissile, STAT_DAMAGEPERCENT, 0) + nDamagePercent;
+		pMissileDamageData->nDamagePercent = nMaxDamagePercent + STATLIST_UnitGetStatValue(pMissile, STAT_DAMAGEPERCENT, 0) + nDamagePercent;
 	}
 	else
 	{
-		pMissileDamageData->nDamagePercent = nMinDamagePercent + STATLIST_GetUnitStatUnsigned(pMissile, STAT_DAMAGEPERCENT, 0) + nDamagePercent;
+		pMissileDamageData->nDamagePercent = nMinDamagePercent + STATLIST_UnitGetStatValue(pMissile, STAT_DAMAGEPERCENT, 0) + nDamagePercent;
 	}
 
 	if (pMissileDamageData->nDamagePercent <= -90)
@@ -800,11 +800,11 @@ BOOL __fastcall MISSILE_HasBonusStats(D2UnitStrc* pUnit, D2UnitStrc* pItem)
 	int nCriticalStrike = 0;
 	int nDeadlyStrike = 0;
 
-	nCriticalStrike = STATLIST_GetUnitStatUnsigned(pUnit, STAT_PASSIVE_CRITICAL_STRIKE, 0);
+	nCriticalStrike = STATLIST_UnitGetStatValue(pUnit, STAT_PASSIVE_CRITICAL_STRIKE, 0);
 
 	if (((int)SEED_RollRandomNumber(&pUnit->pSeed) % 100) >= nCriticalStrike)
 	{
-		nDeadlyStrike = STATLIST_GetUnitStatSigned(pUnit, STAT_ITEM_DEADLYSTRIKE, 0);
+		nDeadlyStrike = STATLIST_UnitGetItemStatOrSkillStatValue(pUnit, STAT_ITEM_DEADLYSTRIKE, 0);
 
 		if (!nDeadlyStrike || ((int)SEED_RollRandomNumber(&pUnit->pSeed) % 100) >= nDeadlyStrike)
 		{
@@ -829,35 +829,35 @@ void __fastcall MISSILE_AddStatsToDamage(D2MissileDamageDataStrc* pMissileDamage
 {
 	int nPoisonLength = 0;
 
-	pMissileDamageData->nFireMinDamage += STATLIST_GetUnitStatUnsigned(pMissile, STAT_FIREMINDAM, 0) << nShift;
-	pMissileDamageData->nFireMaxDamage += STATLIST_GetUnitStatUnsigned(pMissile, STAT_FIREMAXDAM, 0) << nShift;
-	pMissileDamageData->nLightMinDamage += STATLIST_GetUnitStatUnsigned(pMissile, STAT_LIGHTMINDAM, 0) << nShift;
-	pMissileDamageData->nLightMaxDamage += STATLIST_GetUnitStatUnsigned(pMissile, STAT_LIGHTMAXDAM, 0) << nShift;
-	pMissileDamageData->nMagicMinDamage += STATLIST_GetUnitStatUnsigned(pMissile, STAT_MAGICMINDAM, 0) << nShift;
-	pMissileDamageData->nMagicMaxDamage += STATLIST_GetUnitStatUnsigned(pMissile, STAT_MAGICMAXDAM, 0) << nShift;
-	pMissileDamageData->nColdMinDamage += STATLIST_GetUnitStatUnsigned(pMissile, STAT_COLDMINDAM, 0) << nShift;
-	pMissileDamageData->nColdMaxDamage += STATLIST_GetUnitStatUnsigned(pMissile, STAT_COLDMAXDAM, 0) << nShift;
-	pMissileDamageData->nColdLength += STATLIST_GetUnitStatUnsigned(pMissile, STAT_COLDLENGTH, 0);
-	pMissileDamageData->nPoisonMinDamage += STATLIST_GetUnitStatUnsigned(pMissile, STAT_POISONMINDAM, 0);
-	pMissileDamageData->nPoisonMaxDamage += STATLIST_GetUnitStatUnsigned(pMissile, STAT_POISONMAXDAM, 0);
+	pMissileDamageData->nFireMinDamage += STATLIST_UnitGetStatValue(pMissile, STAT_FIREMINDAM, 0) << nShift;
+	pMissileDamageData->nFireMaxDamage += STATLIST_UnitGetStatValue(pMissile, STAT_FIREMAXDAM, 0) << nShift;
+	pMissileDamageData->nLightMinDamage += STATLIST_UnitGetStatValue(pMissile, STAT_LIGHTMINDAM, 0) << nShift;
+	pMissileDamageData->nLightMaxDamage += STATLIST_UnitGetStatValue(pMissile, STAT_LIGHTMAXDAM, 0) << nShift;
+	pMissileDamageData->nMagicMinDamage += STATLIST_UnitGetStatValue(pMissile, STAT_MAGICMINDAM, 0) << nShift;
+	pMissileDamageData->nMagicMaxDamage += STATLIST_UnitGetStatValue(pMissile, STAT_MAGICMAXDAM, 0) << nShift;
+	pMissileDamageData->nColdMinDamage += STATLIST_UnitGetStatValue(pMissile, STAT_COLDMINDAM, 0) << nShift;
+	pMissileDamageData->nColdMaxDamage += STATLIST_UnitGetStatValue(pMissile, STAT_COLDMAXDAM, 0) << nShift;
+	pMissileDamageData->nColdLength += STATLIST_UnitGetStatValue(pMissile, STAT_COLDLENGTH, 0);
+	pMissileDamageData->nPoisonMinDamage += STATLIST_UnitGetStatValue(pMissile, STAT_POISONMINDAM, 0);
+	pMissileDamageData->nPoisonMaxDamage += STATLIST_UnitGetStatValue(pMissile, STAT_POISONMAXDAM, 0);
 
-	nPoisonLength = STATLIST_GetUnitStatUnsigned(pMissile, STAT_SKILL_POISON_OVERRIDE_LENGTH, 0);
+	nPoisonLength = STATLIST_UnitGetStatValue(pMissile, STAT_SKILL_POISON_OVERRIDE_LENGTH, 0);
 
 	if (nPoisonLength <= 0)
 	{
-		pMissileDamageData->nPoisonLength += STATLIST_GetUnitStatUnsigned(pMissile, STAT_POISONLENGTH, 0);
-		pMissileDamageData->nPoisonCount += STATLIST_GetUnitStatUnsigned(pMissile, STAT_POISON_COUNT, 0);
+		pMissileDamageData->nPoisonLength += STATLIST_UnitGetStatValue(pMissile, STAT_POISONLENGTH, 0);
+		pMissileDamageData->nPoisonCount += STATLIST_UnitGetStatValue(pMissile, STAT_POISON_COUNT, 0);
 	}
 	else
 	{
 		pMissileDamageData->nPoisonLength += nPoisonLength;
 	}
 
-	pMissileDamageData->nLifeDrainMinDamage += STATLIST_GetUnitStatUnsigned(pMissile, STAT_LIFEDRAINMINDAM, 0);
-	pMissileDamageData->nManaDrainMinDamage += STATLIST_GetUnitStatUnsigned(pMissile, STAT_MANADRAINMINDAM, 0);
-	pMissileDamageData->nBurningMin += STATLIST_GetUnitStatUnsigned(pMissile, STAT_BURNINGMIN, 0);
-	pMissileDamageData->nBurningMax += STATLIST_GetUnitStatUnsigned(pMissile, STAT_BURNINGMAX, 0);
-	pMissileDamageData->nBurnLength += STATLIST_GetUnitStatUnsigned(pMissile, STAT_FIRELENGTH, 0);
+	pMissileDamageData->nLifeDrainMinDamage += STATLIST_UnitGetStatValue(pMissile, STAT_LIFEDRAINMINDAM, 0);
+	pMissileDamageData->nManaDrainMinDamage += STATLIST_UnitGetStatValue(pMissile, STAT_MANADRAINMINDAM, 0);
+	pMissileDamageData->nBurningMin += STATLIST_UnitGetStatValue(pMissile, STAT_BURNINGMIN, 0);
+	pMissileDamageData->nBurningMax += STATLIST_UnitGetStatValue(pMissile, STAT_BURNINGMAX, 0);
+	pMissileDamageData->nBurnLength += STATLIST_UnitGetStatValue(pMissile, STAT_FIRELENGTH, 0);
 }
 
 //D2Common.0x6FDBB060
@@ -893,7 +893,7 @@ int __fastcall MISSILE_CalculateMasteryBonus(D2UnitStrc* pUnit, int nElemType, i
 	switch (nElemType)
 	{
 	case ELEMTYPE_FIRE:
-		nPercentage = STATLIST_GetUnitStatUnsigned(pUnit, STAT_PASSIVE_FIRE_MASTERY, 0);
+		nPercentage = STATLIST_UnitGetStatValue(pUnit, STAT_PASSIVE_FIRE_MASTERY, 0);
 		if (!nPercentage)
 		{
 			return 0;
@@ -902,7 +902,7 @@ int __fastcall MISSILE_CalculateMasteryBonus(D2UnitStrc* pUnit, int nElemType, i
 		return nSrcDamage * nPercentage / 100;
 
 	case ELEMTYPE_LTNG:
-		nPercentage = STATLIST_GetUnitStatUnsigned(pUnit, STAT_PASSIVE_LTNG_MASTERY, 0);
+		nPercentage = STATLIST_UnitGetStatValue(pUnit, STAT_PASSIVE_LTNG_MASTERY, 0);
 		if (!nPercentage)
 		{
 			return 0;
@@ -912,7 +912,7 @@ int __fastcall MISSILE_CalculateMasteryBonus(D2UnitStrc* pUnit, int nElemType, i
 
 	case ELEMTYPE_COLD:
 	case ELEMTYPE_FREEZE:
-		nPercentage = STATLIST_GetUnitStatUnsigned(pUnit, STAT_PASSIVE_COLD_MASTERY, 0);
+		nPercentage = STATLIST_UnitGetStatValue(pUnit, STAT_PASSIVE_COLD_MASTERY, 0);
 		if (!nPercentage)
 		{
 			return 0;
@@ -921,7 +921,7 @@ int __fastcall MISSILE_CalculateMasteryBonus(D2UnitStrc* pUnit, int nElemType, i
 		return nSrcDamage * nPercentage / 100;
 
 	case ELEMTYPE_POIS:
-		nPercentage = STATLIST_GetUnitStatUnsigned(pUnit, STAT_PASSIVE_POIS_MASTERY, 0);
+		nPercentage = STATLIST_UnitGetStatValue(pUnit, STAT_PASSIVE_POIS_MASTERY, 0);
 		if (!nPercentage)
 		{
 			return 0;
@@ -1008,7 +1008,7 @@ void __stdcall MISSILE_SetDamageStats(D2UnitStrc* pOwner, D2UnitStrc* pMissile, 
 
 		if (pOwner)
 		{
-			nStats = D2Common_11270(pOwner, STAT_DAMAGE_VS_MONTYPE, pStat, ARRAY_SIZE(pStat));
+			nStats = STATLIST_CopyStats(pOwner, STAT_DAMAGE_VS_MONTYPE, pStat, ARRAY_SIZE(pStat));
 			for (int i = 0; i < nStats; ++i)
 			{
 				STATLIST_SetUnitStat(pMissile, STAT_DAMAGE_VS_MONTYPE, pStat[i].nValue, pStat[i].nLayer);
@@ -1253,6 +1253,7 @@ int __stdcall MISSILE_GetMaxElemDamage(D2UnitStrc* pMissile, D2UnitStrc* pOwner,
 //D2Common.0x6FDBBBA0 (#11221)
 int __stdcall MISSILE_GetElementalLength(int nUnused, D2UnitStrc* pMissile, int nMissileId, int nLevel)
 {
+	D2_MAYBE_UNUSED(nUnused);
 	D2MissilesTxt* pMissilesTxtRecord = NULL;
 	int nLength = 0;
 
@@ -1470,6 +1471,7 @@ int __fastcall MISSILE_GetMaximum(int a1, int a2, int a3, int a4)
 //D2Common.0x6FDBC0A0
 int __fastcall MISSILE_GetRandomNumberInRange(int nMin, int nMax, int nUnused, D2UnkMissileCalcStrc* pCalc)
 {
+	D2_MAYBE_UNUSED(nUnused);
 	int nPossibilities = 0;
 
 	if (pCalc)
@@ -1490,6 +1492,7 @@ int __fastcall MISSILE_GetRandomNumberInRange(int nMin, int nMax, int nUnused, D
 //D2Common.0x6FDBC120
 int __fastcall MISSILE_GetSpecialParamValueForSkillMissile(int nSkillId, uint8_t nParamId, int nUnused, D2MissileCalcStrc* pMissileCalc)
 {
+	D2_MAYBE_UNUSED(nUnused);
 	D2SkillStrc* pSkill = NULL;
 	int nSkillLevel = 0;
 

@@ -15,7 +15,7 @@ void __fastcall DRLGOUTWILD_GetBridgeCoords(D2DrlgLevelStrc* pLevel, int* pX, in
 
 	for (int nY = 1; nY < pLevel->pOutdoors->nGridWidth - 1; ++nY)
 	{
-		if (DRLGGRID_GetGridFlags(pLevel->pOutdoors->pGrid, nX, nY) == 28 && (((unsigned int)DRLGGRID_GetGridFlags(&pLevel->pOutdoors->pGrid[2], nX, nY) >> 16) & 15) == 1)
+		if (DRLGGRID_GetGridEntry(pLevel->pOutdoors->pGrid, nX, nY) == 28 && (((unsigned int)DRLGGRID_GetGridEntry(&pLevel->pOutdoors->pGrid[2], nX, nY) >> 16) & 15) == 1)
 		{
 			*pX = nX;
 			*pY = nY;
@@ -31,11 +31,6 @@ void __fastcall DRLGOUTWILD_GetBridgeCoords(D2DrlgLevelStrc* pLevel, int* pX, in
 //TODO: Check v21, v22
 void __fastcall DRLGOUTWILD_InitAct1OutdoorLevel(D2DrlgLevelStrc* pLevel)
 {
-	D2DrlgVertexStrc* pPreviousVertex = NULL;
-	D2DrlgVertexStrc* pSpecialVertex = NULL;
-	D2DrlgVertexStrc* pFirstVertex = NULL;
-	D2DrlgVertexStrc* pNextVertex = NULL;
-	D2DrlgVertexStrc* pVertex = NULL;
 	int nX = 0;
 	int nY = 0;
 	BOOL bAdded = FALSE;
@@ -46,8 +41,8 @@ void __fastcall DRLGOUTWILD_InitAct1OutdoorLevel(D2DrlgLevelStrc* pLevel)
 
 	if (pLevel->nLevelId != LEVEL_BLOODMOOR && pLevel->nLevelId != LEVEL_COLDPLAINS && pLevel->nLevelId != LEVEL_BURIALGROUNDS)
 	{
-		pVertex = pLevel->pOutdoors->pVertex;
-		pPreviousVertex = pVertex;
+		D2DrlgVertexStrc* pVertex = pLevel->pOutdoors->pVertex;
+		D2DrlgVertexStrc* pPreviousVertex = pVertex;
 
 		for (D2DrlgVertexStrc* i = pVertex->pNext; i != pVertex; i = i->pNext)
 		{
@@ -57,13 +52,13 @@ void __fastcall DRLGOUTWILD_InitAct1OutdoorLevel(D2DrlgLevelStrc* pLevel)
 		bBreak = FALSE;
 		do
 		{
-			pNextVertex = pVertex->pNext;
+			D2DrlgVertexStrc* pNextVertex = pVertex->pNext;
 			if (pVertex->nPosX < pNextVertex->nPosX && pPreviousVertex->nPosY > pVertex->nPosY && !(pVertex->dwFlags & 1)
 				&& !(pPreviousVertex->dwFlags & 1) || pVertex->nPosY > pNextVertex->nPosY 
 				&& pPreviousVertex->nPosX > pVertex->nPosX && !(pVertex->dwFlags & 1) && !(pPreviousVertex->dwFlags & 1))
 			{
-				pFirstVertex = pVertex;
-				pSpecialVertex = NULL;
+				D2DrlgVertexStrc* pFirstVertex = pVertex;
+				D2DrlgVertexStrc* pSpecialVertex = NULL;
 				do
 				{
 					if (pVertex == pLevel->pOutdoors->pVertex)
@@ -147,7 +142,7 @@ void __fastcall DRLGOUTWILD_InitAct1OutdoorLevel(D2DrlgLevelStrc* pLevel)
 
 					if (!bAdded)
 					{
-						FOG_10025("fAdded", __FILE__, __LINE__);
+						FOG_DisplayWarning("fAdded", __FILE__, __LINE__);
 					}
 				}
 				else
@@ -172,7 +167,7 @@ void __fastcall DRLGOUTWILD_InitAct1OutdoorLevel(D2DrlgLevelStrc* pLevel)
 
 					if (!bAdded)
 					{
-						FOG_10025("fAdded", __FILE__, __LINE__);
+						FOG_DisplayWarning("fAdded", __FILE__, __LINE__);
 					}
 				}
 			}
@@ -183,17 +178,7 @@ void __fastcall DRLGOUTWILD_InitAct1OutdoorLevel(D2DrlgLevelStrc* pLevel)
 				nX = pLevel->pOutdoors->nGridWidth - ((~(uint8_t)pLevel->pOutdoors->dwFlags & 0x10 | 0x40) >> 4);
 
 				v21 = SEED_RollRandomNumber(&pLevel->pSeed) & 3;
-
-				if ((v21 & 0x80000001) < 0)
-				{
-					v22 = (((v21 & 0x80000001) - 1) | 0xFFFFFFFE) == -1;
-				}
-				else
-				{
-					v22 = (v21 & 0x80000001) == 0;
-				}
-
-				if (!v22)
+				if ((v21 % 2) != 0)
 				{
 					nX = 3;
 				}
@@ -241,7 +226,7 @@ BOOL __fastcall DRLGOUTWILD_TestSpawnRiver(D2DrlgLevelStrc* pLevel, int nX)
 {
 	for (int nY = 0; nY < pLevel->pOutdoors->nGridHeight; ++nY)
 	{
-		if ((DRLGGRID_GetGridFlags(&pLevel->pOutdoors->pGrid[2], nX, nY) & 2) || (DRLGGRID_GetGridFlags(&pLevel->pOutdoors->pGrid[2], nX + 1, nY) & 2))
+		if ((DRLGGRID_GetGridEntry(&pLevel->pOutdoors->pGrid[2], nX, nY) & 2) || (DRLGGRID_GetGridEntry(&pLevel->pOutdoors->pGrid[2], nX + 1, nY) & 2))
 		{
 			return FALSE;
 		}
@@ -277,8 +262,8 @@ void __fastcall DRLGOUTWILD_SpawnRiver(D2DrlgLevelStrc* pLevel, int nX)
 	
 	for (int i = 0; i < pLevel->pOutdoors->nGridHeight; ++i)
 	{
-		nFlags1 = DRLGGRID_GetGridFlags(&pLevel->pOutdoors->pGrid[2], nX, i);
-		nFlags2 = DRLGGRID_GetGridFlags(&pLevel->pOutdoors->pGrid[0], nX, i);
+		nFlags1 = DRLGGRID_GetGridEntry(&pLevel->pOutdoors->pGrid[2], nX, i);
+		nFlags2 = DRLGGRID_GetGridEntry(&pLevel->pOutdoors->pGrid[0], nX, i);
 		if (nFlags2)
 		{
 			if (nFlags2 != 7 || (nFlags1 & 0xF0000) != 0x30000)
@@ -304,8 +289,8 @@ void __fastcall DRLGOUTWILD_SpawnRiver(D2DrlgLevelStrc* pLevel, int nX)
 
 		DRLGOUTDOORS_SpawnOutdoorLevelPresetEx(pLevel, nX, i, LVLPREST_ACT1_RIVER_UPPER, nRand, FALSE);
 
-		nFlags1 = DRLGGRID_GetGridFlags(&pLevel->pOutdoors->pGrid[2], nX + 1, i);
-		nFlags2 = DRLGGRID_GetGridFlags(&pLevel->pOutdoors->pGrid[0], nX + 1, i);
+		nFlags1 = DRLGGRID_GetGridEntry(&pLevel->pOutdoors->pGrid[2], nX + 1, i);
+		nFlags2 = DRLGGRID_GetGridEntry(&pLevel->pOutdoors->pGrid[0], nX + 1, i);
 		if (nFlags2)
 		{
 			if (nFlags2 != 7 || (nFlags1 & 0xF0000) != 0x30000)
@@ -344,7 +329,7 @@ void __fastcall DRLGOUTWILD_SpawnRiver(D2DrlgLevelStrc* pLevel, int nX)
 			{
 				if (DRLGOUTDOORS_TestGridCellSpawnValid(pLevel, nX - 1, nY))
 				{
-					if (DRLGOUTDOORS_TestGridCellSpawnValid(pLevel, nX + 2, nY) && (DRLGGRID_GetGridFlags(&pLevel->pOutdoors->pGrid[2], nX, nY) & 0xF0000) == 0x30000 && (DRLGGRID_GetGridFlags(&pLevel->pOutdoors->pGrid[2], nX + 1, nY) & 0xF0000) == 0x30000)
+					if (DRLGOUTDOORS_TestGridCellSpawnValid(pLevel, nX + 2, nY) && (DRLGGRID_GetGridEntry(&pLevel->pOutdoors->pGrid[2], nX, nY) & 0xF0000) == 0x30000 && (DRLGGRID_GetGridEntry(&pLevel->pOutdoors->pGrid[2], nX + 1, nY) & 0xF0000) == 0x30000)
 					{
 						DRLGOUTDOORS_SpawnOutdoorLevelPresetEx(pLevel, nX, nY, LVLPREST_ACT1_BRIDGE, 1, 0);
 						DRLGOUTDOORS_SpawnOutdoorLevelPresetEx(pLevel, nX + 1, nY, LVLPREST_ACT1_BRIDGE, 2, 0);
@@ -354,7 +339,7 @@ void __fastcall DRLGOUTWILD_SpawnRiver(D2DrlgLevelStrc* pLevel, int nX)
 			}
 			else
 			{
-				if (DRLGOUTDOORS_TestGridCellSpawnValid(pLevel, nX - 1, nY) && (DRLGGRID_GetGridFlags(&pLevel->pOutdoors->pGrid[2], nX, nY) & 0xF0000) == 0x30000 && (DRLGGRID_GetGridFlags(&pLevel->pOutdoors->pGrid[2], nX + 1, nY) & 0xF0000) == 0x30000)
+				if (DRLGOUTDOORS_TestGridCellSpawnValid(pLevel, nX - 1, nY) && (DRLGGRID_GetGridEntry(&pLevel->pOutdoors->pGrid[2], nX, nY) & 0xF0000) == 0x30000 && (DRLGGRID_GetGridEntry(&pLevel->pOutdoors->pGrid[2], nX + 1, nY) & 0xF0000) == 0x30000)
 				{
 					DRLGOUTDOORS_SpawnOutdoorLevelPresetEx(pLevel, nX, nY, LVLPREST_ACT1_BRIDGE, 1, 0);
 					DRLGOUTDOORS_SpawnOutdoorLevelPresetEx(pLevel, nX + 1, nY, LVLPREST_ACT1_BRIDGE, 3, 0);
@@ -400,7 +385,7 @@ BOOL __fastcall sub_6FD85350(D2DrlgVertexStrc* pDrlgVertex)
 //D2Common.0x6FD85390
 BOOL __fastcall DRLGOUTWILD_SpawnCliffCaves(D2DrlgLevelStrc* pLevel, int nX, int nY)
 {
-	switch (DRLGGRID_GetGridFlags(pLevel->pOutdoors->pGrid, nX, nY))
+	switch (DRLGGRID_GetGridEntry(pLevel->pOutdoors->pGrid, nX, nY))
 	{
 	case 16:
 		DRLGOUTDOORS_SpawnOutdoorLevelPresetEx(pLevel, nX, nY, LVLPREST_ACT1_WILD_CLIFF_CAVE_LEFT, -1, 0);
@@ -436,7 +421,7 @@ void __fastcall DRLGOUTWILD_SpawnTownTransitionsAndCaves(D2DrlgLevelStrc* pLevel
 			}
 			else
 			{
-				while (!(DRLGGRID_GetGridFlags(&pLevel->pOutdoors->pGrid[2], nX, nY) & 2) && !(DRLGGRID_GetGridFlags(&pLevel->pOutdoors->pGrid[2], nX + 1, nY) & 2))
+				while (!(DRLGGRID_GetGridEntry(&pLevel->pOutdoors->pGrid[2], nX, nY) & 2) && !(DRLGGRID_GetGridEntry(&pLevel->pOutdoors->pGrid[2], nX + 1, nY) & 2))
 				{
 					++nY;
 
@@ -482,7 +467,7 @@ void __fastcall DRLGOUTWILD_SpawnTownTransitionsAndCaves(D2DrlgLevelStrc* pLevel
 
 			if (!fAdded)
 			{
-				FOG_10025("fAdded", __FILE__, __LINE__);
+				FOG_DisplayWarning("fAdded", __FILE__, __LINE__);
 			}
 
 			pLevel->pOutdoors->dwFlags |= 0x40;

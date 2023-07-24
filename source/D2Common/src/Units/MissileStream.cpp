@@ -3,6 +3,7 @@
 #include "D2Collision.h"
 #include "Units/Missile.h"
 #include "Path/Path.h"
+#include "Path/PathMisc.h"
 #include "Path/Path_IDAStar.h"
 #include "Units/Units.h"
 
@@ -10,11 +11,11 @@
 //D2Common.0x6FDBC230 (#11213)
 void __stdcall MISSTREAM_AllocMissileStream(D2UnitStrc* pMissile)
 {
-	D2MissileStreamStrc* pStream = NULL;
+	D2MissileStreamStrc* pStream = nullptr;
 
 	if (!MISSILE_GetStream(pMissile))
 	{
-		pStream = (D2MissileStreamStrc*)FOG_AllocServerMemory(pMissile ? pMissile->pMemoryPool : NULL, sizeof(D2MissileStreamStrc), __FILE__, __LINE__, 0);
+		pStream = D2_ALLOC_STRC_POOL(pMissile ? pMissile->pMemoryPool : nullptr, D2MissileStreamStrc);
 		pStream->unk0x00 = 0;
 		pStream->unk0x04 = 0;
 
@@ -31,10 +32,10 @@ void __stdcall MISSTREAM_FreeMissileStream(D2UnitStrc* pMissile)
 	{
 		if (pStream->unk0x00)
 		{
-			FOG_FreeServerMemory(pMissile ? pMissile->pMemoryPool : NULL, (void*)pStream->unk0x00, __FILE__, __LINE__, 0);
+			D2_FREE_POOL(pMissile ? pMissile->pMemoryPool : NULL, (void*)pStream->unk0x00);
 		}
 
-		FOG_FreeServerMemory(pMissile ? pMissile->pMemoryPool : NULL, pStream, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(pMissile ? pMissile->pMemoryPool : NULL, pStream);
 	}
 }
 
@@ -69,7 +70,7 @@ void __stdcall MISSTREAM_ExecuteHit(D2UnitStrc* pUnit, int nCollisionType, int n
 }
 
 //D2Common.0x6FDBC3B0
-int __fastcall MISSTREAM_Return1(D2UnitStrc* pUnit1, D2UnitStrc* pUnit2)
+int __fastcall MISSTREAM_Return1(D2UnitStrc* pUnit1, void* pUnit2)
 {
 	return 1;
 }
@@ -124,14 +125,13 @@ void __stdcall MISSTREAM_Update(D2UnitStrc* a1, D2UnitStrc* pMissile, int a3, in
 		{
 			if (pStream->unk0x04 < nPoints)
 			{
-				pStream->unk0x00 = (int*)FOG_ReallocServerMemory(pMissile->pMemoryPool, pStream->unk0x00, sizeof(int) * nPoints, __FILE__, __LINE__, 0);
+				pStream->unk0x00 = (int*)D2_REALLOC_POOL(pMissile->pMemoryPool, pStream->unk0x00, sizeof(int) * nPoints);
 			}
 		}
 		else
 		{
 			pStream->unk0x04 = nPoints;
-			pStream->unk0x00 = (int*)FOG_AllocServerMemory(pMissile->pMemoryPool, sizeof(int) * nPoints, __FILE__, __LINE__, 0);
-			memset(pStream->unk0x00, 0x00, sizeof(int) * nPoints);
+			pStream->unk0x00 = (int*)D2_CALLOC_POOL(pMissile->pMemoryPool, sizeof(int) * nPoints);
 		}
 
 		nMax = nTemp / nRatio;
@@ -155,7 +155,7 @@ void __stdcall MISSTREAM_Update(D2UnitStrc* a1, D2UnitStrc* pMissile, int a3, in
 			nX = pPathPoints[nIndex].X;
 			nY = pPathPoints[nIndex].Y;
 
-			v23 = D2Common_10215(pPathPoints[nIndex + 1].X, pPathPoints[nIndex + 1].Y, nX, nY);
+			v23 = PATH_ComputeDirection(pPathPoints[nIndex + 1].X, pPathPoints[nIndex + 1].Y, nX, nY);
 			if (nCounter >= nMax && a3)
 			{
 				nCounter = 1;

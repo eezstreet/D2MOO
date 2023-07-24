@@ -1,18 +1,26 @@
 #pragma once 
 
+#include <D2Common.h>
 #include <D2BasicTypes.h>
 
 #pragma pack(1)
 
 struct D2ArenaTxt
 {
-	uint32_t dwSuicide;					//0x00
-	uint32_t dwPlayerKill;				//0x04
-	uint32_t dwPlayerKillPercent;		//0x08
-	uint32_t dwMonsterKill;				//0x0C
-	uint32_t dwPlayerDeath;				//0x10
-	uint32_t dwPlayerDeathPercent;		//0x14
-	uint32_t dwMonsterDeath;			//0x18
+	union
+	{
+		struct
+		{
+			int32_t dwSuicide;					//0x00
+			int32_t dwPlayerKill;				//0x04
+			int32_t dwPlayerKillPercent;		//0x08
+			int32_t dwMonsterKill;				//0x0C
+			int32_t dwPlayerDeath;				//0x10
+			int32_t dwPlayerDeathPercent;		//0x14
+			int32_t dwMonsterDeath;				//0x18
+		};
+		int32_t dwScores[7];
+	};
 };
 
 struct D2CharItemStrc
@@ -51,7 +59,7 @@ struct D2CharTemplateTxt
 //D2Common.0x6FD47840
 void __fastcall DATATBLS_LoadArenaTxt(void* pMemPool);
 //D2Common.0x6FD47970 (#10596)
-D2ArenaTxt* __fastcall DATATBLS_GetArenaTxtRecord(int nArenaType);
+D2COMMON_DLL_DECL D2ArenaTxt* __fastcall DATATBLS_GetArenaTxtRecord(int nArenaType);
 //D2Common.0x6FD479B0
 void __fastcall DATATBLS_UnloadArenaTxt();
 //D2Common.0x6FD479D0
@@ -59,10 +67,10 @@ void __fastcall DATATBLS_LoadCharTemplateTxt(void* pMemPool);
 //D2Common.0x6FD48770
 void __fastcall DATATBLS_UnloadCharTemplateTxt();
 //D2Common.0x6FD48790 (#10664)
-int __fastcall DATATBLS_GetCharTemplateTxtRecordCount();
+D2COMMON_DLL_DECL int __fastcall DATATBLS_GetCharTemplateTxtRecordCount();
 //D2Common.0x6FD487A0 (#10665)
-D2CharTemplateTxt* __fastcall DATATBLS_GetCharTemplateTxtRecord(int nTemplate, int nLevel);
+D2COMMON_DLL_DECL D2CharTemplateTxt* __fastcall DATATBLS_GetCharTemplateTxtRecord(int nTemplate, int nLevel);
 //D2Common.0x6FD48810 (#10666)
-int __fastcall DATATBLS_GetClassFromCharTemplateTxtRecord(int nTemplate, int nLevel);
+D2COMMON_DLL_DECL int __fastcall DATATBLS_GetClassFromCharTemplateTxtRecord(int nTemplate, int nLevel);
 
 

@@ -1,10 +1,31 @@
 #pragma once
 
+#include <DataTbls/MonsterTbls.h>
+
 #pragma pack(1)
+struct D2AiControlStrc; // From D2Game
+struct D2AiParamStrc;	// From D2Game
+
+struct D2InteractInfoStrc
+{
+	D2UnitStrc* pUnit;						//0x00
+	int32_t nInteract;						//0x04
+	D2InteractInfoStrc* pNext;				//0x08
+};
+
 
 struct D2MonsterInteractStrc
 {
 	D2InteractInfoStrc* pInteractInfo;		//0x00
+};
+
+struct D2UnkMonsterDataStrc
+{
+	int32_t unk0x00;						//0x00
+	int32_t nLifePercentage;				//0x04
+	int32_t unk0x08;						//0x08
+	uint8_t nCount;							//0x0C
+	uint8_t pad0x0D[3];						//0x0D
 };
 
 struct D2MonsterDataStrc
@@ -21,12 +42,13 @@ struct D2MonsterDataStrc
 	union									//0x2C
 	{
 		D2AiParamStrc* pAiParam;	//Server pMonster
-		wchar_t* wszMonName;		//Client pMonster
+		struct Unicode* wszMonName;	//Client pMonster
 	};
 	D2MonsterInteractStrc* pMonInteract;	//0x30
-	uint32_t unk0x34[3];						//0x34
-	uint32_t dwNecropetFlag;					//0x40
-	uint32_t unk0x44[3];						//0x44
+	uint32_t unk0x34;							//0x34
+	uint32_t unk0x38;							//0x38
+	D2UnkMonsterDataStrc unk0x3C;				//0x3C
+	uint32_t unk0x4C;							//0x4C
 	uint32_t pVision;							//0x50
 	uint32_t dwAiState;						//0x54
 	uint32_t dwTxtLevelNo;						//0x58

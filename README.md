@@ -18,15 +18,29 @@ You will also need to install the [CMake](https://cmake.org) build system and Vi
 
 ### Build the project
 
-In the current directory:
+The preferred way is to use CMake presets.
+You can either open D2Moo using the Visual studio "Open folder" or generate a VS solution (in `out/build/VS20XX`) using:
 
 ```sh
 # Configure the CMake project
-cmake -A Win32 -B build
+cmake --preset VS2019
 # Build the release config
-cmake --build build --config Release
+cmake --build --preset VS2019 --config Release
 # Install
-cmake --install build --config Release --prefix YOUR_INSTALL_FOLDER
+cmake --build --preset VS2019 --config Release --target install
+```
+
+Note: The `ninja` preset requires to run the `cmake` configuration step to be ran from the *x86 Native Command Prompt*.
+
+Or, if you do not wish to use the presets
+
+```sh
+# Configure the CMake project
+cmake -A Win32 -B YOU_BUILD_DIR
+# Build the release config
+cmake --build YOU_BUILD_DIR --config Release
+# Install
+cmake --install YOU_BUILD_DIR --config Release --prefix YOUR_INSTALL_FOLDER
 ```
 
 ## Usage
@@ -38,6 +52,14 @@ cmake --install build --config Release --prefix YOUR_INSTALL_FOLDER
 
 The debug targets are already configured and set as startup project when using Visual Studio.
 
+Note that it will spawn the game/D2SE as a subprocess, so you might be interested in the following Visual Studio extension [Microsoft Child Process Debugging Power Tool](https://marketplace.visualstudio.com/items?itemName=vsdbgplat.MicrosoftChildProcessDebuggingPowerTool). Then go to Debug > Other debug targets > Child process debugging settings, enable & save.
+
+## Debugger (Experimental!)
+
+Start the game with the `-debug`.
+For example: `D2.DetoursLauncher -- -debug`.
+Alternatively, you may set the environment variable `D2_DEBUGGER=1`.
+
 ## Versions
 
 The project is currently based on the 1.10f version of the game.
@@ -47,17 +69,16 @@ Feel free to submit patches for other versions of the game!
 
 ### Why is the code so ugly and with names such as `a1`, `a2`, ... ?
 
-The code was originally extracted by a reverse engineering tool, and slowly cleaned to use understandable names
+The code was originally extracted using a reverse engineering tool, and slowly cleaned to use more understandable names.
 
 ### Can I build D2Common.dll and replace it directly with the one from the game ?
 
 Not yet, but this is one of the objectives !
 We are in the (slow) process of checking each ordinal (exported functions) and patching them one by one. See [D2Common.patch.cpp](D2.Detours.patches/1.10f/D2Common.patch.cpp) for the current status of each ordinal.
 
-### Why is there only D2Common.dll ?
+### Why are some DLLs missing ?
 
-Because it contains a lot of functions that are used in both, client and server code, and as such, it serves as a solid base for further work.  
-We might add other DLLs in the future if there is enough interest / help from the community. Any contributions are welcome.
+Reversing the game is very time consuming. Since `D2Common.dll` and `D2Game.dll` contain most of the game logic, this is where the focus has been set. Any contribution and help is welcome !
 
 ### How can I write my own mod using this ?
 
@@ -69,6 +90,10 @@ More importantly, we need your feedback to determine a roadmap.
 We felt that the current projects are not good enough, and more importantly did not cover enough parts of the game.
 Having a centralized code that one can launch and use as reference will make it easier, we hope, for the modding community.
 
+### I can not set breakpoints in Visual Studio
+
+Please have a look at [Microsoft Child Process Debugging Power Tool](https://marketplace.visualstudio.com/items?itemName=vsdbgplat.MicrosoftChildProcessDebuggingPowerTool).
+
 ### I have other questions !
 
 Please feel free to open an issue or visit the Phrozen Keep [forums](https://www.d2mods.info) / [Discord server](https://discord.gg/NvfftHY) !
@@ -79,17 +104,23 @@ Please feel free to open an issue or visit the Phrozen Keep [forums](https://www
 This could not have been done without the amazing help and work of the Phrozen Keep community!
 Non-exhaustive list of members who helped putting this together (alphabetical order):
 
+ * @Araksson (aka @Conqueror)
+ * @dzik
  * @FearedBliss
  * @Firehawk
+ * @Harvest
+ * @Kieran
  * @Kingpin
  * @Lectem
  * @lolet
  * @Mentor
+ * @MirDrualga (aka @IAmTrial)
  * @misiek1294
  * @Mnw1995
  * @Myhrginoc
  * @Necrolis
  * @Nefarius
+ * @Nizari
  * @Ogodei
  * Paul Siramy
  * @raler (that sparked the idea for the current name of the project)

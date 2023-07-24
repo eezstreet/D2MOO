@@ -444,7 +444,7 @@ void __fastcall DATATBLS_LoadMonStatsTxt(void* pMemPool)
 				if (sgptDataTables->pMonStatsTxt[nId].nBaseId != sgptDataTables->pMonStatsTxt[nCounter].nBaseId && sgptDataTables->bCompileTxt)
 				{
 					szMonsterName = FOG_10255(sgptDataTables->pMonStatsLinker, sgptDataTables->pMonStatsTxt[nId].nId, 0);
-					FOG_WriteToLogFile("BaseId/NextInClass chain -- unexpected baseid for monster '%s' (%d)", szMonsterName);
+					FOG_Trace("BaseId/NextInClass chain -- unexpected baseid for monster '%s' (%d)", szMonsterName);
 				}
 
 				if (nId == nCounter)
@@ -461,7 +461,7 @@ void __fastcall DATATBLS_LoadMonStatsTxt(void* pMemPool)
 					if (sgptDataTables->bCompileTxt)
 					{
 						szMonsterName = FOG_10255(sgptDataTables->pMonStatsLinker, sgptDataTables->pMonStatsTxt[nId].nId, 0);
-						FOG_WriteToLogFile("BaseId/NextInClass chain -- monster '%s' (%d) pointing to itself", szMonsterName);
+						FOG_Trace("BaseId/NextInClass chain -- monster '%s' (%d) pointing to itself", szMonsterName);
 					}
 					break;
 				}
@@ -473,7 +473,7 @@ void __fastcall DATATBLS_LoadMonStatsTxt(void* pMemPool)
 					if (sgptDataTables->bCompileTxt)
 					{
 						szMonsterName = FOG_10255(sgptDataTables->pMonStatsLinker, sgptDataTables->pMonStatsTxt[nNextInClass].nId, 0);
-						FOG_WriteToLogFile("BaseId/NextInClass chain exceeded 255 entries at monster '%s' (%d)", szMonsterName);
+						FOG_Trace("BaseId/NextInClass chain exceeded 255 entries at monster '%s' (%d)", szMonsterName);
 					}
 					break;
 				}
@@ -483,7 +483,7 @@ void __fastcall DATATBLS_LoadMonStatsTxt(void* pMemPool)
 			if (!bFoundInChain && sgptDataTables->bCompileTxt)
 			{
 				szMonsterName = FOG_10255(sgptDataTables->pMonStatsLinker, sgptDataTables->pMonStatsTxt[nCounter].nId, 0);
-				FOG_WriteToLogFile("BaseId/NextInClass monster '%s' (%d) not found in chain", szMonsterName);
+				FOG_Trace("BaseId/NextInClass monster '%s' (%d) not found in chain", szMonsterName);
 			}
 			sgptDataTables->pMonStatsTxt[nCounter].nMaxChainId = nChainId;
 
@@ -871,7 +871,7 @@ wchar_t* __fastcall DATATBLS_RollRandomUniqueAppellationString(D2UnitStrc* pUnit
 //D2Common.0x6FD68BD0
 void __fastcall DATATBLS_ReallocTCExInfo(D2TCExShortStrc* pTCExShort, int nNewRecordCount)
 {
-	pTCExShort->pInfo = (D2TCExInfoStrc*)FOG_ReallocServerMemory(NULL, pTCExShort->pInfo, sizeof(D2TCExInfoStrc) * nNewRecordCount, __FILE__, __LINE__, 0);
+	pTCExShort->pInfo = (D2TCExInfoStrc*)D2_REALLOC_POOL(NULL, pTCExShort->pInfo, sizeof(D2TCExInfoStrc) * nNewRecordCount);
 	memset(&pTCExShort->pInfo[pTCExShort->nTypes], 0x00, sizeof(D2TCExInfoStrc) * (nNewRecordCount - pTCExShort->nTypes));
 	pTCExShort->nTypes = nNewRecordCount;
 }
@@ -936,7 +936,7 @@ int __fastcall DATATBLS_CalculatePercentage(signed int nValue1, signed int nValu
 {
 	if (nDivisor)
 	{
-		if (nValue1 <= 1048576)
+		if (nValue1 <= 0x100000)
 		{
 			if (nValue2 <= 65536)
 			{
@@ -1057,7 +1057,7 @@ __forceinline void __fastcall DATATBLS_ProcessAdditionalTreasureClassArguments(D
 		szArg = strchr(szNext, '=');
 		if (!szArg)
 		{
-			FOG_WriteToLogFile("Couldn't parse treasure class modifier!  (Line:%d  Item:%d)\n", nCounter, nItemCounter);
+			FOG_Trace("Couldn't parse treasure class modifier!  (Line:%d  Item:%d)\n", nCounter, nItemCounter);
 			break;
 		}
 
@@ -1065,7 +1065,7 @@ __forceinline void __fastcall DATATBLS_ProcessAdditionalTreasureClassArguments(D
 		++szArg;
 		if (*szArg == 0)
 		{
-			FOG_WriteToLogFile("Couldn't parse treasure class modifier!  (Line:%d  Item:%d)\n", nCounter, nItemCounter);
+			FOG_Trace("Couldn't parse treasure class modifier!  (Line:%d  Item:%d)\n", nCounter, nItemCounter);
 			break;
 		}
 
@@ -1088,7 +1088,7 @@ __forceinline void __fastcall DATATBLS_ProcessAdditionalTreasureClassArguments(D
 				*szNext = 0;
 				++szNext;
 			}
-			pTCExInfo->unk0x14 = atoi(szArg);
+			pTCExInfo->nUnique = atoi(szArg);
 		}
 		else if (!strncmp(szTmp, "cs", 3))
 		{
@@ -1098,7 +1098,7 @@ __forceinline void __fastcall DATATBLS_ProcessAdditionalTreasureClassArguments(D
 				*szNext = 0;
 				++szNext;
 			}
-			pTCExInfo->unk0x12 = atoi(szArg);
+			pTCExInfo->nSet = atoi(szArg);
 		}
 		else if (!strncmp(szTmp, "cr", 3))
 		{
@@ -1108,7 +1108,7 @@ __forceinline void __fastcall DATATBLS_ProcessAdditionalTreasureClassArguments(D
 				*szNext = 0;
 				++szNext;
 			}
-			pTCExInfo->unk0x10 = atoi(szArg);
+			pTCExInfo->nRare = atoi(szArg);
 		}
 		else if (!strncmp(szTmp, "cm", 3))
 		{
@@ -1118,7 +1118,7 @@ __forceinline void __fastcall DATATBLS_ProcessAdditionalTreasureClassArguments(D
 				*szNext = 0;
 				++szNext;
 			}
-			pTCExInfo->unk0x0E = atoi(szArg);
+			pTCExInfo->nMagic = atoi(szArg);
 		}
 		else if (!strncmp(szTmp, "ce", 3))
 		{
@@ -1128,7 +1128,7 @@ __forceinline void __fastcall DATATBLS_ProcessAdditionalTreasureClassArguments(D
 				*szNext = 0;
 				++szNext;
 			}
-			pTCExInfo->unk0x16 = atoi(szArg);
+			pTCExInfo->nSuperior = atoi(szArg);
 		}
 		else if (!strncmp(szTmp, "cg", 3))
 		{
@@ -1138,7 +1138,7 @@ __forceinline void __fastcall DATATBLS_ProcessAdditionalTreasureClassArguments(D
 				*szNext = 0;
 				++szNext;
 			}
-			pTCExInfo->unk0x18 = atoi(szArg);
+			pTCExInfo->nNormal = atoi(szArg);
 		}
 		else if (!strncmp(szTmp, "ma", 3))
 		{
@@ -1162,7 +1162,7 @@ __forceinline void __fastcall DATATBLS_ProcessAdditionalTreasureClassArguments(D
 		}
 		else
 		{
-			FOG_WriteToLogFile("Couldn't parse treasure class modifier!  (Line:%d  Item:%d)\n", nCounter, nItemCounter);
+			FOG_Trace("Couldn't parse treasure class modifier!  (Line:%d  Item:%d)\n", nCounter, nItemCounter);
 			break;
 		}
 	}
@@ -1230,7 +1230,7 @@ void __fastcall DATATBLS_LoadTreasureClassExTxt(void* pMemPool)
 
 		if (!(sgptDataTables->nTreasureClassEx % 16))
 		{
-			sgptDataTables->pTreasureClassEx = (D2TCExShortStrc*)FOG_ReallocServerMemory(NULL, sgptDataTables->pTreasureClassEx, sizeof(D2TCExShortStrc) * (sgptDataTables->nTreasureClassEx + 16), __FILE__, __LINE__, 0);
+			sgptDataTables->pTreasureClassEx = (D2TCExShortStrc*)D2_REALLOC_POOL(NULL, sgptDataTables->pTreasureClassEx, sizeof(D2TCExShortStrc) * (sgptDataTables->nTreasureClassEx + 16));
 		}
 		memset(&sgptDataTables->pTreasureClassEx[sgptDataTables->nTreasureClassEx], 0x00, sizeof(sgptDataTables->pTreasureClassEx[sgptDataTables->nTreasureClassEx]));
 
@@ -1271,7 +1271,7 @@ void __fastcall DATATBLS_LoadTreasureClassExTxt(void* pMemPool)
 
 				if (pTreasureClassExTxt[i].nProb[j] <= 0)
 				{
-					FOG_WriteToLogFile("Found a treasure class item with 0 chance!  (Line:%d  Item:%d)\n", i, j);
+					FOG_Trace("Found a treasure class item with 0 chance!  (Line:%d  Item:%d)\n", i, j);
 				}
 				else
 				{
@@ -1378,7 +1378,7 @@ void __fastcall DATATBLS_LoadTreasureClassExTxt(void* pMemPool)
 						}
 						else
 						{
-							FOG_WriteToLogFile("Couldn't parse treasure class item!  (Line:%d  Item:%d)\n", i, j);
+							FOG_Trace("Couldn't parse treasure class item!  (Line:%d  Item:%d)\n", i, j);
 						}
 					}
 				}
@@ -1392,7 +1392,7 @@ void __fastcall DATATBLS_LoadTreasureClassExTxt(void* pMemPool)
 //D2Common.0x6FD69B70 (#10656)
 int __stdcall DATATBLS_ShouldNeverCallInExpansion()
 {
-	FOG_10025("should never call this function in expansion", __FILE__, __LINE__);
+	FOG_DisplayWarning("should never call this function in expansion", __FILE__, __LINE__);
 	return 0;
 }
 
@@ -1465,7 +1465,7 @@ void __fastcall DATATBLS_LoadMonUModTxt(void* pMemPool)
 
 	if (sgptDataTables->nMonUModTxtRecordCount > 256)
 	{
-		FOG_WriteToLogFile("monumod.txt exceeded %d entries", 256);
+		FOG_Trace("monumod.txt exceeded %d entries", 256);
 		sgptDataTables->nMonUModTxtRecordCount = 256;
 	}
 }
@@ -1506,7 +1506,7 @@ void __fastcall DATATBLS_LoadSuperUniquesTxt(void* pMemPool)
 	{
 		if (sgptDataTables->bCompileTxt)
 		{
-			FOG_WriteToLogFile("Cut off superuniques at %d entries", 512);
+			FOG_Trace("Cut off superuniques at %d entries", 512);
 		}
 		sgptDataTables->nSuperUniquesTxtRecordCount = 512;
 	}
@@ -1520,7 +1520,7 @@ void __fastcall DATATBLS_LoadSuperUniquesTxt(void* pMemPool)
 		{
 			if (sgptDataTables->bCompileTxt)
 			{
-				FOG_WriteToLogFile("Invalid hcIdx (%d) -- value must be between 0 and %d.", nId, 65);
+				FOG_Trace("Invalid hcIdx (%d) -- value must be between 0 and %d.", nId, 65);
 			}
 		}
 		else
@@ -1533,7 +1533,7 @@ void __fastcall DATATBLS_LoadSuperUniquesTxt(void* pMemPool)
 			{
 				if (sgptDataTables->bCompileTxt)
 				{
-					FOG_WriteToLogFile("Duplicate hcIdx (%d) -- index must be unique.", nId);
+					FOG_Trace("Duplicate hcIdx (%d) -- index must be unique.", nId);
 				}
 			}
 		}
@@ -1543,7 +1543,7 @@ void __fastcall DATATBLS_LoadSuperUniquesTxt(void* pMemPool)
 	{
 		if (sgptDataTables->nSuperUniqueIds[i] == -1 && sgptDataTables->bCompileTxt)
 		{
-			FOG_WriteToLogFile("Missing hcIdx (%d) -- index incomplete", i);
+			FOG_Trace("Missing hcIdx (%d) -- index incomplete", i);
 		}
 
 #define SUPERUNIQUE_NONE -1
@@ -2298,7 +2298,7 @@ int __fastcall DATATBLS_CheckNestedMonsterTypes(int nMonType1, int nMonType2)
 			}
 		}
 
-		FOG_WriteToLogFile("Invalid monster type at line %d of file %s", __LINE__, __FILE__);
+		FOG_Trace("Invalid monster type at line %d of file %s", __LINE__, __FILE__);
 	}
 
 	return 0;
@@ -2324,8 +2324,7 @@ void __fastcall DATATBLS_LoadMonTypeTxt(void* pMemPool)
 	sgptDataTables->pMonTypeTxt = (D2MonTypeTxt*)DATATBLS_CompileTxt(pMemPool, "montype", pTbl, &sgptDataTables->nMonTypeTxtRecordCount, sizeof(D2MonTypeTxt));
 
 	sgptDataTables->nMonTypeIndex = (sgptDataTables->nMonTypeTxtRecordCount + 31) / 32;
-	sgptDataTables->pMonTypeNest = (uint32_t*)FOG_AllocServerMemory(NULL, sizeof(uint32_t) * sgptDataTables->nMonTypeTxtRecordCount * sgptDataTables->nMonTypeIndex, __FILE__, __LINE__, 0);
-	memset(sgptDataTables->pMonTypeNest, 0x00, sizeof(uint32_t) * sgptDataTables->nMonTypeTxtRecordCount * sgptDataTables->nMonTypeIndex);
+	sgptDataTables->pMonTypeNest = (uint32_t*)D2_CALLOC_POOL(nullptr, sizeof(uint32_t) * sgptDataTables->nMonTypeTxtRecordCount * sgptDataTables->nMonTypeIndex);
 
 	for (int i = 0; i < sgptDataTables->nMonTypeTxtRecordCount; ++i)
 	{
@@ -2348,7 +2347,7 @@ void __fastcall DATATBLS_UnloadMonTypeTxt()
 	{
 		DATATBLS_UnloadBin(sgptDataTables->pMonTypeTxt);
 		FOG_FreeLinker(sgptDataTables->pMonTypeLinker);
-		FOG_FreeServerMemory(NULL, sgptDataTables->pMonTypeNest, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(nullptr, sgptDataTables->pMonTypeNest);
 		sgptDataTables->pMonTypeTxt = NULL;
 		sgptDataTables->pMonTypeLinker = NULL;
 	}
@@ -2665,7 +2664,7 @@ void __fastcall DATATBLS_LoadMonEquipTxt(void* pMemPool)
 
 	if (sgptDataTables->nMonEquipTxtRecordCount >= 32767)
 	{
-		FOG_10025("Monequip.txt exceeded maximum number of allowable rows", __FILE__, __LINE__);
+		FOG_DisplayWarning("Monequip.txt exceeded maximum number of allowable rows", __FILE__, __LINE__);
 	}
 
 	for (int i = 0; i < sgptDataTables->nMonStatsTxtRecordCount; ++i)
@@ -2732,6 +2731,7 @@ void __fastcall DATATBLS_LoadSomeMonsterTxts(void* pMemPool)
 		{
 			for (int k = 0; k < 3; ++k)
 			{
+				// Note: Game actually uses Storm.dll SStrVPrintf
 				wsprintfA(szChest, "Act %d%s Chest %s", j + 1, szDifficulties[i], szTreasureClassVariants[k]);
 
 				nTxtRow = FOG_GetRowFromTxt(sgptDataTables->pTreasureClassExLinker, szChest, 0);
@@ -2782,7 +2782,7 @@ void __fastcall DATATBLS_CreateItemTypeTreasureClasses()
 
 	if (!(sgptDataTables->nTreasureClassEx % 16))
 	{
-		sgptDataTables->pTreasureClassEx = (D2TCExShortStrc*)FOG_ReallocServerMemory(NULL, sgptDataTables->pTreasureClassEx, sizeof(D2TCExShortStrc) * (sgptDataTables->nTreasureClassEx + 16), __FILE__, __LINE__, 0);
+		sgptDataTables->pTreasureClassEx = (D2TCExShortStrc*)D2_REALLOC_POOL(NULL, sgptDataTables->pTreasureClassEx, sizeof(D2TCExShortStrc) * (sgptDataTables->nTreasureClassEx + 16));
 	}
 	memset(&sgptDataTables->pTreasureClassEx[sgptDataTables->nTreasureClassEx], 0x00, sizeof(sgptDataTables->pTreasureClassEx[sgptDataTables->nTreasureClassEx]));
 	++sgptDataTables->nTreasureClassEx;
@@ -2803,12 +2803,13 @@ void __fastcall DATATBLS_CreateItemTypeTreasureClasses()
 			{
 				if (FOG_GetStringFromLinkIndex(sgptDataTables->pItemTypesLinker, i, v37))
 				{
+					// Note: Game actually uses Storm.dll SStrVPrintf
 					wsprintfA(dest, "%s%d", v37, nLevel);
 					FOG_10216_AddRecordToLinkingTable(sgptDataTables->pTreasureClassExLinker, dest);
 
 					if (!(sgptDataTables->nTreasureClassEx % 16))
 					{
-						sgptDataTables->pTreasureClassEx = (D2TCExShortStrc*)FOG_ReallocServerMemory(NULL, sgptDataTables->pTreasureClassEx, sizeof(D2TCExShortStrc) * (sgptDataTables->nTreasureClassEx + 16), __FILE__, __LINE__, 0);
+						sgptDataTables->pTreasureClassEx = (D2TCExShortStrc*)D2_REALLOC_POOL(NULL, sgptDataTables->pTreasureClassEx, sizeof(D2TCExShortStrc) * (sgptDataTables->nTreasureClassEx + 16));
 					}
 					memset(&sgptDataTables->pTreasureClassEx[sgptDataTables->nTreasureClassEx], 0x00, sizeof(sgptDataTables->pTreasureClassEx[sgptDataTables->nTreasureClassEx]));
 
@@ -2953,7 +2954,7 @@ void __fastcall DATATBLS_UnloadSomeMonsterTxts()
 	}
 	if (sgptDataTables->pMonSeqTable)
 	{
-		FOG_FreeServerMemory(NULL, sgptDataTables->pMonSeqTable, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(nullptr, sgptDataTables->pMonSeqTable);
 		sgptDataTables->nMonSeqTableRecordCount = 0;
 	}
 
@@ -2962,10 +2963,10 @@ void __fastcall DATATBLS_UnloadSomeMonsterTxts()
 	{
 		if (sgptDataTables->pTreasureClassEx[i].pInfo)
 		{
-			FOG_FreeServerMemory(NULL, sgptDataTables->pTreasureClassEx[i].pInfo, __FILE__, __LINE__, 0);
+			D2_FREE_POOL(nullptr, sgptDataTables->pTreasureClassEx[i].pInfo);
 		}
 	}
-	FOG_FreeServerMemory(NULL, sgptDataTables->pTreasureClassEx, __FILE__, __LINE__, 0);
+	D2_FREE_POOL(nullptr, sgptDataTables->pTreasureClassEx);
 	sgptDataTables->pTreasureClassEx = NULL;
 	sgptDataTables->nTreasureClassEx = 0;
 
@@ -3002,15 +3003,4 @@ void __fastcall DATATBLS_UnloadSomeMonsterTxts()
 		sgptDataTables->pUniqueAppellationTxt = NULL;
 		sgptDataTables->nUniqueAppellationTxtRecordCount = 0;
 	}
-}
-
-//Inlined at various places
-D2MonStatsTxt* __fastcall DATATBLS_GetMonStatsTxtRecord(int nMonsterId)
-{
-	if (nMonsterId >= 0 && nMonsterId < sgptDataTables->nMonStatsTxtRecordCount)
-	{
-		return &sgptDataTables->pMonStatsTxt[nMonsterId];
-	}
-
-	return NULL;
 }

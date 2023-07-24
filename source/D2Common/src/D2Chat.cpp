@@ -1,7 +1,8 @@
 #include <cstring>
+
 #include <D2Chat.h>
 #include <D2Lang.h>
-
+#include <D2StrTable.h>
 
 //D2Common.0x6FDC3BF0 (#10892)
 D2HoverTextStrc* __stdcall CHAT_AllocHoverMsg(void* pMemPool, const char* szText, int nTimeout)
@@ -25,12 +26,11 @@ D2HoverTextStrc* __stdcall CHAT_AllocHoverMsg(void* pMemPool, const char* szText
 		nLength = 254;
 	}
 
-	pHoverMsg = (D2HoverTextStrc*)FOG_AllocServerMemory(pMemPool, sizeof(D2HoverTextStrc), __FILE__, __LINE__, 0);
-	memset(pHoverMsg, 0x00, sizeof(D2HoverTextStrc));
-
+	pHoverMsg = D2_CALLOC_STRC_POOL(pMemPool, D2HoverTextStrc);
+	
 	pHoverMsg->dwDisplayTime = 8 * nLength + 125;
 	pHoverMsg->dwExpireTime = 8 * nLength + 125 + nTimeout;
-	pHoverMsg->nLangId = D2LANG_GetLocaleId();
+	pHoverMsg->nLangId = STRTABLE_GetLanguage();
 	pHoverMsg->bUsed = FALSE;
 
 	strncpy_s(pHoverMsg->szMsg, szText, nLength + 1);
@@ -44,7 +44,7 @@ void __stdcall CHAT_FreeHoverMsg(void* pMemPool, D2HoverTextStrc* pHoverMsg)
 {
 	if (pHoverMsg)
 	{
-		FOG_FreeServerMemory(pMemPool, pHoverMsg, __FILE__, __LINE__, 0);
+		D2_FREE_POOL(pMemPool, pHoverMsg);
 	}
 }
 
@@ -82,7 +82,7 @@ BOOL __stdcall CHAT_GetUsedFromHoverMsg(D2HoverTextStrc* pHoverMsg)
 		return pHoverMsg->bUsed;
 	}
 
-	REMOVE_LATER_WriteToLogFile("CHAT_GetUsedFromHoverMsg: NULL pointer");
+	REMOVE_LATER_Trace("CHAT_GetUsedFromHoverMsg: NULL pointer");
 	return FALSE;
 }
 
