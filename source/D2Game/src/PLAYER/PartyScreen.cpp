@@ -170,7 +170,7 @@ void __fastcall D2GAME_PARTYSCREEN_Command8_6FC7ADD0(D2GameStrc* pGame, D2UnitSt
 
     if (nPartyId == -1)
     {
-        nPartyId = sub_6FCB9C40(pGame);
+        nPartyId = PARTY_AllocParty(pGame);
         sub_6FCB9D10(pGame, nPartyId, pPlayer2);
         sub_6FCB9D10(pGame, nPartyId, pPlayer1);
         PLAYERLIST_sub_6FCBAD60(pGame, pPlayer2);
@@ -373,7 +373,7 @@ void __fastcall D2GAME_PARTYSCREEN_Command4_6FC7B1D0(D2GameStrc* pGame, D2UnitSt
         PARTY_IteratePartyMembers(pGame, nPartyId2, sub_6FC7B3F0, pPlayer1);
     }
 
-    sub_6FC7C170(pGame, pPlayer1);
+    PLAYER_RemoveTownPortal(pGame, pPlayer1);
 
     const int32_t nPartyId1 = SUNIT_GetPartyId(pPlayer1);
     if (nPartyId1 != -1 && nPartyId1 == SUNIT_GetPartyId(pPlayer2))

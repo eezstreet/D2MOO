@@ -208,7 +208,7 @@ int32_t __fastcall SKILLS_SrvSt12_Telekinesis_DragonFlight(D2GameStrc* pGame, D2
 
     if (pTarget->dwUnitType == UNIT_PLAYER || pTarget->dwUnitType == UNIT_MONSTER)
     {
-        if (!sub_6FCBD900(pGame, pUnit, pTarget) || DUNGEON_IsRoomInTown(UNITS_GetRoom(pTarget)) || DUNGEON_IsRoomInTown(UNITS_GetRoom(pUnit)))
+        if (!SUNIT_AreUnitOwnersAligned(pGame, pUnit, pTarget) || DUNGEON_IsRoomInTown(UNITS_GetRoom(pTarget)) || DUNGEON_IsRoomInTown(UNITS_GetRoom(pUnit)))
         {
             return 0;
         }
@@ -513,7 +513,7 @@ int32_t __fastcall SKILLS_SrvDo021_Telekinesis(D2GameStrc* pGame, D2UnitStrc* pU
     case UNIT_PLAYER:
     case UNIT_MONSTER:
     {
-        if (!sub_6FCBD900(pGame, pUnit, pTarget) || DUNGEON_IsRoomInTown(UNITS_GetRoom(pTarget)) || DUNGEON_IsRoomInTown(UNITS_GetRoom(pUnit)))
+        if (!SUNIT_AreUnitOwnersAligned(pGame, pUnit, pTarget) || DUNGEON_IsRoomInTown(UNITS_GetRoom(pTarget)) || DUNGEON_IsRoomInTown(UNITS_GetRoom(pUnit)))
         {
             return 0;
         }
@@ -1162,7 +1162,7 @@ int32_t __fastcall SKILLS_SrvDo144_Hydra(D2GameStrc* pGame, D2UnitStrc* pUnit, i
 
             if (pOwner && pOwner->dwUnitType == UNIT_MONSTER)
             {
-                sub_6FCBDD30(pPet, STATLIST_GetUnitAlignment(pOwner), 1);
+                SUNIT_SetUnitAlignment(pPet, STATLIST_GetUnitAlignment(pOwner), 1);
             }
         }
     }
@@ -1179,7 +1179,7 @@ int32_t __fastcall SKILLS_EventFunc01_ChillingArmor(D2GameStrc* pGame, int32_t n
     }
 
     D2UnitStrc* pOwner = SUNIT_GetOwner(pGame, pUnit);
-    if (!pOwner || !sub_6FCBD900(pGame, pAttacker, pOwner))
+    if (!pOwner || !SUNIT_AreUnitOwnersAligned(pGame, pAttacker, pOwner))
     {
         return 0;
     }

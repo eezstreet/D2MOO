@@ -363,7 +363,7 @@ void __fastcall D2GAME_InitTimer_6FC351D0(D2GameStrc* pGame, D2UnitStrc* pUnit, 
 
     if (pUnit && pUnit->dwUnitType == UNIT_MONSTER && nTimerType == UNITEVENTCALLBACK_AITHINK && STATES_CheckState(pUnit, STATE_UNINTERRUPTABLE))
     {
-        sub_6FCBDE90(pUnit, 0);
+        SUNIT_SetUninterruptable(pUnit, 0);
     }
 
     pEventTimer = sub_6FC35460(pGame, pUnit);

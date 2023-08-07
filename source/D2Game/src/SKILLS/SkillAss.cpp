@@ -1450,7 +1450,7 @@ D2UnitStrc* __fastcall sub_6FCF8610(D2GameStrc* pGame, D2UnitStrc* pUnit, int32_
 
     D2GAME_SKILLS_SetSummonBaseStats_6FD0CB10(pGame, pOwner, pPet, 0, nSkillLevel);
     D2GAME_SetSummonPassiveStats_6FD0C530(pGame, pOwner, pPet, nSkillId, nSkillLevel, 0);
-    sub_6FCBDD30(pPet, 2u, 1);
+    SUNIT_SetUnitAlignment(pPet, UNIT_ALIGNMENT_GOOD, 1);
     
     D2ModeChangeStrc modeChange = {};
     MONSTERMODE_GetModeChangeInfo(pPet, nSpawnMode, &modeChange);
@@ -2165,7 +2165,7 @@ int32_t __fastcall SKILLS_SrvDo050_DragonTail(D2GameStrc* pGame, D2UnitStrc* pUn
 //D2Game.0x6FCF9EA0
 void __fastcall SKILLS_StatRemoveCallback_MindBlast(D2UnitStrc* pItem, int32_t nState, int32_t nUnused)
 {
-    sub_6FCBDD30(pItem, 0, 1);
+    SUNIT_SetUnitAlignment(pItem, UNIT_ALIGNMENT_EVIL, 1);
     STATES_ToggleState(pItem, nState, 0);
     D2GAME_TARGETS_Last_6FC40380(SUNIT_GetGameFromUnit(pItem), pItem);
 
@@ -2240,7 +2240,7 @@ int32_t __fastcall SKILLS_AuraCallback_MindBlast(D2AuraCallbackStrc* pAuraCallba
             D2COMMON_10476(pConversionStatList, nExpireFrame);
             EVENT_SetEvent(pAuraCallback->pGame, pUnit, UNITEVENTCALLBACK_REMOVESTATE, nExpireFrame, 0, 0);
             sub_6FD154D0(pUnit);
-            sub_6FCBDD30(pUnit, 2u, 1);
+            SUNIT_SetUnitAlignment(pUnit, UNIT_ALIGNMENT_GOOD, 1);
             D2GAME_UpdateSummonAI_6FC401F0(pAuraCallback->pGame, pUnit, 0, pAuraCallback->pOwner->dwNodeIndex);
 
             for (D2StatListStrc* i = STATLIST_GetStatListFromUnitAndFlag(pUnit, 8); i; i = STATLIST_GetStatListFromUnitAndFlag(pUnit, 8))

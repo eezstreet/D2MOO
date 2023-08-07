@@ -92,7 +92,7 @@ void __fastcall sub_6FC61270(D2GameStrc* pGame, D2UnitStrc* pPlayer, D2UnitStrc*
 
     pUnit->dwFlags |= UNITFLAG_NOXP | UNITFLAG_NOTC | UNITFLAG_ISMERC;
 
-    sub_6FCBDD30(pUnit, 2u, 0);
+    SUNIT_SetUnitAlignment(pUnit, UNIT_ALIGNMENT_GOOD, 0);
 
     if (!bDead)
     {

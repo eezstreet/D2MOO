@@ -140,7 +140,7 @@ void __fastcall SUNIT_RemoveUnit(D2GameStrc* pGame, D2UnitStrc* pUnit)
     case UNIT_PLAYER:
     {
         D2GAME_FreeUnitNode_6FC40310(pGame, pUnit);
-        sub_6FC7C170(pGame, pUnit);
+        PLAYER_RemoveTownPortal(pGame, pUnit);
         PARTY_LeaveParty(pGame, pUnit);
         PLAYER_Destroy(pGame, pUnit);
 
@@ -1826,7 +1826,7 @@ int32_t __fastcall SUNIT_IsDead(D2UnitStrc* pUnit)
 }
 
 //D2Game.0x6FCBD900
-int32_t __fastcall sub_6FCBD900(D2GameStrc* pGame, D2UnitStrc* pUnit, D2UnitStrc* pTarget)
+int32_t __fastcall SUNIT_AreUnitOwnersAligned(D2GameStrc* pGame, D2UnitStrc* pUnit, D2UnitStrc* pTarget)
 {
     D2UnitStrc* pTestUnit = pUnit;
     if (pTestUnit)
@@ -2021,7 +2021,7 @@ int32_t __fastcall SUNIT_AreUnitsAligned(D2GameStrc* pGame, D2UnitStrc* pUnit1, 
 }
 
 //D2Game.0x6FCBDD30
-void __fastcall sub_6FCBDD30(D2UnitStrc* pUnit, uint8_t nAlignNew, int32_t a3)
+void __fastcall SUNIT_SetUnitAlignment(D2UnitStrc* pUnit, uint8_t nAlignNew, int32_t bUpdateSpawnCount)
 {
     int32_t nAlignment = UNIT_ALIGNMENT_UNASSIGNED;
 
@@ -2070,9 +2070,9 @@ void __fastcall sub_6FCBDD30(D2UnitStrc* pUnit, uint8_t nAlignNew, int32_t a3)
         return;
     }
 
-    if (a3)
+    if (bUpdateSpawnCount)
     {
-        sub_6FC681C0(pUnit->pGame->pMonReg, pUnit, nAlignment, nAlignNew);
+        MONSTERREGION_UpdateSpawnCountForNewAlignment(pUnit->pGame->pMonReg, pUnit, nAlignment, nAlignNew);
     }
 
     if (nAlignment == nAlignNew)
@@ -2102,7 +2102,7 @@ void __fastcall sub_6FCBDD30(D2UnitStrc* pUnit, uint8_t nAlignNew, int32_t a3)
 }
 
 //D2Game.0x6FCBDE90
-void __fastcall sub_6FCBDE90(D2UnitStrc* pUnit, int32_t bSetUninterruptable)
+void __fastcall SUNIT_SetUninterruptable(D2UnitStrc* pUnit, int32_t bSetUninterruptable)
 {
     STATES_ToggleState(pUnit, STATE_UNINTERRUPTABLE, bSetUninterruptable);
 

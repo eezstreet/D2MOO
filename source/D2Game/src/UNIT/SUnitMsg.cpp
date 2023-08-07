@@ -725,7 +725,7 @@ void __fastcall sub_6FCC6540(D2UnitStrc* pUnit, D2ClientStrc* pClient)
             if (!(pUnit->dwFlags & UNITFLAG_UPGRLIFENHITCLASS))
             {
                 D2UnitStrc* pPlayer = CLIENTS_GetPlayerFromClient(pClient, 0);
-                if (pPlayer && sub_6FCBD900(pPlayer->pGame, pPlayer, pUnit))
+                if (pPlayer && SUNIT_AreUnitOwnersAligned(pPlayer->pGame, pPlayer, pUnit))
                 {
                     D2GAME_PACKETS_SendPacket0xAB_6FC3D7B0(pClient, *(uint8_t*)(i + 8), *(uint32_t*)(i + 12), *(uint8_t*)(i + 16));
                 }

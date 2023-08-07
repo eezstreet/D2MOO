@@ -145,7 +145,7 @@ D2UnitStrc* __fastcall sub_6FCF16D0(D2GameStrc* pGame, D2UnitStrc* pUnit, D2Unit
 	}
 
 	const int32_t nDistance = AIUTIL_GetDistanceToCoordinates_FullUnitSize(pUnit, pTarget);
-	if (nDistance >= pArg->nMaxDistance || sub_6FCBD900(pGame, pUnit, pTarget))
+	if (nDistance >= pArg->nMaxDistance || SUNIT_AreUnitOwnersAligned(pGame, pUnit, pTarget))
 	{
 		return nullptr;
 	}
@@ -183,7 +183,7 @@ D2UnitStrc* __fastcall sub_6FCF1780(D2GameStrc* pGame, D2UnitStrc* pUnit, D2Unit
 		return nullptr;
 	}
 
-	if ((pTarget->dwUnitType != UNIT_PLAYER && pTarget->dwUnitType != UNIT_MONSTER) || SUNIT_IsDead(pTarget) || !(pTarget->dwFlags & UNITFLAG_CANBEATTACKED) || !sub_6FCBD900(pGame, pUnit, pTarget))
+	if ((pTarget->dwUnitType != UNIT_PLAYER && pTarget->dwUnitType != UNIT_MONSTER) || SUNIT_IsDead(pTarget) || !(pTarget->dwFlags & UNITFLAG_CANBEATTACKED) || !SUNIT_AreUnitOwnersAligned(pGame, pUnit, pTarget))
 	{
 		if (pTarget->dwUnitType == UNIT_MONSTER && (!pUnit || pUnit->dwUnitType != UNIT_PLAYER) && STATLIST_GetUnitAlignment(pUnit) == UNIT_ALIGNMENT_EVIL && pArg->unk0x08 && !MONSTERS_IsDead(pTarget))
 		{
@@ -387,7 +387,7 @@ int32_t __fastcall sub_6FCF1A50(D2GameStrc* pGame, D2UnitStrc* pUnit, D2UnitStrc
 		}
 	}
 
-	return sub_6FCBD900(pGame, pUnit, pTarget);
+	return SUNIT_AreUnitOwnersAligned(pGame, pUnit, pTarget);
 }
 
 //D2Game.0x6FCF1B30
@@ -432,7 +432,7 @@ D2UnitStrc* __fastcall sub_6FCF1BD0(D2GameStrc* pGame, D2UnitStrc* pUnit, D2Unit
 {
 	D2AiCallback11ArgStrc* pArg = (D2AiCallback11ArgStrc*)pCallbackArg;
 
-	if (pTarget == pArg->unk0x08 || !pTarget || (pTarget->dwUnitType != UNIT_PLAYER && pTarget->dwUnitType != UNIT_MONSTER) || SUNIT_IsDead(pTarget) || !(pTarget->dwFlags & UNITFLAG_CANBEATTACKED) || !sub_6FCBD900(pGame, pUnit, pTarget))
+	if (pTarget == pArg->unk0x08 || !pTarget || (pTarget->dwUnitType != UNIT_PLAYER && pTarget->dwUnitType != UNIT_MONSTER) || SUNIT_IsDead(pTarget) || !(pTarget->dwFlags & UNITFLAG_CANBEATTACKED) || !SUNIT_AreUnitOwnersAligned(pGame, pUnit, pTarget))
 	{
 		return nullptr;
 	}
@@ -951,11 +951,11 @@ int32_t __fastcall sub_6FCF2920(D2GameStrc* pGame, D2UnitStrc* pUnit, int32_t a3
 		{
 			if (ITEMS_RollRandomNumber(&pUnit->pSeed) & 1)
 			{
-				sub_6FCBDD30(pUnit, 2, 1);
+				SUNIT_SetUnitAlignment(pUnit, UNIT_ALIGNMENT_GOOD, 1);
 			}
 			else
 			{
-				sub_6FCBDD30(pUnit, 0, 1);
+				SUNIT_SetUnitAlignment(pUnit, UNIT_ALIGNMENT_EVIL, 1);
 			}
 		}
 		else
@@ -964,11 +964,11 @@ int32_t __fastcall sub_6FCF2920(D2GameStrc* pGame, D2UnitStrc* pUnit, int32_t a3
 			{
 				if (nAlignment ==  UNIT_ALIGNMENT_EVIL)
 				{
-					sub_6FCBDD30(pUnit, 2, 1);
+					SUNIT_SetUnitAlignment(pUnit, UNIT_ALIGNMENT_GOOD, 1);
 				}
 				else if (nAlignment == UNIT_ALIGNMENT_GOOD)
 				{
-					sub_6FCBDD30(pUnit, 0, 1);
+					SUNIT_SetUnitAlignment(pUnit, UNIT_ALIGNMENT_EVIL, 1);
 				}
 			}
 		}
@@ -1003,7 +1003,7 @@ int32_t __fastcall sub_6FCF2920(D2GameStrc* pGame, D2UnitStrc* pUnit, int32_t a3
 			nDistance = arg.nDistance;
 		}
 
-		sub_6FCBDD30(pUnit, nAlignment, 1);
+		SUNIT_SetUnitAlignment(pUnit, nAlignment, 1);
 
 		if (!pTarget)
 		{

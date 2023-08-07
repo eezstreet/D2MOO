@@ -35,7 +35,7 @@ void __fastcall PLAYER_SetUniqueIdInPlayerData(D2UnitStrc* pPlayer, int32_t nUni
 //D2Game.0x6FC7C120
 int32_t __fastcall PLAYER_GetUniqueIdFromPlayerData(D2UnitStrc* pPlayer);
 //D2Game.0x6FC7C170
-void __fastcall sub_6FC7C170(D2GameStrc* pGame, D2UnitStrc* pPlayer);
+void __fastcall PLAYER_RemoveTownPortal(D2GameStrc* pGame, D2UnitStrc* pPlayer);
 //D2Game.0x6FC7C260
 int32_t __fastcall sub_6FC7C260(D2GameStrc* pGame, D2UnitStrc* pUnit, int32_t nUnitGUID, uint32_t nValue);
 //D2Game.0x6FC7C3A0

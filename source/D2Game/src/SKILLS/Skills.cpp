@@ -553,7 +553,7 @@ int32_t __fastcall sub_6FD0FA00(D2UnitStrc* pUnit, D2UnitStrc* pTarget, uint32_t
             pAttacker = pOwner;
         }
 
-        if (!sub_6FCBD900(SUNIT_GetGameFromUnit(pAttacker), pAttacker, pTarget))
+        if (!SUNIT_AreUnitOwnersAligned(SUNIT_GetGameFromUnit(pAttacker), pAttacker, pTarget))
         {
             return 0;
         }
@@ -2605,7 +2605,7 @@ int32_t __fastcall sub_6FD12FD0(D2GameStrc* pGame, D2UnitStrc* pUnit)
 
         if (pSkillsTxtRecord->dwFlags[0] & gdwBitMasks[SKILLSFLAGINDEX_TARGETABLEONLY])
         {
-            if (!sub_6FCBD900(pGame, pUnit, pTarget) && !SUNIT_CanPetBeTargetedBySkill(pGame, pUnit, pTarget, nSkillId) && !SUNIT_CanAllyBeTargetedBySkill(pGame, pUnit, pTarget, nSkillId))
+            if (!SUNIT_AreUnitOwnersAligned(pGame, pUnit, pTarget) && !SUNIT_CanPetBeTargetedBySkill(pGame, pUnit, pTarget, nSkillId) && !SUNIT_CanAllyBeTargetedBySkill(pGame, pUnit, pTarget, nSkillId))
             {
                 if (pUnit && pUnit->dwUnitType == UNIT_PLAYER)
                 {

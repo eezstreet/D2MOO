@@ -117,7 +117,7 @@ void __stdcall SUNIT_ResetInteractInfo(D2UnitStrc* pUnit);
 //D2Game.0x6FCBD8B0
 int32_t __fastcall SUNIT_IsDead(D2UnitStrc* pUnit);
 //D2Game.0x6FCBD900
-int32_t __fastcall sub_6FCBD900(D2GameStrc* pGame, D2UnitStrc* pUnit, D2UnitStrc* pTarget);
+int32_t __fastcall SUNIT_AreUnitOwnersAligned(D2GameStrc* pGame, D2UnitStrc* pUnit, D2UnitStrc* pTarget);
 //D2Game.0x6FCBDA10
 D2UnitStrc** __fastcall SUNIT_GetUnitList(int32_t nUnitType, D2GameStrc* pGame, int32_t nUnitGUID);
 //D2Game.0x6FCBDA40
@@ -127,9 +127,9 @@ int32_t __fastcall SUNIT_CanAllyBeTargetedBySkill(D2GameStrc* pGame, D2UnitStrc*
 //D2Game.0x6FCBDC60
 int32_t __fastcall SUNIT_AreUnitsAligned(D2GameStrc* pGame, D2UnitStrc* pUnit1, D2UnitStrc* pUnit);
 //D2Game.0x6FCBDD30
-void __fastcall sub_6FCBDD30(D2UnitStrc* pUnit, uint8_t nAlignNew, int32_t a3);
+void __fastcall SUNIT_SetUnitAlignment(D2UnitStrc* pUnit, uint8_t nAlignNew, int32_t a3);
 //D2Game.0x6FCBDE90
-void __fastcall sub_6FCBDE90(D2UnitStrc* pUnit, int32_t bSetUninterruptable);
+void __fastcall SUNIT_SetUninterruptable(D2UnitStrc* pUnit, int32_t bSetUninterruptable);
 //D2Game.0x6FCBDF90
 int32_t __fastcall sub_6FCBDF90(D2GameStrc* pGame, D2UnitStrc* pPlayer, int32_t a3, int32_t a4, int32_t a5);
 //D2Game.0x6FCBDFE0

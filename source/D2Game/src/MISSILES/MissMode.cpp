@@ -101,7 +101,7 @@ int32_t __fastcall MISSMODE_UnitFindCallback_CanCollideWithMonster(D2UnitStrc* p
         return 0;
     }
 
-    if (MISSILE_CheckUnitIfOwner(pArg->pMissile, pUnit) || (pArg->pOwner && !sub_6FCBD900(pArg->pGame, pArg->pOwner, pUnit) && !pArg->pMissilesTxtRecord->nCollideFriend))
+    if (MISSILE_CheckUnitIfOwner(pArg->pMissile, pUnit) || (pArg->pOwner && !SUNIT_AreUnitOwnersAligned(pArg->pGame, pArg->pOwner, pUnit) && !pArg->pMissilesTxtRecord->nCollideFriend))
     {
         return 0;
     }
@@ -128,7 +128,7 @@ int32_t __fastcall MISSMODE_UnitFindCallback_CanCollideWithAlignUnit(D2UnitStrc*
         return 0;
     }
 
-    if (MISSILE_CheckUnitIfOwner(pArg->pMissile, pUnit) || (pArg->pOwner && !sub_6FCBD900(pArg->pGame, pArg->pOwner, pUnit) && !pArg->pMissilesTxtRecord->nCollideFriend))
+    if (MISSILE_CheckUnitIfOwner(pArg->pMissile, pUnit) || (pArg->pOwner && !SUNIT_AreUnitOwnersAligned(pArg->pGame, pArg->pOwner, pUnit) && !pArg->pMissilesTxtRecord->nCollideFriend))
     {
         return 0;
     }
@@ -155,7 +155,7 @@ int32_t __fastcall MISSMODE_UnitFindCallback_CanCollideWithPlayerOrMonster(D2Uni
         return 0;
     }
 
-    if (MISSILE_CheckUnitIfOwner(pArg->pMissile, pUnit) || (pArg->pOwner && !sub_6FCBD900(pArg->pGame, pArg->pOwner, pUnit) && !pArg->pMissilesTxtRecord->nCollideFriend))
+    if (MISSILE_CheckUnitIfOwner(pArg->pMissile, pUnit) || (pArg->pOwner && !SUNIT_AreUnitOwnersAligned(pArg->pGame, pArg->pOwner, pUnit) && !pArg->pMissilesTxtRecord->nCollideFriend))
     {
         return 0;
     }
@@ -896,7 +896,7 @@ int32_t __fastcall MISSMODE_SrvDo07_GuidedArrow_BoneSpirit(D2GameStrc* pGame, D2
         sub_6FCBC7E0(pGame, pMissile);
 
         D2UnitStrc* pTarget = SUNIT_GetTargetUnit(pGame, pMissile);
-        if (pTarget && (SUNIT_IsDead(pTarget) || !sub_6FCBD900(pGame, pOwner, pTarget)))
+        if (pTarget && (SUNIT_IsDead(pTarget) || !SUNIT_AreUnitOwnersAligned(pGame, pOwner, pTarget)))
         {
             pTarget = nullptr;
         }
@@ -5026,7 +5026,7 @@ int32_t __fastcall MISSMODE_SrvDmgHitHandler(D2GameStrc* pGame, D2UnitStrc* pMis
 
         if (pOwner)
         {
-            if (!sub_6FCBD900(pGame, pOwner, pUnit) && !pMissilesTxtRecord->nCollideFriend)
+            if (!SUNIT_AreUnitOwnersAligned(pGame, pOwner, pUnit) && !pMissilesTxtRecord->nCollideFriend)
             {
                 return 1;
             }

@@ -227,7 +227,7 @@ void __fastcall SUNITINACTIVE_RestoreInactiveUnits(D2GameStrc* pGame, D2RoomStrc
 							}
 						}
 
-						sub_6FCBDD30(pUnit, nOldAlign, 1);
+						SUNIT_SetUnitAlignment(pUnit, nOldAlign, 1);
 
 						if (pInactiveMonsterNode->nUnitFlagsEx & 0x200)
 						{
@@ -616,7 +616,7 @@ void __fastcall SUNITINACTIVE_CompressUnitIfNeeded(D2GameStrc* pGame, D2UnitStrc
 			if (!bIsDead)
 			{
 				bCompress = 1;
-				sub_6FCBDD30(pUnit, 0, 1);
+				SUNIT_SetUnitAlignment(pUnit, UNIT_ALIGNMENT_EVIL, 1);
 				D2GAME_TARGETS_Last_6FC40380(pGame, pUnit);
 			}
 			else

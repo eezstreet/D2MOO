@@ -185,7 +185,7 @@ void __fastcall ACT5Q5_DeactivateAncientMonsters(D2GameStrc* pGame, D2QuestDataS
 			{
 				if (STATES_CheckState(pAncientMonster, STATE_UNINTERRUPTABLE))
 				{
-					sub_6FCBDE90(pAncientMonster, 0);
+					SUNIT_SetUninterruptable(pAncientMonster, 0);
 				}
 
 				if (UNITS_GetRoom(pAncientMonster))
@@ -1265,7 +1265,7 @@ int32_t __fastcall ACT5Q5_UnitIterate_ClosePortals(D2GameStrc* pGame, D2UnitStrc
 	D2RoomStrc* pRoom = UNITS_GetRoom(pPortal);
 	if (DUNGEON_GetLevelIdFromRoom(pRoom) == LEVEL_ROCKYSUMMIT)
 	{
-		sub_6FC7C170(pGame, pUnit);
+		PLAYER_RemoveTownPortal(pGame, pUnit);
 	}
 
 	return 0;

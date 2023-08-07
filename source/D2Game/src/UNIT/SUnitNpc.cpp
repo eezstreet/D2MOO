@@ -924,7 +924,7 @@ void __fastcall sub_6FCC7E20(D2GameStrc* pGame, D2UnitStrc* pNpc, D2UnitStrc* pI
 }
 
 //D2Game.0x6FCC7FA0
-void __fastcall sub_6FCC7FA0(D2GameStrc* pGame, D2UnitStrc* pPlayer, D2UnitStrc* pNpc, uint16_t wName)
+void __fastcall D2GAME_NPC_FinalizeMercHire_6FCC7FA0(D2GameStrc* pGame, D2UnitStrc* pPlayer, D2UnitStrc* pNpc, uint16_t wName)
 {
     int32_t nLevel = STATLIST_UnitGetStatValue(pPlayer, STAT_LEVEL, 0);
     if (pGame->nDifficulty == DIFFMODE_NORMAL)
@@ -1060,7 +1060,7 @@ void __fastcall sub_6FCC8430(D2GameStrc* pGame, D2UnitStrc* pUnit)
 }
 
 //D2Game.0x6FCC84D0
-void __fastcall sub_6FCC84D0(D2GameStrc* pGame, D2UnitStrc* pPlayer, D2UnitStrc* pPet)
+void __fastcall D2GAME_NPC_InitMerc_6FCC84D0(D2GameStrc* pGame, D2UnitStrc* pPlayer, D2UnitStrc* pPet)
 {
     if (!pPet || !pPlayer)
     {
@@ -1721,10 +1721,10 @@ void __fastcall D2GAME_NPC_ResurrectMerc_6FCC9350(D2GameStrc* pGame, D2UnitStrc*
 
     pHireling->dwFlags &= 0xFFFEFFFFu;
 
-    UNITS_ChangeAnimMode(pHireling, 1);
+    UNITS_ChangeAnimMode(pHireling, MONMODE_NEUTRAL);
 
     STATLIST_SetUnitStat(pHireling, STAT_HITPOINTS, STATLIST_GetMaxLifeFromUnit(pHireling), 0);
-    sub_6FCC84D0(pGame, pPlayer, pHireling);
+    D2GAME_NPC_InitMerc_6FCC84D0(pGame, pPlayer, pHireling);
 
     D2ClientStrc* pClient = SUNIT_GetClientFromPlayer(pPlayer, __FILE__, __LINE__);
     D2GAME_PACKETS_SendPacket0x9B_6FC3FB30(pClient, -1, 0);
@@ -1739,7 +1739,7 @@ void __fastcall D2GAME_NPC_HireMerc_6FCC9540(D2GameStrc* pGame, D2UnitStrc* pPla
     D2UnitStrc* pNpc = SUNIT_GetServerUnit(pGame, UNIT_MONSTER, nNpcUnitId);
     if (pNpc && pInteractUnit == pNpc)
     {
-        sub_6FCC7FA0(pGame, pPlayer, pNpc, a4);
+        D2GAME_NPC_FinalizeMercHire_6FCC7FA0(pGame, pPlayer, pNpc, a4);
     }
     else
     {

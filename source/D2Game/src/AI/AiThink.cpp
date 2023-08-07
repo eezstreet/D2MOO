@@ -4327,7 +4327,7 @@ D2UnitStrc* __fastcall AITHINK_TargetCallback_Mephisto(D2GameStrc* pGame, D2Unit
 {
 	D2MephistoAiCallbackArgStrc* pArg = (D2MephistoAiCallbackArgStrc*)pCallbackArg;
 
-	if (pUnit == pTarget || SUNIT_IsDead(pTarget) || !pTarget || !(pTarget->dwFlags & UNITFLAG_CANBEATTACKED) || !sub_6FCBD900(pGame, pUnit, pTarget))
+	if (pUnit == pTarget || SUNIT_IsDead(pTarget) || !pTarget || !(pTarget->dwFlags & UNITFLAG_CANBEATTACKED) || !SUNIT_AreUnitOwnersAligned(pGame, pUnit, pTarget))
 	{
 		return nullptr;
 	}
@@ -7882,7 +7882,7 @@ D2UnitStrc* __fastcall AITHINK_TargetCallback_Overseer_Nihlathak(D2GameStrc* pGa
 		nClassId = pMonstatsTxtRecord->nBaseId;
 	}
 
-	if (nClassId != MONSTER_MINION1 || MONSTERS_IsDead(pTarget) || sub_6FCBD900(pGame, pUnit, pTarget) || STATES_CheckState(pTarget, STATE_BLOODLUST))
+	if (nClassId != MONSTER_MINION1 || MONSTERS_IsDead(pTarget) || SUNIT_AreUnitOwnersAligned(pGame, pUnit, pTarget) || STATES_CheckState(pTarget, STATE_BLOODLUST))
 	{
 		return nullptr;
 	}
@@ -13285,7 +13285,7 @@ void __fastcall AITHINK_Fn106_143_ShadowMaster(D2GameStrc* pGame, D2UnitStrc* pU
 		pOwnerTarget = SUNIT_GetTargetUnit(pGame, pOwner);
 		if (pOwnerTarget)
 		{
-			if (!SUNIT_IsDead(pOwnerTarget) && sub_6FCBD900(pGame, pUnit, pOwnerTarget))
+			if (!SUNIT_IsDead(pOwnerTarget) && SUNIT_AreUnitOwnersAligned(pGame, pUnit, pOwnerTarget))
 			{
 				pTarget = pOwnerTarget;
 			}
@@ -13837,7 +13837,7 @@ D2UnitStrc* __fastcall AITHINK_TargetCallback_ShadowMaster(D2GameStrc* pGame, D2
 		}
 	}
 
-	if (!(pTarget->dwFlags & UNITFLAG_CANBEATTACKED) || !sub_6FCBD900(pGame, pUnit, pTarget))
+	if (!(pTarget->dwFlags & UNITFLAG_CANBEATTACKED) || !SUNIT_AreUnitOwnersAligned(pGame, pUnit, pTarget))
 	{
 		return nullptr;
 	}

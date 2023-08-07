@@ -79,7 +79,7 @@ void __fastcall PLAYER_Create(D2GameStrc* pGame, D2UnitStrc* pPlayer, int32_t nP
     D2GAME_DeleteTimersOnUnit_6FC34A30(pGame, pPlayer);
     ARENA_AllocArenaUnit(pGame, pPlayer);
     PLAYERPETS_AllocPetList(pGame, pPlayer);
-    sub_6FCBDD30(pPlayer, 2u, 1);
+    SUNIT_SetUnitAlignment(pPlayer, UNIT_ALIGNMENT_GOOD, 1);
 }
 
 //D2Game.0x6FC7B630
@@ -505,7 +505,7 @@ int32_t __fastcall PLAYER_GetUniqueIdFromPlayerData(D2UnitStrc* pPlayer)
 }
 
 //D2Game.0x6FC7C170
-void __fastcall sub_6FC7C170(D2GameStrc* pGame, D2UnitStrc* pPlayer)
+void __fastcall PLAYER_RemoveTownPortal(D2GameStrc* pGame, D2UnitStrc* pPlayer)
 {
     D2_ASSERT(pPlayer);
 

@@ -21,7 +21,7 @@ struct D2PartyStrc
 
 struct D2PartyControlStrc
 {
-	int16_t field_0;
+	int16_t nParties;
 	int16_t field_2;
 	D2PartyStrc* pParties;
 };
@@ -35,7 +35,7 @@ void __fastcall PARTY_AllocPartyControl(D2GameStrc* pGame);
 //D2Game.0x6FCB9BA0
 void __fastcall PARTY_FreePartyControl(D2GameStrc* pGame);
 //D2Game.0x6FCB9C40
-int16_t __fastcall sub_6FCB9C40(D2GameStrc* pGame);
+int16_t __fastcall PARTY_AllocParty(D2GameStrc* pGame);
 //D2Game.0x6FCB9D10
 int32_t __fastcall sub_6FCB9D10(D2GameStrc* pGame, int16_t nPartyId, D2UnitStrc* pPlayer);
 //D2Game.0x6FCB9E80

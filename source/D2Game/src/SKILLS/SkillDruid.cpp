@@ -2421,7 +2421,7 @@ D2UnitStrc* __fastcall SKILLS_FindUseableCorpse(D2GameStrc* pGame, D2UnitStrc* p
     for (int32_t i = 0; i < unitFindData.nIndex; ++i)
     {
         D2UnitStrc* pResult = unitFindData.pUnitsArray[i];
-        if (UNITS_IsCorpseUseable(pResult) && sub_6FCBD900(pGame, pUnit, pResult))
+        if (UNITS_IsCorpseUseable(pResult) && SUNIT_AreUnitOwnersAligned(pGame, pUnit, pResult))
         {
             UNITFINDS_FreeUnitFindData(&unitFindData);
             return pResult;

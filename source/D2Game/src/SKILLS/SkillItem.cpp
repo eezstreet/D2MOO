@@ -90,7 +90,7 @@ int32_t __fastcall SKILLITEM_pSpell02_CastPortal(D2GameStrc* pGame, D2UnitStrc* 
         const int32_t nTownLevelId = DUNGEON_GetTownLevelIdFromActNo(DRLG_GetActNoFromLevelId(DUNGEON_GetLevelIdFromRoom(pRoom)));
         if (!DUNGEON_IsRoomInTown(pRoom))
         {
-            sub_6FC7C170(pGame, pUnit);
+            PLAYER_RemoveTownPortal(pGame, pUnit);
             
             D2UnitStrc* pPortal = nullptr;
 
@@ -1799,7 +1799,7 @@ int32_t __fastcall SKILLITEM_TimerCallback_ReanimateMonster(D2GameStrc* pGame, i
     AIUTIL_SetOwnerGUIDAndType(pRevivedMonster, pOwner);
     D2GAME_EVENTS_Delete_6FC34840(pGame, pRevivedMonster, UNITEVENTCALLBACK_AITHINK, 0);
     EVENT_SetEvent(pGame, pRevivedMonster, UNITEVENTCALLBACK_AITHINK, pGame->dwGameFrame + 25, 0, 0);
-    sub_6FCBDD30(pRevivedMonster, 2u, 0);
+    SUNIT_SetUnitAlignment(pRevivedMonster, UNIT_ALIGNMENT_GOOD, 0);
     pRevivedMonster->dwFlags |= UNITFLAG_ISREVIVE;
     STATES_ToggleState(pRevivedMonster, STATE_REVIVE, 1);
     D2GAME_BOSSES_AssignUMod_6FC6FF10(pGame, pRevivedMonster, 21, 0);

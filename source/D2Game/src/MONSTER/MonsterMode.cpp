@@ -771,7 +771,7 @@ void __fastcall sub_6FC63680(D2GameStrc* pGame, D2UnitStrc* pUnit)
     {
         if (STATES_CheckState(pUnit, STATE_UNINTERRUPTABLE))
         {
-            sub_6FCBDE90(pUnit, 0);
+            SUNIT_SetUninterruptable(pUnit, 0);
 
             if (SUNIT_IsDead(pUnit))
             {
@@ -1763,7 +1763,7 @@ int32_t __stdcall D2GAME_ModeChange_6FC65220(D2GameStrc* pGame, D2ModeChangeStrc
 
     if (STATES_CheckState(pUnit, STATE_UNINTERRUPTABLE))
     {
-        sub_6FCBDE90(pUnit, 0);
+        SUNIT_SetUninterruptable(pUnit, 0);
 
         if (SUNIT_IsDead(pUnit))
         {

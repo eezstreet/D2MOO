@@ -1159,7 +1159,7 @@ int32_t __fastcall SKILLS_SrvDo079_Conversion(D2GameStrc* pGame, D2UnitStrc* pUn
     D2COMMON_10476(pStatList, nExpireFrame);
     EVENT_SetEvent(pGame, pTarget, UNITEVENTCALLBACK_REMOVESTATE, nExpireFrame, 0, 0);
     sub_6FD154D0(pTarget);
-    sub_6FCBDD30(pTarget, 2u, 1);
+    SUNIT_SetUnitAlignment(pTarget, UNIT_ALIGNMENT_GOOD, 1);
     D2GAME_UpdateSummonAI_6FC401F0(pGame, pTarget, 0, pUnit->dwNodeIndex);
     UNITS_SetTargetUnitForDynamicUnit(pUnit, 0);
 
@@ -1215,7 +1215,7 @@ int32_t __fastcall SKILLS_SrvDo079_Conversion(D2GameStrc* pGame, D2UnitStrc* pUn
 void __fastcall SKILLS_StatRemoveCallback_Conversion(D2UnitStrc* pUnit, int32_t nState, D2StatListStrc* pStatList)
 {
     STATES_ToggleState(pUnit, nState, 0);
-    sub_6FCBDD30(pUnit, 0, 1);
+    SUNIT_SetUnitAlignment(pUnit, UNIT_ALIGNMENT_EVIL, 1);
     D2GAME_TARGETS_Last_6FC40380(SUNIT_GetGameFromUnit(pUnit), pUnit);
 
     D2StatListStrc* pConversionStatList = STATLIST_GetStatListFromUnitAndState(pUnit, STATE_CONVERSION_SAVE);
